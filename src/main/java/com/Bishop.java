@@ -7,9 +7,9 @@ public class Bishop extends Piece {
 
     @Override
     public boolean isValidMove(int destination) {
-        if (board.whiteTurn != this.getColor()) {
-            return false;
-        }
+        // if (board.whiteTurn != this.getColor()) {
+        //     return false;
+        // }
         if (destination < 0 || destination > 63) {
             return false;
         }
@@ -62,4 +62,23 @@ public class Bishop extends Piece {
         return true;
 
     }
+
+    @Override
+    public void move(int position) {
+            board.board[this.position] = 0;
+            board.board[position] = this.type;
+            this.position = position;
+    }
+
+   @Override
+   public String toString() {
+       // Return the type, position, and color of the piece. ex: "Bishop{type=3, position=0, color=0}"
+       // color is getColor()
+         return "Bishop{" +
+                "type=" + type +
+                ", position=" + position +
+                ", color=" + getColor() +
+                '}';
+        
+   }
 }

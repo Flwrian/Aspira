@@ -1,6 +1,5 @@
 package com;
 
-import java.util.Arrays;
 
 public class Rook extends Piece {
     public Rook(int type, int position, Board board) {
@@ -9,9 +8,9 @@ public class Rook extends Piece {
 
     @Override
     public boolean isValidMove(int position) {
-        if (board.whiteTurn != this.getColor()) {
-            return false;
-        }
+        // if (board.whiteTurn != this.getColor()) {
+        //     return false;
+        // }
 
         if (position < 0 || position > 63) {
             return false;
@@ -53,5 +52,19 @@ public class Rook extends Piece {
             return true;
         }
         return false;
+    }
+
+    @Override
+    public void move(int position) {
+            board.board[this.position] = 0;
+            board.board[position] = this.type;
+            this.position = position;
+    }
+
+    @Override
+    public String toString() {
+       // Return the type, position, and color of the piece. ex: "Bishop{type=3, position=0, color=0}"
+       // color is getColor()
+         return "Rook{type=" + this.type + ", position=" + this.position + ", color=" + this.getColor() + "}";
     }
 }

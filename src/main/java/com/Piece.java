@@ -26,17 +26,13 @@ import java.util.Arrays;
 public abstract class Piece {
 
     protected Board board;
-    protected int[] tempBoard;
     protected int type;
     protected int position;
-    protected int hasMoved;
 
     public Piece(int type, int position, Board board) {
         this.type = type;
         this.position = position;
         this.board = board;
-        this.hasMoved = 0;
-        this.tempBoard = new int[64];
     }
 
     public static Piece getPiece(int type, int position, Board board) {
@@ -94,39 +90,7 @@ public abstract class Piece {
         this.position = position;
     }
 
-    public int hasMoved() {
-        return hasMoved;
-    }
-
-    public void setHasMoved(int hasMoved) {
-        this.hasMoved = hasMoved;
-    }
-
-    public void addHasMoved(int nb) {
-        this.hasMoved += nb;
-    }
-
-    // TODO: passe cette méthode en abstraite maybe
-    public void move(int position) {
-        System.arraycopy(board.board, 0, this.tempBoard, 0, 64);
-
-        // If a pawn reaches the other side of the board, it will be promoted to a queen
-        if (this.type == 1 && position > 55) {
-            this.type = 5;
-        } else if (this.type == 7 && position < 8) {
-            this.type = 11;
-        }
-
-        this.getBoard().setPiece(position, this.type);
-        this.getBoard().setPiece(this.getPosition(), 0);
-        this.setPosition(position);
-        this.addHasMoved(1);
-    }
-
-    public void undoMove() {
-        System.arraycopy(this.tempBoard, 0, board.board, 0, 64);
-        this.addHasMoved(-1);
-    }
+    public abstract void move(int position);
 
     // TODO: fix this
     public boolean isLegalMove(int position) {
@@ -135,17 +99,45 @@ public abstract class Piece {
         if (!this.isValidMove(position)) {
             return false;
         }
-        System.out.println(this + " : " + this.getPosition() + " -> " + position + " is a valid move");
 
-        // Check if the move puts the king in check
-        this.move(position);
-        boolean inCheck = this.getBoard().isInCheck(this.getColor());
-        this.undoMove();
+        board.pushMove(this.position, position);
+        boolean inCheck = board.isInCheck(getColor());
+        board.popMove();
 
         return !inCheck;
     }
 
     public abstract boolean isValidMove(int position);
+
+    public int countValidMoves() {
+        // Count the number of valid moves for the piece
+        int count = 0;
+        for (int i = 0; i < 64; i++) {
+            if (this.isValidMove(i)) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    public void printValidMoves() {
+        for (int i = 0; i < 64; i++) {
+            if (this.isValidMove(i)) {
+                System.out.println("From " + this.getPosition() + " to " + i);
+            }
+        }
+    }
+
+    public int countLegalMoves() {
+        // Count the number of legal moves for the piece
+        int count = 0;
+        for (int i = 0; i < 64; i++) {
+            if (this.isLegalMove(i)) {
+                count++;
+            }
+        }
+        return count;
+    }
 
     /**
      * <p>

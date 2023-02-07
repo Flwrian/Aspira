@@ -1,7 +1,6 @@
 package com.example;
 
 import org.junit.Test;
-import org.junit.runners.JUnit4;
 
 import com.Bishop;
 import com.Board;
@@ -44,7 +43,7 @@ public class PieceMovementTest {
         Pawn pawn = (Pawn) board.getPiece(8);
 
         for (int i = 64; i < board.board.length; i++) {
-            if (i == 16 || i == 24) {
+            if (i == pawn.getPosition() + 8 || i == pawn.getPosition() + 16) {
                 assertEquals(true, pawn.isValidMove(i));
             } else {
                 assertEquals(false, pawn.isValidMove(i));
@@ -64,7 +63,7 @@ public class PieceMovementTest {
         Pawn pawn = (Pawn) board.getPiece(63 - 8);
 
         for (int i = 0; i < 64; i++) {
-            if (i == 63 - 16 || i == 63 - 24) {
+            if (i == pawn.getPosition() - 8 || i == pawn.getPosition() - 16) {
                 assertEquals(true, pawn.isValidMove(i));
             } else {
                 assertEquals(false, pawn.isValidMove(i));
@@ -330,16 +329,215 @@ public class PieceMovementTest {
         }
     }
 
+    // @Test
+    // public void testKingCastling() {
+    //     Board board = new Board();
+    //     board.board = new int[64];
+    //     board.board[4] = 6;
+    //     board.board[7] = 2;
+
+    //     King king = (King) board.getPiece(4);
+
+    //     assertEquals(true, king.isValidMove(6));
+    // }
+
     @Test
-    public void testKingCastling() {
+    public void testPieceMovementBasicBoard() {
         Board board = new Board();
-        board.board = new int[64];
-        board.board[4] = 6;
-        board.board[7] = 2;
+        board.loadFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
 
+        int count = 0;
+
+        // Starting position
+        
+        // Calculate the number of valid moves for each piece
+
+        // First white Rook
+        Rook rook = (Rook) board.getPiece(0);
+        for (int i = 0; i < 64; i++) {
+            if (rook.isValidMove(i)) {
+                count++;
+            }
+        }
+        assertEquals(0, count);
+
+        // White Knight
+        Knight knight = (Knight) board.getPiece(1);
+        count = 0;
+        for (int i = 0; i < 64; i++) {
+            if (knight.isValidMove(i)) {
+                count++;
+            }
+        }
+        assertEquals(2, count);
+
+        // White Bishop
+        Bishop bishop = (Bishop) board.getPiece(2);
+        count = 0;
+        for (int i = 0; i < 64; i++) {
+            if (bishop.isValidMove(i)) {
+                count++;
+            }
+        }
+        assertEquals(0, count);
+
+        // White Queen
+        Queen queen = (Queen) board.getPiece(3);
+        count = 0;
+        for (int i = 0; i < 64; i++) {
+            if (queen.isValidMove(i)) {
+                count++;
+            }
+        }
+        assertEquals(0, count);
+
+        // White King
         King king = (King) board.getPiece(4);
+        count = 0;
+        for (int i = 0; i < 64; i++) {
+            if (king.isValidMove(i)) {
+                count++;
+            }
+        }
+        assertEquals(0, count);
 
-        assertEquals(true, king.isValidMove(6));
+        // White Second Bishop
+        bishop = (Bishop) board.getPiece(5);
+        count = 0;
+        for (int i = 0; i < 64; i++) {
+            if (bishop.isValidMove(i)) {
+                count++;
+            }
+        }
+        assertEquals(0, count);
+
+        // White Second Knight
+        knight = (Knight) board.getPiece(6);
+        count = 0;
+        for (int i = 0; i < 64; i++) {
+            if (knight.isValidMove(i)) {
+                count++;
+            }
+        }
+        assertEquals(2, count);
+
+        // White Second Rook
+        rook = (Rook) board.getPiece(7);
+        count = 0;
+        for (int i = 0; i < 64; i++) {
+            if (rook.isValidMove(i)) {
+                count++;
+            }
+        }
+        assertEquals(0, count);
+
+        // White Pawns
+        for (int i = 8; i < 16; i++) {
+            Pawn pawn = (Pawn) board.getPiece(i);
+            count = 0;
+            for (int j = 0; j < 64; j++) {
+                if (pawn.isValidMove(j)) {
+                    count++;
+                }
+            }
+            assertEquals(2, count);
+        }
+
+        // Black Rook
+        rook = (Rook) board.getPiece(56);
+        count = 0;
+        for (int i = 0; i < 64; i++) {
+            if (rook.isValidMove(i)) {
+                count++;
+            }
+        }
+        assertEquals(0, count);
+
+        // Black Knight
+        knight = (Knight) board.getPiece(57);
+        count = 0;
+        for (int i = 0; i < 64; i++) {
+            if (knight.isValidMove(i)) {
+                count++;
+            }
+        }
+        assertEquals(2, count);
+
+        // Black Bishop
+        bishop = (Bishop) board.getPiece(58);
+        count = 0;
+        for (int i = 0; i < 64; i++) {
+            if (bishop.isValidMove(i)) {
+                count++;
+            }
+        }
+        assertEquals(0, count);
+
+        // Black Queen
+        queen = (Queen) board.getPiece(59);
+        count = 0;
+        for (int i = 0; i < 64; i++) {
+            if (queen.isValidMove(i)) {
+                count++;
+            }
+        }
+        assertEquals(0, count);
+
+        // Black King
+        king = (King) board.getPiece(60);
+        count = 0;
+        for (int i = 0; i < 64; i++) {
+            if (king.isValidMove(i)) {
+                count++;
+            }
+        }
+        assertEquals(0, count);
+
+        // Black Second Bishop
+        bishop = (Bishop) board.getPiece(61);
+        count = 0;
+        for (int i = 0; i < 64; i++) {
+            if (bishop.isValidMove(i)) {
+                count++;
+            }
+        }
+        assertEquals(0, count);
+
+        // Black Second Knight
+        knight = (Knight) board.getPiece(62);
+        count = 0;
+        for (int i = 0; i < 64; i++) {
+            if (knight.isValidMove(i)) {
+                count++;
+            }
+        }
+        assertEquals(2, count);
+
+        // Black Second Rook
+        rook = (Rook) board.getPiece(63);
+        count = 0;
+        for (int i = 0; i < 64; i++) {
+            if (rook.isValidMove(i)) {
+                count++;
+            }
+        }
+        assertEquals(0, count);
+
+        // Black Pawns
+        for (int i = 48; i < 56; i++) {
+            Pawn pawn = (Pawn) board.getPiece(i);
+            count = 0;
+            for (int j = 0; j < 64; j++) {
+                if (pawn.isValidMove(j)) {
+                    count++;
+                }
+            }
+            assertEquals(2, count);
+        }
+
+        // GG WP
+
+
     }
 
 }

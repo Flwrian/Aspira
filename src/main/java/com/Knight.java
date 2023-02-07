@@ -28,20 +28,34 @@ public class Knight extends Piece {
 
         // The knight move in an L shape.
 
-        // The offsets for the 8 different moves
+        int newRow = position / 8;
+        int newCol = position % 8;
+        int currentRow = this.getPosition() / 8;
+        int currentCol = this.getPosition() % 8;
 
-        int[] moveOffsets = { -17, -15, -10, -6, 6, 10, 15, 17 };
-        for (int move : moveOffsets) {
-            int newPos = this.getPosition() + move;
-            if (newPos == position) {
-                if ((this.getPosition() % 8 == 0 && (move == -17 || move == -10 || move == 6 || move == 15)) ||
-                        (this.getPosition() % 8 == 7 && (move == -15 || move == -6 || move == 10 || move == 17))) {
-                    return false;
-                }
-                return true;
-            }
-        }
+        if(Math.abs(newRow - currentRow) == 2 && Math.abs(newCol - currentCol) == 1){
+			return true;
+		}
+		
+		if(Math.abs(newRow - currentRow) == 1 && Math.abs(newCol - currentCol) == 2){
+			return true;
+		}
+		
+		return false;
 
-        return false;
+    }
+
+    @Override
+    public void move(int position) {
+            board.board[this.position] = 0;
+            board.board[position] = this.type;
+            this.position = position;
+    }
+
+    @Override
+    public String toString() {
+       // Return the type, position, and color of the piece. ex: "Bishop{type=3, position=0, color=0}"
+       // color is getColor()
+       return "Knight{type=" + this.type + ", position=" + this.position + ", color=" + this.getColor() + "}";
     }
 }
