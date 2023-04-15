@@ -26,7 +26,8 @@ import com.pieces.Piece;
  */
 public class Board {
 
-    // ! We need to find a better way to store the board / pieces / moves (bitboards)
+    // ! We need to find a better way to store the board / pieces / moves
+    // (bitboards)
 
     public static final String STARTING_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
     public static String gamePGN = "";
@@ -91,6 +92,7 @@ public class Board {
     public void setCanPlay(boolean canPlay) {
         this.canPlay = canPlay;
     }
+
     /**
      * <p>
      * Push a move to the board, and backup the board
@@ -101,7 +103,8 @@ public class Board {
      * </p>
      */
     public void pushMove(int from, int destination) {
-        if(!canPlay) throw new RuntimeException("Cannot play");
+        if (!canPlay)
+            throw new RuntimeException("Cannot play");
         int[] boardCopy = new int[64];
         System.arraycopy(board, 0, boardCopy, 0, 64);
         boardHistory.push(boardCopy);
@@ -121,7 +124,8 @@ public class Board {
     }
 
     public void popMove() {
-        if(!canPlay) setCanPlay(true);
+        if (!canPlay)
+            setCanPlay(true);
         boardHistory.pop();
         board = boardHistory.pop();
         whiteTurn = !whiteTurn;
@@ -146,8 +150,6 @@ public class Board {
             return countLegalMoves(1) == 0;
         }
     }
-
-    
 
     @Override
     public int hashCode() {
@@ -461,8 +463,9 @@ public class Board {
      * @param string
      */
     public void makeMove(String string) {
-        int from = 8 * (8 - (string.charAt(1) - '0')) + (string.charAt(0) - 'a');
-        int to = 8 * (8 - (string.charAt(3) - '0')) + (string.charAt(2) - 'a');
+        int from = (string.charAt(0) - 'a') + 8 * (string.charAt(1) - '1');
+        int to = (string.charAt(2) - 'a') + 8 * (string.charAt(3) - '1');
+
         board[to] = board[from];
         board[from] = 0;
     }
@@ -516,7 +519,6 @@ public class Board {
         move += Piece.getSquareName(from).charAt(0);
         int fromRow = (from / 8) + 1;
         move += fromRow;
-
 
         move += Piece.getSquareName(destination);
 

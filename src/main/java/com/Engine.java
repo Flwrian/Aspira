@@ -61,7 +61,7 @@ public class Engine implements PlayableEntity {
         return bestMove;
     }
 
-    public String parseBestMove(int[] bestMove){
+    public String parseMove(int[] bestMove){
         // First index is the origin square (ex: 13)
         // Second index is the destination square (ex: 21)
         // Third index is the eval (not needed)

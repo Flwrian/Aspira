@@ -68,7 +68,7 @@ public class UCI {
             }
         }
         if(depth == 0){
-            depth = 1;
+            depth = 5;
         }
         if(time == 0){
             time = 10000;
@@ -77,13 +77,16 @@ public class UCI {
         engine = new Engine(board);
         engine.setAlgorithm(new AlphaBetaPruningAlgorithm(depth));
         int[] move = engine.play();
-        System.out.println("bestmove " + engine.parseBestMove(move));
+        System.out.println("bestmove " + engine.parseMove(move));
 
         // Move bestMove = board.getBestMove(depth, time);
         // System.out.println("bestmove " + bestMove);
     }
 
     private static void position(String[] inputArray) {
+        // Example: position startpos moves e2e4 e7e5
+        // So we need to load the starting position and then make the moves
+
         if(inputArray[1].equals("startpos")){
             board.loadFEN(Board.STARTING_FEN);
         }
@@ -102,6 +105,7 @@ public class UCI {
                 if(inputArray[i].equals("moves")){
                     for(int j = i + 1; j < inputArray.length; j++){
                         board.makeMove(inputArray[j]);
+                        board.flip();
                     }
                     break;
                 }
