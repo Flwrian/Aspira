@@ -20,7 +20,7 @@ import com.algorithms.ChessAlgorithm;
  * @see Board
  * @see ChessAlgorithm
  */
-public class Engine {
+public class Engine implements PlayableEntity {
 
     private Board board;
     private ChessAlgorithm algorithm;
@@ -34,6 +34,7 @@ public class Engine {
         this.algorithm = algorithm;
     }
 
+    @Override
     public void play() {
         if(algorithm == null){
             throw new IllegalStateException("No algorithm selected");

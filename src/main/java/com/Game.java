@@ -5,45 +5,42 @@ import com.algorithms.AlphaBetaPruning;
 
 public class Game {
 
+    private PlayableEntity player1;
+    private PlayableEntity player2;
+
+    private Board board;
+
     static boolean isEnded = false;
-    
-    public static void main(String[] args) {
-        Board board = new Board();
-        board.loadFEN(Board.STARTING_FEN);
-        board.printBoard();
 
-        ChessAlgorithm algorithm = new AlphaBetaPruning(4);
-        ChessAlgorithm algorithm2 = new AlphaBetaPruning(3);
+    public void setPlayer1(PlayableEntity player1) {
+        this.player1 = player1;
+    }
 
-        Engine engine = new Engine(board);
-        engine.setAlgorithm(algorithm);
+    public void setPlayer2(PlayableEntity player2) {
+        this.player2 = player2;
+    }
 
-        Engine engine2 = new Engine(board);
-        engine2.setAlgorithm(algorithm2);
+    public void play() {
+        if(player1 == null || player2 == null){
+            throw new IllegalStateException("No player selected");
+        }
 
-        board.pushMove(3+8, 3+8+16);
-        board.buildPGN(3+8, 3+8+16);
+        while(!isEnded){
+            isEnded = !board.canPlay;
 
-        try{
-            while(!isEnded){
-                isEnded = !board.canPlay;
-
-                if(board.is3FoldRepetition()){
-                    System.out.println("3-fold repetition");
-                    isEnded = true;
-                    break;
-                }
-
-                if(board.whiteTurn){
-                    engine.play();
-                }
-                else{
-                    engine2.play();
-                }
-                board.printBoard();
+            if(board.is3FoldRepetition()){
+                System.out.println("3-fold repetition");
+                isEnded = true;
+                break;
             }
-        } catch (Exception e) {
-            e.printStackTrace();
+
+            if(board.whiteTurn){
+                player1.play();
+            }
+            else{
+                player2.play();
+            }
+            board.printBoard();
         }
 
         System.out.println(Board.gamePGN);
