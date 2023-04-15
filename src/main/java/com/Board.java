@@ -1,10 +1,7 @@
 package com;
 
 import java.util.ArrayDeque;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Deque;
-import java.util.Stack;
 
 /**
  * Chess Board Class
@@ -27,12 +24,22 @@ import java.util.Stack;
  */
 public class Board {
 
+    // ! We maybe need to find a better way to store the board / pieces / moves
+
+    public static final String STARTING_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+    public static String gamePGN = "";
+
     public int[] board = new int[64];
 
-    // private Stack<int[]> boardHistory = new Stack<int[]>(); // Stores the board history
+    // private Stack<int[]> boardHistory = new Stack<int[]>(); // Stores the board
+    // history
     private ArrayDeque<int[]> boardHistory = new ArrayDeque<int[]>();
 
     public boolean whiteTurn;
+
+    private int moveNumber = 1;
+
+    public boolean canPlay = true;
 
     public Board() {
         boardHistory.push(board);
@@ -75,40 +82,35 @@ public class Board {
         }
     }
 
-    public ArrayList<Piece> getPieces() {
-        ArrayList<Piece> pieces = new ArrayList<>();
-        for (int i = 0; i < 64; i++) {
-            if (board[i] != 0) {
-                pieces.add(Piece.getPiece(board[i], i, this));
-            }
-        }
-        return pieces;
-    }
-
-    public Piece getPiece(int position) {
-        if (board[position] != 0) {
-            return Piece.getPiece(board[position], position, this);
-        }
-        return null;
-    }
-
     public void setPiece(int position, int type) {
         board[position] = type;
     }
 
+    public void setCanPlay(boolean canPlay) {
+        this.canPlay = canPlay;
+    }
     /**
-     * <p>Push a move to the board, and backup the board</p>
-     * <p>This method is VERY important, as it allows us to undo moves and it also allows us to check for check and is very important for the AI</p>
+     * <p>
+     * Push a move to the board, and backup the board
+     * </p>
+     * <p>
+     * This method is VERY important, as it allows us to undo moves and it also
+     * allows us to check for check and is very important for the AI
+     * </p>
      */
     public void pushMove(int from, int destination) {
+        if(!canPlay) throw new RuntimeException("Cannot play");
         int[] boardCopy = new int[64];
         System.arraycopy(board, 0, boardCopy, 0, 64);
         boardHistory.push(boardCopy);
-        
-        Piece piece = getPiece(from);
-        if (piece != null) {
-            piece.move(destination);
-        }
+
+        // Replace this
+        // Piece piece = getPiece(from);
+        // if (piece != null) {
+        // piece.move(destination);
+        // }
+        // Piece.move(from, destination, this);
+        Piece.move(from, destination, this);
 
         whiteTurn = !whiteTurn;
 
@@ -117,22 +119,98 @@ public class Board {
     }
 
     public void popMove() {
+        if(!canPlay) setCanPlay(true);
         boardHistory.pop();
         board = boardHistory.pop();
         whiteTurn = !whiteTurn;
     }
 
-    public int countLegalMoves(int depth){
+    public void printTurn() {
+        if (whiteTurn) {
+            System.out.println("White's turn");
+        } else {
+            System.out.println("Black's turn");
+        }
+    }
+
+    public void info(int square) {
+        System.out.println("Piece: " + board[square]);
+    }
+
+    public boolean isStaleMate() {
+        if (whiteTurn) {
+            return countLegalMoves(1) == 0;
+        } else {
+            return countLegalMoves(1) == 0;
+        }
+    }
+
+    
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + Arrays.hashCode(board);
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        Board other = (Board) obj;
+        if (!Arrays.equals(board, other.board))
+            return false;
+        return true;
+    }
+
+    public boolean is3FoldRepetition() {
+        int count = 0;
+        for (int[] board : boardHistory) {
+            if (Arrays.equals(board, this.board)) {
+                count++;
+            }
+        }
+        return count >= 6;
+    }
+
+    // ? In addition to the possible way to optimize this, we can also use a
+    // bitboard to store the pieces
+    public int countLegalMoves(int depth) {
         if (depth == 0) {
             return 1;
         }
         int count = 0;
-        for (Piece piece : getPieces()) {
-            if (piece.getColor() == whiteTurn) {
-                for (int i = 0; i < 64; i++) {
-                    if (piece.isLegalMove(i)) {
-                        pushMove(piece.getPosition(), i);
+        for (int i = 0; i < 64; i++) {
+            if (board[i] != 0 && board[i] < 7 == whiteTurn) {
+                for (int j = 0; j < 64; j++) {
+                    if (Piece.isLegalMove(board[i], i, j, this)) {
+                        pushMove(i, j);
                         count += countLegalMoves(depth - 1);
+                        popMove();
+                    }
+                }
+            }
+        }
+        return count;
+    }
+
+    public int countValidMoves(int depth) {
+        if (depth == 0) {
+            return 1;
+        }
+        int count = 0;
+        for (int i = 0; i < 64; i++) {
+            if (board[i] != 0 && board[i] < 7 == whiteTurn) {
+                for (int j = 0; j < 64; j++) {
+                    if (Piece.isValidMove(board[i], i, j, this)) {
+                        pushMove(i, j);
+                        count += countValidMoves(depth - 1);
                         popMove();
                     }
                 }
@@ -145,16 +223,19 @@ public class Board {
     public boolean isInCheck(boolean white) {
         int kingPosition = 0;
         for (int i = 0; i < 64; i++) {
-            if (board[i] == (white ? 6 : 12)) {
+            if (board[i] == 6 && white == true) {
+                kingPosition = i;
+                break;
+            }
+            if (board[i] == 12 && white == false) {
                 kingPosition = i;
                 break;
             }
         }
 
         for (int i = 0; i < 64; i++) {
-            if (board[i] != 0 && Piece.getPiece(board[i], i, this).getColor() != white) {
-                Piece piece = Piece.getPiece(board[i], i, this);
-                if (piece.isLegalMove(kingPosition)) {
+            if (board[i] != 0 && board[i] < 7 != white) {
+                if (Piece.isValidMove(board[i], i, kingPosition, this)) {
                     return true;
                 }
             }
@@ -162,84 +243,89 @@ public class Board {
         return false;
     }
 
-    public void flip(){
+    public int[][] getLegalMoves() {
+        int[][] moves = new int[64][64];
+        int index = 0;
+        for (int i = 0; i < 64; i++) {
+            if (board[i] != 0 && board[i] < 7 == whiteTurn) {
+                for (int j = 0; j < 64; j++) {
+                    if (Piece.isLegalMove(board[i], i, j, this)) {
+                        moves[index][0] = i;
+                        moves[index][1] = j;
+                        index++;
+                    }
+                }
+            }
+        }
+        return moves;
+    }
+
+    public void printValidMoves(int piecePosition) {
+        for (int i = 0; i < 64; i++) {
+            if (Piece.isValidMove(board[piecePosition], piecePosition, i, this)) {
+                System.out.println("Valid move: " + piecePosition + " -> " + i);
+            }
+        }
+    }
+
+    public void flip() {
         whiteTurn = !whiteTurn;
     }
 
     public void loadFEN(String fen) {
-        board = new int[64];
-        String[] parts = fen.split(" ");
-        String[] rows = parts[0].split("/");
-        int index = 0;
+        String[] fenData = fen.split(" ");
+        String[] fenBoard = fenData[0].split("/");
+        int index = 56;
         for (int i = 0; i < 8; i++) {
-            String row = rows[i];
-            for (int j = 0; j < row.length(); j++) {
-                char c = row.charAt(j);
-                if (Character.isDigit(c)) {
-                    index += Character.getNumericValue(c);
+            for (int j = 0; j < fenBoard[i].length(); j++) {
+                char piece = fenBoard[i].charAt(j);
+                if (Character.isDigit(piece)) {
+                    index += (piece - '0');
                 } else {
-                    switch (c) {
+                    switch (piece) {
                         case 'p':
-                            board[index] = 7;
-                            break;
-                        case 'P':
-                            board[index] = 1;
+                            board[index++] = 7;
                             break;
                         case 'n':
-                            board[index] = 8;
-                            break;
-                        case 'N':
-                            board[index] = 2;
+                            board[index++] = 8;
                             break;
                         case 'b':
-                            board[index] = 9;
-                            break;
-                        case 'B':
-                            board[index] = 3;
+                            board[index++] = 9;
                             break;
                         case 'r':
-                            board[index] = 10;
-                            break;
-                        case 'R':
-                            board[index] = 4;
+                            board[index++] = 10;
                             break;
                         case 'q':
-                            board[index] = 11;
-                            break;
-                        case 'Q':
-                            board[index] = 5;
+                            board[index++] = 11;
                             break;
                         case 'k':
-                            board[index] = 12;
+                            board[index++] = 12;
+                            break;
+                        case 'P':
+                            board[index++] = 1;
+                            break;
+                        case 'N':
+                            board[index++] = 2;
+                            break;
+                        case 'B':
+                            board[index++] = 3;
+                            break;
+                        case 'R':
+                            board[index++] = 4;
+                            break;
+                        case 'Q':
+                            board[index++] = 5;
                             break;
                         case 'K':
-                            board[index] = 6;
+                            board[index++] = 6;
                             break;
                     }
-                    index++;
                 }
             }
+            index -= 16;
         }
 
-        whiteTurn = parts[1].equals("w");
-
-        // Mirror the board
-        int[] newBoard = new int[64];
-        for (int i = 0; i < 64; i++) {
-            newBoard[i] = board[63 - i];
-        }
-
-        // Switch the white Queen and King
-        int temp = newBoard[3];
-        newBoard[3] = newBoard[4];
-        newBoard[4] = temp;
-
-        // Switch the black Queen and King
-        temp = newBoard[59];
-        newBoard[59] = newBoard[60];
-        newBoard[60] = temp;
-
-        board = newBoard;
+        whiteTurn = fenData[1].equals("w");
     }
 
     public String getFEN() {
@@ -308,7 +394,6 @@ public class Board {
         return sb.toString();
     }
 
-
     public void printBoard() {
         System.out.println("  a b c d e f g h");
         for (int i = 7; i >= 0; i--) {
@@ -354,7 +439,7 @@ public class Board {
                         pieceName = "k";
                         break;
                     default:
-                        pieceName = " ";
+                        pieceName = ".";
                         break;
                 }
                 System.out.print(pieceName + " ");
@@ -364,7 +449,7 @@ public class Board {
         System.out.println();
     }
 
-    public void printBoardInt(){
+    public void printBoardInt() {
         System.out.println("  a b c d e f g h");
         for (int i = 7; i >= 0; i--) {
             System.out.print((1 + i) + " ");
@@ -419,5 +504,90 @@ public class Board {
         System.out.println();
     }
 
+    /**
+     * Make a move on the board.
+     * Example: "e2e4" or "e7e5"
+     * 
+     * @param string
+     */
+    public void makeMove(String string) {
+        int from = 8 * (8 - (string.charAt(1) - '0')) + (string.charAt(0) - 'a');
+        int to = 8 * (8 - (string.charAt(3) - '0')) + (string.charAt(2) - 'a');
+        board[to] = board[from];
+        board[from] = 0;
+    }
+
+    /**
+     * This method will be used to build the gamePGN string.
+     */
+    public void buildPGN(int from, int destination) {
+        String move = "";
+        int pieceType = board[from];
+
+        switch (pieceType) {
+            case 1:
+                break;
+            case 2:
+                move += "N";
+                break;
+            case 3:
+                move += "B";
+                break;
+            case 4:
+                move += "R";
+                break;
+            case 5:
+                move += "Q";
+                break;
+            case 6:
+                move += "K";
+                break;
+            case 7:
+                break;
+            case 8:
+                move += "N";
+                break;
+            case 9:
+                move += "B";
+                break;
+            case 10:
+                move += "R";
+                break;
+            case 11:
+                move += "Q";
+                break;
+            case 12:
+                move += "K";
+                break;
+            default:
+                break;
+        }
+
+        move += Piece.getSquareName(from).charAt(0);
+        int fromRow = (from / 8) + 1;
+        move += fromRow;
+
+
+        move += Piece.getSquareName(destination);
+
+        if (whiteTurn) {
+            if (isInCheck(whiteTurn)) {
+                move += "+";
+            }
+
+            gamePGN += moveNumber + ". " + move + " ";
+            moveNumber++;
+        } else {
+            if (isInCheck(!whiteTurn)) {
+                move += "+";
+            }
+
+            gamePGN += moveNumber + ". " + move + " ";
+            moveNumber++;
+
+        }
+
+        System.out.println(gamePGN);
+    }
 
 }
