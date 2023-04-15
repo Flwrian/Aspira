@@ -3,6 +3,8 @@ package com;
 import java.util.ArrayDeque;
 import java.util.Arrays;
 
+import com.pieces.Piece;
+
 /**
  * Chess Board Class
  * 
@@ -24,7 +26,7 @@ import java.util.Arrays;
  */
 public class Board {
 
-    // ! We maybe need to find a better way to store the board / pieces / moves
+    // ! We need to find a better way to store the board / pieces / moves (bitboards)
 
     public static final String STARTING_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
     public static String gamePGN = "";
@@ -273,59 +275,7 @@ public class Board {
     }
 
     public void loadFEN(String fen) {
-        String[] fenData = fen.split(" ");
-        String[] fenBoard = fenData[0].split("/");
-        int index = 56;
-        for (int i = 0; i < 8; i++) {
-            for (int j = 0; j < fenBoard[i].length(); j++) {
-                char piece = fenBoard[i].charAt(j);
-                if (Character.isDigit(piece)) {
-                    index += (piece - '0');
-                } else {
-                    switch (piece) {
-                        case 'p':
-                            board[index++] = 7;
-                            break;
-                        case 'n':
-                            board[index++] = 8;
-                            break;
-                        case 'b':
-                            board[index++] = 9;
-                            break;
-                        case 'r':
-                            board[index++] = 10;
-                            break;
-                        case 'q':
-                            board[index++] = 11;
-                            break;
-                        case 'k':
-                            board[index++] = 12;
-                            break;
-                        case 'P':
-                            board[index++] = 1;
-                            break;
-                        case 'N':
-                            board[index++] = 2;
-                            break;
-                        case 'B':
-                            board[index++] = 3;
-                            break;
-                        case 'R':
-                            board[index++] = 4;
-                            break;
-                        case 'Q':
-                            board[index++] = 5;
-                            break;
-                        case 'K':
-                            board[index++] = 6;
-                            break;
-                    }
-                }
-            }
-            index -= 16;
-        }
-
-        whiteTurn = fenData[1].equals("w");
+        FENLoader.loadFEN(fen, this);
     }
 
     public String getFEN() {

@@ -1,4 +1,6 @@
-package com;
+package com.pieces;
+
+import com.Board;
 
 public class Pawn extends Piece {
 

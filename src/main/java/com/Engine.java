@@ -1,5 +1,7 @@
 package com;
 
+import com.algorithms.ChessAlgorithm;
+import com.pieces.Piece;
 
 /**
  * <h1>Engine</h1>
@@ -19,7 +21,7 @@ package com;
  * @see Board
  * @see ChessAlgorithm
  */
-public class Engine {
+public class Engine implements PlayableEntity {
 
     private Board board;
     private ChessAlgorithm algorithm;
@@ -33,7 +35,8 @@ public class Engine {
         this.algorithm = algorithm;
     }
 
-    public void play() {
+    @Override
+    public int[] play() {
         if(algorithm == null){
             throw new IllegalStateException("No algorithm selected");
         }
@@ -54,6 +57,19 @@ public class Engine {
 
         board.pushMove(bestMove[0], bestMove[1]);
         board.buildPGN(bestMove[0], bestMove[1]);
+
+        return bestMove;
+    }
+
+    public String parseBestMove(int[] bestMove){
+        // First index is the origin square (ex: 13)
+        // Second index is the destination square (ex: 21)
+        // Third index is the eval (not needed)
+        
+        String moveString = "";
+        moveString += Piece.getSquareName(bestMove[0]);
+        moveString += Piece.getSquareName(bestMove[1]);
+        return moveString;
     }
 
 

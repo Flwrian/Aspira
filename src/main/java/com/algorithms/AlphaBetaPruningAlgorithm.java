@@ -1,6 +1,8 @@
-package com;
+package com.algorithms;
 
-public class MinMaxAlgorithm implements ChessAlgorithm {
+import com.Board;
+
+public class AlphaBetaPruningAlgorithm implements ChessAlgorithm {
 
     private final int DEFAULT_DEPTH = 1;
 
@@ -239,11 +241,11 @@ public class MinMaxAlgorithm implements ChessAlgorithm {
         this.depth = depth;
     }
 
-    public MinMaxAlgorithm(int depth) {
+    public AlphaBetaPruningAlgorithm(int depth) {
         this.depth = depth;
     }
 
-    public MinMaxAlgorithm() {
+    public AlphaBetaPruningAlgorithm() {
         
     }
     
