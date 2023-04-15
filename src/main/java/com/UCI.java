@@ -1,6 +1,8 @@
 package com;
 import java.util.*;
 
+import com.algorithms.AlphaBetaPruningAlgorithm;
+
 /**
  * This class is the UCI interface for the chess engine.
  * It is responsible for communicating with the GUI.
@@ -10,6 +12,7 @@ public class UCI {
 
     private static String ENGINE_NAME = "FlowBot";
     private static Board board;
+    private static Engine engine;
     
 
     public static void main(String[] args) {
@@ -70,6 +73,12 @@ public class UCI {
         if(time == 0){
             time = 10000;
         }
+
+        engine = new Engine(board);
+        engine.setAlgorithm(new AlphaBetaPruningAlgorithm(depth));
+        int[] move = engine.play();
+        System.out.println("bestmove " + engine.parseBestMove(move));
+
         // Move bestMove = board.getBestMove(depth, time);
         // System.out.println("bestmove " + bestMove);
     }
@@ -102,6 +111,7 @@ public class UCI {
 
     private static void uciNewGame() {
         board = new Board();
+        board.loadFEN(Board.STARTING_FEN);
     }
 
     private static void isReady() {

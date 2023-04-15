@@ -12,6 +12,11 @@ public class Game {
 
     static boolean isEnded = false;
 
+    public Game() {
+        board = new Board();
+        board.loadFEN(Board.STARTING_FEN);
+    }
+
     public void setPlayer1(PlayableEntity player1) {
         this.player1 = player1;
     }
