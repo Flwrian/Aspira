@@ -2,7 +2,7 @@ package com.algorithms;
 
 import com.Board;
 
-public class MinMaxAlgorithm implements ChessAlgorithm {
+public class AlphaBetaPruning implements ChessAlgorithm {
 
     private final int DEFAULT_DEPTH = 1;
 
@@ -241,11 +241,11 @@ public class MinMaxAlgorithm implements ChessAlgorithm {
         this.depth = depth;
     }
 
-    public MinMaxAlgorithm(int depth) {
+    public AlphaBetaPruning(int depth) {
         this.depth = depth;
     }
 
-    public MinMaxAlgorithm() {
+    public AlphaBetaPruning() {
         
     }
     
