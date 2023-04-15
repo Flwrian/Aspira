@@ -2,7 +2,7 @@ package com.algorithms;
 
 import com.Board;
 
-public class AlphaBetaPruning implements ChessAlgorithm {
+public class AlphaBetaPruningAlgorithm implements ChessAlgorithm {
 
     private final int DEFAULT_DEPTH = 1;
 
@@ -241,11 +241,11 @@ public class AlphaBetaPruning implements ChessAlgorithm {
         this.depth = depth;
     }
 
-    public AlphaBetaPruning(int depth) {
+    public AlphaBetaPruningAlgorithm(int depth) {
         this.depth = depth;
     }
 
-    public AlphaBetaPruning() {
+    public AlphaBetaPruningAlgorithm() {
         
     }
     

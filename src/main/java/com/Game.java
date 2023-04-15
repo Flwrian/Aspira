@@ -1,14 +1,14 @@
 package com;
 
 import com.algorithms.ChessAlgorithm;
-import com.algorithms.AlphaBetaPruning;
+import com.algorithms.AlphaBetaPruningAlgorithm;
 
 public class Game {
 
     private PlayableEntity player1;
     private PlayableEntity player2;
 
-    private Board board;
+    Board board;
 
     static boolean isEnded = false;
 
