@@ -66,17 +66,18 @@ public class Pawn extends Piece {
             }
 
             
-            int row = piecePosition / 8;
+            int col = piecePosition % 8;
 
             // Check if the pawn is trying to capture a piece diagonally
             if (board.board[destination] != 0 && (destination - piecePosition == 9 || destination - piecePosition == 7)) {
-                // Check if the pawn is on the edge of the board
-                if (row == 0 && destination - piecePosition == 9) {
-                    return false;
-                } else if (row == 7 && destination - piecePosition == 7) {
-                    return false;
+                // Check if the pawn is capturing to the right column
+                if ((destination % 8 == col + 1) && (col < 7)) {
+                    return true;
                 }
-                return true;
+                // Check if the pawn is capturing to the left column
+                if ((destination % 8 == col - 1) && (col > 0)) {
+                    return true;
+                }
             }
 
             return false;
@@ -102,23 +103,26 @@ public class Pawn extends Piece {
             }
 
             // Check if the pawn is moving two squares in front of it and the squares are empty
-            if (piecePosition > 55 && destination == piecePosition - 16 && board.board[piecePosition - 8] == 0
+            if (piecePosition > 55 && (destination == piecePosition - 16) && board.board[piecePosition - 8] == 0
                     && board.board[destination] == 0) {
                 return true;
             }
 
-            int row = piecePosition / 8;
+            int col = piecePosition % 8;
 
             // Check if the pawn is trying to capture a piece diagonally
             if (board.board[destination] != 0 && (piecePosition - destination == 9 || piecePosition - destination == 7)) {
-                // Check if the pawn is on the edge of the board
-                if (row == 0 && piecePosition - destination == 7) {
-                    return false;
-                } else if (row == 7 && piecePosition - destination == 9) {
-                    return false;
+                // Check if the pawn is capturing to the right column
+                if ((destination % 8 == col + 1) && (col < 7)) {
+                    return true;
                 }
-                return true;
+                // Check if the pawn is capturing to the left column
+                if ((destination % 8 == col - 1) && (col > 0)) {
+                    return true;
+                }
             }
+
+            
 
             return false;
 
