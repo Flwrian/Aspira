@@ -77,6 +77,7 @@ public class UCI {
         engine = new Engine(board);
         engine.setAlgorithm(new AlphaBetaPruningAlgorithm(depth));
         int[] move = engine.play();
+        System.out.println("info score cp " + move[2] + " depth " + depth);
         System.out.println("bestmove " + engine.parseMove(move));
 
         // Move bestMove = board.getBestMove(depth, time);
@@ -124,7 +125,7 @@ public class UCI {
 
     private static void uci() {
         System.out.println("id name " + ENGINE_NAME);
-        System.out.println("id author FlowBot");
+        System.out.println("id author Florian");
         System.out.println("uciok");
     }
 

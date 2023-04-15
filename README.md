@@ -8,6 +8,7 @@ I am aware that there are more efficient ways to program a chess engine. I am no
 - [x] Multiple algorithms for the engine
 - [x] You can implement your own algorithm
 - [x] Save and load games (FEN and PGN formats)
+- [x] Fix weird pawn glitch (A file to H file)
 - [x] UCI protocol
 ## Need to do
 - [ ] Add a GUI
@@ -15,7 +16,6 @@ I am aware that there are more efficient ways to program a chess engine. I am no
 - [ ] Add en passant
 - [ ] Add pawn promotion to other pieces than queen
 - [ ] Add a timer
-- [ ] Fix weird pawn glitch (A file to H file)
 - [ ] Add a lot of tests
 
 
