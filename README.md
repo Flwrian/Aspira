@@ -1,5 +1,5 @@
 # Chess Game + Engine
-This is a chess game and engine written in Java. Note that this is a work in progress and is not finished yet. There are a lot of things that need to be done. If you want to help, feel free to do so.
+This is a chess game and engine written in Java. Note that this is a work in progress and is not finished yet. There are a lot of things that need to be done. If you want to help, feel free to do so. I'm still learning new things and trying to play better chess too :)
 
 ## Need to do
 - [ ] Add a GUI
