@@ -1,7 +1,7 @@
 package com;
 
 import com.algorithms.ChessAlgorithm;
-import com.algorithms.MinMaxAlgorithm;
+import com.algorithms.AlphaBetaPruning;
 
 public class Game {
 
@@ -12,8 +12,8 @@ public class Game {
         board.loadFEN(Board.STARTING_FEN);
         board.printBoard();
 
-        ChessAlgorithm algorithm = new MinMaxAlgorithm(4);
-        ChessAlgorithm algorithm2 = new MinMaxAlgorithm(3);
+        ChessAlgorithm algorithm = new AlphaBetaPruning(4);
+        ChessAlgorithm algorithm2 = new AlphaBetaPruning(3);
 
         Engine engine = new Engine(board);
         engine.setAlgorithm(algorithm);

@@ -26,7 +26,7 @@ import com.pieces.Piece;
  */
 public class Board {
 
-    // ! We maybe need to find a better way to store the board / pieces / moves
+    // ! We need to find a better way to store the board / pieces / moves (bitboards)
 
     public static final String STARTING_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
     public static String gamePGN = "";
