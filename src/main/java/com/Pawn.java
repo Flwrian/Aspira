@@ -19,21 +19,21 @@ public class Pawn extends Piece {
         board.board[destination] = type;
     }
 
-    public static boolean isValidMove(int piecePosition, int position, Board board) {
+    public static boolean isValidMove(int piecePosition, int destination, Board board) {
         boolean color = board.board[piecePosition] < 7;
 
         // Check that the move is inside the board
-        if (position < 0 || position > 63) {
+        if (destination < 0 || destination > 63) {
             return false;
         }
 
         // Check that the move is not on the same square
-        if (piecePosition == position) {
+        if (piecePosition == destination) {
             return false;
         }
 
         // Check that the move is not on a square occupied by a piece of the same color
-        if (board.board[position] != 0 && (board.board[position] < 7 == board.board[piecePosition] < 7)) {
+        if (board.board[destination] != 0 && (board.board[destination] < 7 == board.board[piecePosition] < 7)) {
             return false;
         }
 
@@ -53,13 +53,13 @@ public class Pawn extends Piece {
             // }
 
             // Check if the pawn is moving one square in front of it and the square is empty
-            if (position == piecePosition + 8 && board.board[position] == 0) {
+            if (destination == piecePosition + 8 && board.board[destination] == 0) {
                 return true;
             }
 
             // Check if the pawn is moving two squares in front of it and the squares are empty
-            if (piecePosition < 8 && position == piecePosition + 16 && board.board[piecePosition + 8] == 0
-                    && board.board[position] == 0) {
+            if (piecePosition < 8 && destination == piecePosition + 16 && board.board[piecePosition + 8] == 0
+                    && board.board[destination] == 0) {
                 return true;
             }
 
@@ -67,11 +67,11 @@ public class Pawn extends Piece {
             int row = piecePosition / 8;
 
             // Check if the pawn is trying to capture a piece diagonally
-            if (board.board[position] != 0 && (position - piecePosition == 9 || position - piecePosition == 7)) {
+            if (board.board[destination] != 0 && (destination - piecePosition == 9 || destination - piecePosition == 7)) {
                 // Check if the pawn is on the edge of the board
-                if (row == 0 && position - piecePosition == 9) {
+                if (row == 0 && destination - piecePosition == 9) {
                     return false;
-                } else if (row == 7 && position - piecePosition == 7) {
+                } else if (row == 7 && destination - piecePosition == 7) {
                     return false;
                 }
                 return true;
@@ -95,24 +95,24 @@ public class Pawn extends Piece {
             // }
 
             // Check if the pawn is moving one square in front of it and the square is empty
-            if (position == piecePosition - 8 && board.board[position] == 0) {
+            if (destination == piecePosition - 8 && board.board[destination] == 0) {
                 return true;
             }
 
             // Check if the pawn is moving two squares in front of it and the squares are empty
-            if (piecePosition > 55 && position == piecePosition - 16 && board.board[piecePosition - 8] == 0
-                    && board.board[position] == 0) {
+            if (piecePosition > 55 && destination == piecePosition - 16 && board.board[piecePosition - 8] == 0
+                    && board.board[destination] == 0) {
                 return true;
             }
 
             int row = piecePosition / 8;
 
             // Check if the pawn is trying to capture a piece diagonally
-            if (board.board[position] != 0 && (piecePosition - position == 9 || piecePosition - position == 7)) {
+            if (board.board[destination] != 0 && (piecePosition - destination == 9 || piecePosition - destination == 7)) {
                 // Check if the pawn is on the edge of the board
-                if (row == 0 && piecePosition - position == 7) {
+                if (row == 0 && piecePosition - destination == 7) {
                     return false;
-                } else if (row == 7 && piecePosition - position == 9) {
+                } else if (row == 7 && piecePosition - destination == 9) {
                     return false;
                 }
                 return true;

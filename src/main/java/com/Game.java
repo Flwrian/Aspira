@@ -9,7 +9,7 @@ public class Game {
         board.loadFEN(Board.STARTING_FEN);
         board.printBoard();
 
-        ChessAlgorithm algorithm = new MinMaxAlgorithm(3);
+        ChessAlgorithm algorithm = new MinMaxAlgorithm(5);
         ChessAlgorithm algorithm2 = new MinMaxAlgorithm(5);
 
         Engine engine = new Engine(board);
@@ -18,8 +18,8 @@ public class Game {
         Engine engine2 = new Engine(board);
         engine2.setAlgorithm(algorithm2);
 
-        board.pushMove(4+8, 4+8+16);
-        board.buildPGN(4+8, 4+8+16);
+        board.pushMove(3+8, 3+8+16);
+        board.buildPGN(3+8, 3+8+16);
 
         try{
             while(!isEnded){

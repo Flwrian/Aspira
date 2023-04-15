@@ -5,7 +5,7 @@ public interface ChessAlgorithm {
     /**
      * Returns the best move for the current player.
      * @param board
-     * @return coordinates of the best move, in the format {toX, toY}
+     * @return coordinates of the best move, in the format {toX, toY, eval}
      */
     public int[] play(Board board);
 

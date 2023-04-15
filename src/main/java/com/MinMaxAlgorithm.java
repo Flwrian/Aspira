@@ -2,7 +2,9 @@ package com;
 
 public class MinMaxAlgorithm implements ChessAlgorithm {
 
-    int depth;
+    private final int DEFAULT_DEPTH = 1;
+
+    private int depth = DEFAULT_DEPTH;
 
     // Piece material values
     private static final int PAWN_VALUE = 100;
@@ -233,8 +235,16 @@ public class MinMaxAlgorithm implements ChessAlgorithm {
 
     }
 
+    public void setDepth(int depth) {
+        this.depth = depth;
+    }
+
     public MinMaxAlgorithm(int depth) {
         this.depth = depth;
+    }
+
+    public MinMaxAlgorithm() {
+        
     }
     
 }
