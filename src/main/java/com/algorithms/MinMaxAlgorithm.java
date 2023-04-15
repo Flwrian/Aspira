@@ -1,4 +1,6 @@
-package com;
+package com.algorithms;
+
+import com.Board;
 
 public class MinMaxAlgorithm implements ChessAlgorithm {
 

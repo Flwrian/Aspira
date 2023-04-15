@@ -2,14 +2,14 @@ package com.example;
 
 import org.junit.Test;
 
-import com.Bishop;
 import com.Board;
-import com.King;
-import com.Knight;
-import com.Pawn;
-import com.Piece;
-import com.Queen;
-import com.Rook;
+import com.pieces.Bishop;
+import com.pieces.King;
+import com.pieces.Knight;
+import com.pieces.Pawn;
+import com.pieces.Piece;
+import com.pieces.Queen;
+import com.pieces.Rook;
 
 import static org.junit.Assert.assertEquals;
 

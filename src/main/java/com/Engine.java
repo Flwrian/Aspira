@@ -1,5 +1,6 @@
 package com;
 
+import com.algorithms.ChessAlgorithm;
 
 /**
  * <h1>Engine</h1>

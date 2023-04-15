@@ -1,5 +1,6 @@
-package com;
+package com.pieces;
 
+import com.Board;
 
 public class Rook extends Piece {
 

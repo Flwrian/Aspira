@@ -3,6 +3,8 @@ package com;
 import java.util.ArrayDeque;
 import java.util.Arrays;
 
+import com.pieces.Piece;
+
 /**
  * Chess Board Class
  * 
