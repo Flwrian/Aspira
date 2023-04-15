@@ -2,23 +2,22 @@ package com;
 
 
 /**
- * Chess Engine Class
+ * <h1>Engine</h1>
+ * The Engine class is responsible for playing the best move according to the algorithm on a given board.
+ * 
+ * It also provides methods to count the number of legal moves and valid moves for a given depth and to show the number of positions reached per second.
  * 
  * <p>
- * The type is an integer that represents the type of piece
- * 1 = white pawn
- * 2 = white knight
- * 3 = white bishop
- * 4 = white rook
- * 5 = white queen
- * 6 = white king
- * 7 = black pawn
- * 8 = black knight
- * 9 = black bishop
- * 10 = black rook
- * 11 = black queen
- * 12 = black king
- * <p>
+ * To use the Engine class, you need to create a new instance of the class and pass the board to the constructor.
+ * Then you can set the algorithm to use with the <code>setAlgorithm</code> method.
+ * Finally, you can play the best move with the play method.
+ * </p>
+ * 
+ * @author Montourcy Florian
+ * @version 1.0
+ * 
+ * @see Board
+ * @see ChessAlgorithm
  */
 public class Engine {
 
@@ -29,7 +28,7 @@ public class Engine {
     public Engine(Board board) {
         this.board = board;
     }
-    
+
     public void setAlgorithm(ChessAlgorithm algorithm) {
         this.algorithm = algorithm;
     }
