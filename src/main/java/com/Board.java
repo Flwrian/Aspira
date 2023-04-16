@@ -103,8 +103,9 @@ public class Board {
      * </p>
      */
     public void pushMove(int from, int destination) {
-        if (!canPlay)
-            throw new RuntimeException("Cannot play");
+        
+        if (!canPlay) throw new RuntimeException("Cannot play");
+
         int[] boardCopy = new int[64];
         System.arraycopy(board, 0, boardCopy, 0, 64);
         boardHistory.push(boardCopy);
@@ -248,7 +249,15 @@ public class Board {
     }
 
     public int[][] getLegalMoves() {
-        int[][] moves = new int[64][64];
+        int nb = countLegalMoves(1);
+        if (nb == 0) {
+            int[][] moves = new int[1][3];
+            moves[0][0] = 0;
+            moves[0][1] = 0;
+            moves[0][2] = 0;
+            return moves;
+        }
+        int[][] moves = new int[nb][3];
         int index = 0;
         for (int i = 0; i < 64; i++) {
             if (board[i] != 0 && board[i] < 7 == whiteTurn) {
@@ -537,6 +546,15 @@ public class Board {
             gamePGN += moveNumber + ". " + move + " ";
             moveNumber++;
 
+        }
+
+        // If the move is a pawn promotion, add the promotion piece.
+        if (pieceType == 1 || pieceType == 7) {
+            if (destination >= 0 && destination <= 7) {
+                gamePGN += "=Q";
+            } else if (destination >= 56 && destination <= 63) {
+                gamePGN += "=Q";
+            }
         }
 
         System.out.println(gamePGN);
