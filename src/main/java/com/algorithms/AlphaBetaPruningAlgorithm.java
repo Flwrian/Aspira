@@ -1,6 +1,10 @@
 package com.algorithms;
 
+import java.util.Arrays;
+import java.util.Comparator;
+
 import com.Board;
+import com.pieces.Piece;
 
 public class AlphaBetaPruningAlgorithm implements ChessAlgorithm {
 
@@ -93,6 +97,8 @@ public class AlphaBetaPruningAlgorithm implements ChessAlgorithm {
             -30, -20, -10, 0, 0, -10, -20, -30,
             -50, -40, -30, -20, -20, -30, -40, -50
     };
+
+    private static final long TIME_LIMIT = 300;
 
     @Override
     public int[] play(Board board) {
@@ -234,7 +240,50 @@ public class AlphaBetaPruningAlgorithm implements ChessAlgorithm {
             // We return the best move and its evaluation
             return new int[]{bestMove[0], bestMove[1], minEval};
         }
+    }
 
+    /**
+     * Ponder the next move (predict the opponent's move and play the best move to counter it)
+     * @param board
+     * @param move
+     * @return
+     */
+    private int[] ponder(Board board, int[] move){
+        // We play the move
+        board.pushMove(move[0], move[1]);
+
+        // We search for the best move
+        int[] bestMove = minimax(depth, Integer.MIN_VALUE, Integer.MAX_VALUE, board.whiteTurn, board);
+
+        // We undo the move
+        board.popMove();
+
+        // We return the best move
+        return bestMove;
+    }
+
+    /**
+     * Search for the best move, increasing the depth until the time limit is reached
+     * @param board
+     * @return
+     */
+    private int[] ponder(Board board){
+        // Start timer and set the depth to 1
+        long startTime = System.currentTimeMillis();
+        int depth = 1;
+
+        // We search for the best move
+        int[] bestMove = minimax(depth, Integer.MIN_VALUE, Integer.MAX_VALUE, board.whiteTurn, board);
+
+        // We increase the depth until the time limit is reached
+        while (System.currentTimeMillis() - startTime < TIME_LIMIT) {
+            depth++;
+            bestMove = minimax(depth, Integer.MIN_VALUE, Integer.MAX_VALUE, board.whiteTurn, board);
+        }
+
+        // We return the best move
+        return bestMove;
+        
     }
 
     public void setDepth(int depth) {

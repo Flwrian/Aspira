@@ -1,14 +1,11 @@
 package com;
 
-import com.algorithms.ChessAlgorithm;
-import com.algorithms.AlphaBetaPruningAlgorithm;
-
 public class Game {
 
     private PlayableEntity player1;
     private PlayableEntity player2;
 
-    Board board;
+    private Board board;
 
     static boolean isEnded = false;
 
@@ -17,12 +14,16 @@ public class Game {
         board.loadFEN(Board.STARTING_FEN);
     }
 
-    public void setPlayer1(PlayableEntity player1) {
+    public void setWhite(PlayableEntity player1) {
         this.player1 = player1;
     }
 
-    public void setPlayer2(PlayableEntity player2) {
+    public void setBlack(PlayableEntity player2) {
         this.player2 = player2;
+    }
+
+    public Board getBoard() {
+        return board;
     }
 
     public void play() {
@@ -45,6 +46,7 @@ public class Game {
             else{
                 player2.play();
             }
+
             board.printBoard();
         }
 
