@@ -7,6 +7,7 @@ com\pieces\King.class
 com\pieces\Bishop.class
 com\algorithms\ChessAlgorithm.class
 com\pieces\Rook.class
+com\algorithms\RandomAlgorithm.class
 com\algorithms\AlphaBetaPruningAlgorithm.class
 com\Engine.class
 com\pieces\Piece.class

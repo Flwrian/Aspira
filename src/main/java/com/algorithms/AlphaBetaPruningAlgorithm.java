@@ -26,7 +26,7 @@ public class AlphaBetaPruningAlgorithm implements ChessAlgorithm {
             5, 10, 10, -20, -20, 10, 10, 5,
             5, -5, -10, 0, 0, -10, -5, 5,
             0, 0, 0, 20, 20, 0, 0, 0,
-            5, 5, 10, 25, 25, 10, 5, 5,
+            5, 5, 10, 50, 50, 10, 5, 5,
             10, 10, 20, 30, 30, 20, 10, 10,
             50, 50, 50, 50, 50, 50, 50, 50,
             0, 0, 0, 0, 0, 0, 0, 0
@@ -146,7 +146,7 @@ public class AlphaBetaPruningAlgorithm implements ChessAlgorithm {
                     case 3 -> score += BISHOP_TABLE[i];
                     case 4 -> score += ROOK_TABLE[i];
                     case 5 -> score += QUEEN_TABLE[i];
-                    case 6 -> score += KING_TABLE[i];
+                    case 6 -> score += KING_TABLE_ENDGAME[i];
                 }
             }
             else {
@@ -156,7 +156,7 @@ public class AlphaBetaPruningAlgorithm implements ChessAlgorithm {
                     case 9 -> score -= BISHOP_TABLE[63 - i];
                     case 10 -> score -= ROOK_TABLE[63 - i];
                     case 11 -> score -= QUEEN_TABLE[63 - i];
-                    case 12 -> score -= KING_TABLE[63 - i];
+                    case 12 -> score -= KING_TABLE_ENDGAME[63 - i];
                 }
             }
         }
@@ -167,6 +167,7 @@ public class AlphaBetaPruningAlgorithm implements ChessAlgorithm {
 
     private int[] minimax(int depth, int alpha, int beta, boolean maximizingPlayer, Board board) {
         // If we reached the maximum depth or if the game is over, we return the evaluation of the current board position
+
         if (depth == 0) {
             return new int[]{-1, -1, evaluate(board)};
         }

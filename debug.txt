@@ -1,0 +1,18 @@
+uci
+ucinewgame
+uci
+position fen rn2k2r/pp2bppp/2p1pn2/q5Bb/2BP4/2NQ1N1P/PPP2PP1/R4RK1 b kq - 0 10
+go
+ucinewgame
+isreadt
+isready
+position fen r1bqkb1r/pppp1ppp/2n2n2/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 0 1 moves f3g5
+go
+ucinewgame
+isready
+            System.out.println(fen);
+position fen r1bqkb1r/pppp1ppp/2n2n2/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 0 1 moves f3g5
+ucinewgame
+isready
+        board.loadFEN(Board.STARTING_FEN);
+position fen r1bqkb1r/pppp1ppp/2n2n2/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 0 1 moves f3g5

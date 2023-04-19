@@ -1,4 +1,6 @@
 package com;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.*;
 
 import com.algorithms.AlphaBetaPruningAlgorithm;
@@ -23,6 +25,17 @@ public class UCI {
             String input = scanner.nextLine();
             String[] inputArray = input.split(" ");
             String command = inputArray[0];
+
+            // Write the command to file for debugging
+            try {
+                FileWriter myWriter = new FileWriter("debug.txt", true);
+                myWriter.write(input);
+                myWriter.write("\r\n");
+                myWriter.close();
+            } catch (IOException e) {
+                System.out.println("An error occurred.");
+                e.printStackTrace();
+            }
             switch(command){
                 case "uci":
                     uci();
@@ -42,11 +55,40 @@ public class UCI {
                 case "quit":
                     quit();
                     break;
+                case "stop":
+                    stop();
+                    break;
+                case "option":
+                    option(inputArray);
+                    break;
                 default:
                     System.out.println("Unknown command: " + command);
                     break;
             }
         }
+    }
+
+    private static void option(String[] inputArray) {
+        if(inputArray[1].equals("name")){
+            if(inputArray[2].equals("Debug Log File")){
+                if(inputArray[3].equals("value")){
+                    String fileName = inputArray[4];
+                    try {
+                        FileWriter myWriter = new FileWriter(fileName, true);
+                        myWriter.write("Debug Log File: " + fileName);
+                        myWriter.write("\r\n");
+                        myWriter.close();
+                    } catch (IOException e) {
+                        System.out.println("An error occurred.");
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }
+    }
+
+    private static void stop() {
+
     }
 
     private static void quit() {
@@ -68,7 +110,7 @@ public class UCI {
             }
         }
         if(depth == 0){
-            depth = 5;
+            depth = 6;
         }
         if(time == 0){
             time = 10000;
@@ -100,6 +142,7 @@ public class UCI {
                 fen += inputArray[i] + " ";
             }
             board.loadFEN(fen);
+            board.printBoard();
         }
         if(inputArray.length > 2){
             for(int i = 2; i < inputArray.length; i++){
@@ -116,7 +159,6 @@ public class UCI {
 
     private static void uciNewGame() {
         board = new Board();
-        board.loadFEN(Board.STARTING_FEN);
     }
 
     private static void isReady() {
@@ -126,6 +168,8 @@ public class UCI {
     private static void uci() {
         System.out.println("id name " + ENGINE_NAME);
         System.out.println("id author Florian");
+        System.out.println("option name Debug Log File type string default FlowBot.log");
+        System.out.println();
         System.out.println("uciok");
     }
 

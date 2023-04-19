@@ -14,6 +14,14 @@ public class Game {
         board.loadFEN(Board.STARTING_FEN);
     }
 
+    /**
+     * Set the board to a specific position (FEN)
+     * @param fen
+     */
+    public void setPosition(String fen) {
+        board.loadFEN(fen);
+    }
+
     public void setWhite(PlayableEntity player1) {
         this.player1 = player1;
     }
