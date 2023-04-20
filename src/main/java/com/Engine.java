@@ -46,12 +46,6 @@ public class Engine implements PlayableEntity {
         System.out.println(bestMove[2]);
 
         if(bestMove[0] == 0 && bestMove[1] == 0){
-            // Choose another move
-            System.out.println("Try another move");
-            bestMove = algorithm.play(board);
-        }
-
-        if(bestMove[0] == 0 && bestMove[1] == 0){
             throw new IllegalStateException(board.whiteTurn ? "White resigned" : "Black resigned");
         }
 
@@ -61,11 +55,7 @@ public class Engine implements PlayableEntity {
         return bestMove;
     }
 
-    public String parseMove(int[] bestMove){
-        // First index is the origin square (ex: 13)
-        // Second index is the destination square (ex: 21)
-        // Third index is the eval (not needed)
-        
+    public String parseMove(int[] bestMove){  
         String moveString = "";
         moveString += Piece.getSquareName(bestMove[0]);
         moveString += Piece.getSquareName(bestMove[1]);
@@ -90,8 +80,6 @@ public class Engine implements PlayableEntity {
 
     public void showKnps() {
         new Thread(() -> {
-            // Animate the stdout to show the number of legal moves per second (knps) like a
-            // loading bar
             int depth = 4;
     
             Board tempBoard = new Board();
