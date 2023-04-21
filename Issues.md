@@ -14,10 +14,10 @@ En passant is not implemented yet.
 Checkmate is not really implemented in the actual game. The game will just end if the engine detects that the king is going to be captured.
 
 ## Stalemate
-Stalemate is not implemented yet.
+Stalemate is not fully implemented yet.
 
 ## Threefold repetition
-Threefold repetition is not implemented yet.
+Threefold repetition is fully not implemented yet.
 
 ## Fifty move rule
 Fifty move rule is not implemented yet.
