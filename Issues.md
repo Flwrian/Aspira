@@ -1,8 +1,11 @@
 # Issues
 
-## Pawn teleports
+## Pawn teleports (fixed see commit: https://github.com/Flwrian/JavaChessEngine/commit/2269c980f85900319624b9c5d5b971c5207c580b)
 Pawn can sometimes teleports especially if they are on the A file or H file.
 []: # 6kr/5ppp/2PQb3/p2p4/8/Pq2B2P/1P1R1PPR/6K1 b - - 1 29 pawn a5 teleports to h3 engine depth 3
+
+## King move into check sometimes
+King can sometimes move into check especially if they are on the edge of the board versus a queen or maybe a rook or bishop.
 
 ## Castling
 Castling is not implemented yet.

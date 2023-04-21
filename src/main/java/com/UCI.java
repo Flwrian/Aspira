@@ -13,6 +13,9 @@ public class UCI {
     
 
     private static String ENGINE_NAME = "FlowBot";
+    private static String AUTHOR = "Flwrian";
+    private static String VERSION = "1.0";
+    
     private static Board board;
     private static Engine engine;
     
@@ -28,7 +31,7 @@ public class UCI {
 
             // Write the command to file for debugging
             try {
-                FileWriter myWriter = new FileWriter("debug.txt", true);
+                FileWriter myWriter = new FileWriter("debug.log", true);
                 myWriter.write(input);
                 myWriter.write("\r\n");
                 myWriter.close();
@@ -88,7 +91,7 @@ public class UCI {
     }
 
     private static void stop() {
-
+        
     }
 
     private static void quit() {
@@ -167,8 +170,12 @@ public class UCI {
 
     private static void uci() {
         System.out.println("id name " + ENGINE_NAME);
-        System.out.println("id author Florian");
-        System.out.println("option name Debug Log File type string default FlowBot.log");
+        System.out.println("id author " + AUTHOR);
+        System.out.println("id version " + VERSION);
+        System.out.println("option name Hash type spin default 16 min 1 max 1024");
+        System.out.println("option name Threads type spin default 1 min 1 max 1024");
+        System.out.println("option name Ponder type check default false");
+        System.out.println("option name Debug Log File type string default debug.log");
         System.out.println();
         System.out.println("uciok");
     }
