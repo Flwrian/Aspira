@@ -162,7 +162,7 @@ public abstract class Piece {
         return !inCheck;
     }
 
-    public int countLegalMoves(int position, Board board) {
+    public static int countLegalMoves(int position, Board board) {
         // Count the number of legal moves for the piece
         int count = 0;
         for (int i = 0; i < 64; i++) {
@@ -173,6 +173,11 @@ public abstract class Piece {
         return count;
     }
 
+    /**
+     * Get the name of the square from the position (ex: 0 -> a1, 63 -> h8)
+     * @param from
+     * @return the name of the square
+     */
     public static String getSquareName(int from) {
         // Get the name of the square (inverse of the board array)
         String[] letters = {"a", "b", "c", "d", "e", "f", "g", "h"};
