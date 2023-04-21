@@ -17,4 +17,10 @@ public interface ChessAlgorithm {
      * @return the evaluation of the board position in centipawns
      */
     public int evaluate(Board board);
+
+    /**
+     * Returns the name of the algorithm.
+     * @return the name of the algorithm
+     */
+    public String getName();
 }

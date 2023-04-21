@@ -17,5 +17,10 @@ public class RandomAlgorithm implements ChessAlgorithm {
     public int evaluate(Board board) {
         throw new UnsupportedOperationException("Unimplemented method 'evaluate'");
     }
+
+    @Override
+    public String getName() {
+        return "Random";
+    }
     
 }

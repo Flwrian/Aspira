@@ -269,5 +269,10 @@ public class AlphaBetaPruningAlgorithm implements ChessAlgorithm {
     public AlphaBetaPruningAlgorithm() {
         
     }
+
+    @Override
+    public String getName() {
+        return "AlphaBetaPruning";
+    }
     
 }
