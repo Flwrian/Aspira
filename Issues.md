@@ -1,6 +1,6 @@
 # Issues
 
-## Pawn teleports (fixed see commit: https://github.com/Flwrian/JavaChessEngine/commit/2269c980f85900319624b9c5d5b971c5207c580b)
+## Pawn teleports (fixed see commit: https://github.com/Flwrian/JavaChessEngine/commit/6de59463536028a86b383e6ee0768c8eca1c036b)
 Pawn can sometimes teleports especially if they are on the A file or H file.
 []: # 6kr/5ppp/2PQb3/p2p4/8/Pq2B2P/1P1R1PPR/6K1 b - - 1 29 pawn a5 teleports to h3 engine depth 3
 
