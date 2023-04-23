@@ -32,7 +32,7 @@ public class Board {
     public static final String STARTING_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
     public static String gamePGN = "";
 
-    public int[] board = new int[64];
+    public int[] board = new int[64+3+3]; // Stores the board + castling rights (1 int for left rook, 1 int for right rook, 1 int for king. Same for black) true = 100, false = 0
 
     // private Stack<int[]> boardHistory = new Stack<int[]>(); // Stores the board
     // history
@@ -83,6 +83,13 @@ public class Board {
         for (int i = 48; i < 56; i++) {
             board[i] = 7;
         }
+
+        board[64] = 100;
+        board[65] = 100;
+        board[66] = 100;
+        board[67] = 100;
+        board[68] = 100;
+        board[69] = 100;
     }
 
     public void setPiece(int position, int type) {
