@@ -28,6 +28,31 @@ public class King {
         int rowDiff = Math.abs(position / 8 - piecePosition / 8);
         int colDiff = Math.abs(position % 8 - piecePosition % 8);
 
+        // castling rights for white king are stored between board[64+0] and board[64+3] and for black king between board[64+4] and board[64+7]
+
+        // Check if not already moved
+        if (color) {
+            if (piecePosition == 60 && position == 62 && board.board[64] == 0) {
+                if (board.board[61] == 0 && board.board[62] == 0) {
+                    return true;
+                }
+            } else if (piecePosition == 60 && position == 58 && board.board[64] == 0) {
+                if (board.board[59] == 0 && board.board[58] == 0 && board.board[57] == 0) {
+                    return true;
+                }
+            }
+        } else {
+            if (piecePosition == 4 && position == 6 && board.board[64 + 4] == 0) {
+                if (board.board[5] == 0 && board.board[6] == 0) {
+                    return true;
+                }
+            } else if (piecePosition == 4 && position == 2 && board.board[64 + 4] == 0) {
+                if (board.board[3] == 0 && board.board[2] == 0 && board.board[1] == 0) {
+                    return true;
+                }
+            }
+        }
+
         if (rowDiff > 1 || colDiff > 1) {
             // King can only move one square at a time
             return false;
