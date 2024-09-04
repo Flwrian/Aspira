@@ -107,9 +107,9 @@ public class BitBoardTest {
 
     // castling
     @Test
-    public void testMakeMoveWithCastling() {
+    public void testMakeMoveWithCastlingBlack() {
 
-        board.loadFromFen("r3k2r/8/8/2PP1pp1/8/8/8/4K3 w kq - 0 1");
+        board.loadFromFen("r3k2r/8/8/2PP1pp1/8/8/8/4K3 b kq - 0 1");
         // Testing black king side castling
         board.makeMove("e8g8");
 
@@ -126,4 +126,26 @@ public class BitBoardTest {
         assertEquals(expectedBlackCastleQueenSide, board.blackCastleQueenSide);
 
     }
+
+    @Test
+    public void testMakeMoveWithCastlingWhite() {
+
+        board.loadFromFen("4k3/8/8/2PP1pp1/8/8/8/R3K2R w KQ - 0 1");
+        // Testing white king side castling
+        board.makeMove("e1g1");
+
+        long expectedBitboard = 576460984231657606L;
+        long expectedWhiteKing = 2L;
+        long expectedWhiteRooks = 132L;
+        long expectedWhiteCastleKingSide = 0;
+        long expectedWhiteCastleQueenSide = 0;
+
+        assertEquals(expectedBitboard, board.bitboard);
+        assertEquals(expectedWhiteKing, board.whiteKing);
+        assertEquals(expectedWhiteRooks, board.whiteRooks);
+        assertEquals(expectedWhiteCastleKingSide, board.whiteCastleKingSide);
+        assertEquals(expectedWhiteCastleQueenSide, board.whiteCastleQueenSide);
+
+    }
+
 }

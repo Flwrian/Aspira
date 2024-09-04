@@ -47,25 +47,25 @@ public class Main {
         // System.out.println("Black king");
         // bitBoard.printBitBoard(bitBoard.getBlackKing());
         
-        bitBoard.loadFromFen("r3k2r/8/8/2PP1pp1/8/8/8/4K3 w HAkq - 0 1");
+        bitBoard.loadFromFen("4k3/8/8/2PP1pp1/8/8/8/R3K2R w KQ - 0 1");
         bitBoard.printChessBoard();
 
-        bitBoard.makeMove("e8g8");
+        bitBoard.makeMove("e1g1");
         bitBoard.printChessBoard();
 
         System.out.println(bitBoard.bitboard);
-        System.out.println(bitBoard.blackKing);
-        System.out.println(bitBoard.blackRooks);
-        System.out.println(bitBoard.blackCastleKingSide);
-        System.out.println(bitBoard.blackCastleQueenSide);
+        System.out.println(bitBoard.whiteKing);
+        System.out.println(bitBoard.whiteRooks);
+        System.out.println(bitBoard.whiteCastleKingSide);
+        System.out.println(bitBoard.whiteCastleQueenSide);
 
-        bitBoard.makeMove("g8f7");
-        bitBoard.makeMove("f7e8");
-        bitBoard.makeMove("f8h8");
+        bitBoard.makeMove("g1f2");
+        bitBoard.makeMove("f2e1");
+        bitBoard.makeMove("f1h1");
 
         bitBoard.printChessBoard();
 
-        bitBoard.makeMove("e8g8");
+        bitBoard.makeMove("e1g1");
 
         bitBoard.printChessBoard();
 
