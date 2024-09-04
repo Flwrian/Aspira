@@ -417,6 +417,9 @@ public class BitBoard {
                         whiteKing |= 1L << 5;
                         whiteRooks &= ~(1L << 7);
                         whiteRooks |= 1L << 4;
+
+                        whiteCastleQueenSide = 0L;
+                        whiteCastleKingSide = 0L;
                     } else if (toSquare == 1 && whiteCastleKingSide != 0) {
                         System.out.println("Roque du côté du roi");
                         // Roque du côté du roi
@@ -424,6 +427,9 @@ public class BitBoard {
                         whiteKing |= 1L << 1;
                         whiteRooks &= ~(1L << 0);
                         whiteRooks |= 1L << 2;
+
+                        whiteCastleKingSide = 0L;
+                        whiteCastleQueenSide = 0L;
                     }
                 } else {
                     if (toSquare == 61 && blackCastleQueenSide != 0) {
@@ -433,6 +439,9 @@ public class BitBoard {
                         blackKing |= 1L << 61;
                         blackRooks &= ~(1L << 63);
                         blackRooks |= 1L << 60;
+
+                        blackCastleQueenSide = 0L;
+                        blackCastleKingSide = 0L;
                     } else if (toSquare == 57 && blackCastleKingSide != 0) {
                         System.out.println("Roque du côté du roi");
                         // Roque du côté du roi
@@ -440,6 +449,9 @@ public class BitBoard {
                         blackKing |= 1L << 57;
                         blackRooks &= ~(1L << 56);
                         blackRooks |= 1L << 58;
+
+                        blackCastleKingSide = 0L;
+                        blackCastleQueenSide = 0L;
                     }
                 }
             }

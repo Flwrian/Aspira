@@ -4,6 +4,7 @@ import static org.junit.Assert.*;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.Board;
 import com.bitboard.BitBoard;
 
 public class BitBoardTest {
@@ -90,5 +91,39 @@ public class BitBoardTest {
         board.loadFromFen("rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR w KQkq e3 0 1");
         assertEquals("P", board.getPieceAtSquare("e4"));
         assertEquals(".", board.getPieceAtSquare("d4"));
+    }
+
+    @Test
+    public void testGetPieceAtSquareWithInvalidSquare() {
+        board.loadFromFen("rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR w KQkq e3 0 1");
+        assertEquals(".", board.getPieceAtSquare("z9"));
+    }
+
+    @Test
+    public void testGetPieceAtSquareWithEmptySquare() {
+        board.loadFromFen("rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR w KQkq e3 0 1");
+        assertEquals(".", board.getPieceAtSquare("e3"));
+    }
+
+    // castling
+    @Test
+    public void testMakeMoveWithCastling() {
+
+        board.loadFromFen("r3k2r/8/8/2PP1pp1/8/8/8/4K3 w kq - 0 1");
+        // Testing black king side castling
+        board.makeMove("e8g8");
+
+        long expectedBitboard = -8791026240698974200L;
+        long expectedBlackKing = 144115188075855872L;
+        long expectedBlackRooks = -8935141660703064064L;
+        long expectedBlackCastleKingSide = 0;
+        long expectedBlackCastleQueenSide = 0;
+
+        assertEquals(expectedBitboard, board.bitboard);
+        assertEquals(expectedBlackKing, board.blackKing);
+        assertEquals(expectedBlackRooks, board.blackRooks);
+        assertEquals(expectedBlackCastleKingSide, board.blackCastleKingSide);
+        assertEquals(expectedBlackCastleQueenSide, board.blackCastleQueenSide);
+
     }
 }
