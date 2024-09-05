@@ -9,7 +9,7 @@ public class Main {
         Game game = new Game();
         
         Engine engine = new Engine(game.getBoard());
-        engine.setAlgorithm(new AlphaBetaPruningAlgorithm(4));
+        engine.setAlgorithm(new AlphaBetaPruningAlgorithm(6));
 
         Engine engine2 = new Engine(game.getBoard());
         engine2.setAlgorithm(new AlphaBetaPruningAlgorithm(2));

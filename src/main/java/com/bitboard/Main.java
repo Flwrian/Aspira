@@ -4,70 +4,26 @@ public class Main {
     
     public static void main(String[] args) {
         BitBoard bitBoard = new BitBoard();
+        MoveGenerator moveGenerator = new MoveGenerator(bitBoard);
+        System.out.println("""
+ _______________________________________________________________________________________
+
+  ███████╗██╗      ██████╗ ██╗    ██╗ ██████╗ ██╗███╗   ██╗███████╗██╗   ██╗██████╗ 
+  ██╔════╝██║     ██╔═══██╗██║    ██║██╔════╝ ██║████╗  ██║██╔════╝██║   ██║╚════██╗
+  █████╗  ██║     ██║   ██║██║ █╗ ██║██║  ███╗██║██╔██╗ ██║█████╗  ██║   ██║ █████╔╝
+  ██╔══╝  ██║     ██║   ██║██║███╗██║██║   ██║██║██║╚██╗██║██╔══╝  ╚██╗ ██╔╝██╔═══╝ 
+  ██║     ███████╗╚██████╔╝╚███╔███╔╝╚██████╔╝██║██║ ╚████║███████╗ ╚████╔╝ ███████╗
+  ╚═╝     ╚══════╝ ╚═════╝  ╚══╝╚══╝  ╚═════╝ ╚═╝╚═╝  ╚═══╝╚══════╝  ╚═══╝  ╚══════╝
+_______________________________________________________________________________________
+
+                """);
+
+        bitBoard.loadFromFen("8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - -");
+        bitBoard.printBitBoard(bitBoard.bitboard);
+        int moves = moveGenerator.countMoves(true);
+        bitBoard.printBitBoard(moveGenerator.generateKingMoves(bitBoard.whiteKing, true));
+        System.out.println("Number of moves: " + moves);
         
-        // System.out.println("White pieces");
-        // bitBoard.printBitBoard(bitBoard.getWhitePieces());
-
-        // System.out.println("Black pieces");
-        // bitBoard.printBitBoard(bitBoard.getBlackPieces());
-
-        // System.out.println("White pawns");
-        // bitBoard.printBitBoard(bitBoard.getWhitePawns());
-
-        // System.out.println("White knights");
-        // bitBoard.printBitBoard(bitBoard.getWhiteKnights());
-
-        // System.out.println("White bishops");
-        // bitBoard.printBitBoard(bitBoard.getWhiteBishops());
-
-        // System.out.println("White rooks");
-        // bitBoard.printBitBoard(bitBoard.getWhiteRooks());
-
-        // System.out.println("White queens");
-        // bitBoard.printBitBoard(bitBoard.getWhiteQueens());
-
-        // System.out.println("White king");
-        // bitBoard.printBitBoard(bitBoard.getWhiteKing());
-
-        // System.out.println("Black pawns");
-        // bitBoard.printBitBoard(bitBoard.getBlackPawns());
-
-        // System.out.println("Black knights");
-        // bitBoard.printBitBoard(bitBoard.getBlackKnights());
-
-        // System.out.println("Black bishops");
-        // bitBoard.printBitBoard(bitBoard.getBlackBishops());
-
-        // System.out.println("Black rooks");
-        // bitBoard.printBitBoard(bitBoard.getBlackRooks());
-
-        // System.out.println("Black queens");
-        // bitBoard.printBitBoard(bitBoard.getBlackQueens());
-
-        // System.out.println("Black king");
-        // bitBoard.printBitBoard(bitBoard.getBlackKing());
-        
-        bitBoard.loadFromFen("4k3/8/8/2PP1pp1/8/8/8/R3K2R w KQ - 0 1");
-        bitBoard.printChessBoard();
-
-        bitBoard.makeMove("e1g1");
-        bitBoard.printChessBoard();
-
-        System.out.println(bitBoard.bitboard);
-        System.out.println(bitBoard.whiteKing);
-        System.out.println(bitBoard.whiteRooks);
-        System.out.println(bitBoard.whiteCastleKingSide);
-        System.out.println(bitBoard.whiteCastleQueenSide);
-
-        bitBoard.makeMove("g1f2");
-        bitBoard.makeMove("f2e1");
-        bitBoard.makeMove("f1h1");
-
-        bitBoard.printChessBoard();
-
-        bitBoard.makeMove("e1g1");
-
-        bitBoard.printChessBoard();
 
     }
 }

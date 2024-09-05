@@ -3,6 +3,9 @@ package com.bitboard;
 import java.io.PrintWriter;
 
 public class BitBoard {
+
+    public boolean whiteTurn;
+
     public long whitePawns;
     public long whiteKnights;
     public long whiteBishops;
@@ -32,16 +35,166 @@ public class BitBoard {
     
     public long enPassantSquare;
 
+    // valid
+    public static final long RANK_1 = 0x00000000000000FFL;
+    public static final long RANK_2 = 0x000000000000FF00L;
+    public static final long RANK_3 = 0x0000000000FF0000L;
+    public static final long RANK_4 = 0x00000000FF000000L;
+    public static final long RANK_5 = 0x000000FF00000000L;
+    public static final long RANK_6 = 0x0000FF0000000000L;
+    public static final long RANK_7 = 0x00FF000000000000L;
+    public static final long RANK_8 = 0xFF00000000000000L;
 
-    private long A_RANK = 0x00000000000000FFL;
-    private long H_RANK = 0xFF00000000000000L;
+    // valid
+    public static final long FILE_H = 0x0101010101010101L;
+    public static final long FILE_G = 0x0202020202020202L;
+    public static final long FILE_F = 0x0404040404040404L;
+    public static final long FILE_E = 0x0808080808080808L;
+    public static final long FILE_D = 0x1010101010101010L;
+    public static final long FILE_C = 0x2020202020202020L;
+    public static final long FILE_B = 0x4040404040404040L;
+    public static final long FILE_A = 0x8080808080808080L;
 
-    private long A_FILE = 0x0101010101010101L;
-    private long H_FILE = 0x8080808080808080L;
+    public static final long A1 = 0b10000000L;
+    public static final long B1 = A1 >>> 1;
+    public static final long C1 = B1 >>> 1;
+    public static final long D1 = C1 >>> 1;
+    public static final long E1 = D1 >>> 1;
+    public static final long F1 = E1 >>> 1;
+    public static final long G1 = F1 >>> 1;
+    public static final long H1 = G1 >>> 1;
+
+    public static final long A2 = A1 << 8;
+    public static final long B2 = B1 << 8;
+    public static final long C2 = C1 << 8;
+    public static final long D2 = D1 << 8;
+    public static final long E2 = E1 << 8;
+    public static final long F2 = F1 << 8;
+    public static final long G2 = G1 << 8;
+    public static final long H2 = H1 << 8;
+
+    public static final long A3 = A2 << 8;
+    public static final long B3 = B2 << 8;
+    public static final long C3 = C2 << 8;
+    public static final long D3 = D2 << 8;
+    public static final long E3 = E2 << 8;
+    public static final long F3 = F2 << 8;
+    public static final long G3 = G2 << 8;
+    public static final long H3 = H2 << 8;
+
+    public static final long A4 = A3 << 8;
+    public static final long B4 = B3 << 8;
+    public static final long C4 = C3 << 8;
+    public static final long D4 = D3 << 8;
+    public static final long E4 = E3 << 8;
+    public static final long F4 = F3 << 8;
+    public static final long G4 = G3 << 8;
+    public static final long H4 = H3 << 8;
+
+    public static final long A5 = A4 << 8;
+    public static final long B5 = B4 << 8;
+    public static final long C5 = C4 << 8;
+    public static final long D5 = D4 << 8;
+    public static final long E5 = E4 << 8;
+    public static final long F5 = F4 << 8;
+    public static final long G5 = G4 << 8;
+    public static final long H5 = H4 << 8;
+
+    public static final long A6 = A5 << 8;
+    public static final long B6 = B5 << 8;
+    public static final long C6 = C5 << 8;
+    public static final long D6 = D5 << 8;
+    public static final long E6 = E5 << 8;
+    public static final long F6 = F5 << 8;
+    public static final long G6 = G5 << 8;
+    public static final long H6 = H5 << 8;
+
+    public static final long A7 = A6 << 8;
+    public static final long B7 = B6 << 8;
+    public static final long C7 = C6 << 8;
+    public static final long D7 = D6 << 8;
+    public static final long E7 = E6 << 8;
+    public static final long F7 = F6 << 8;
+    public static final long G7 = G6 << 8;
+    public static final long H7 = H6 << 8;
+
+    public static final long A8 = A7 << 8;
+    public static final long B8 = B7 << 8;
+    public static final long C8 = C7 << 8;
+    public static final long D8 = D7 << 8;
+    public static final long E8 = E7 << 8;
+    public static final long F8 = F7 << 8;
+    public static final long G8 = G7 << 8;
+    public static final long H8 = H7 << 8;
+
+    // diagonals and anti-diagonals
+    public static final long DIAGONAL_A1_H8 = 0x0102040810204080L;
+    public static final long DIAGONAL_A2_G8 = 0x0204081020408000L;
+    public static final long DIAGONAL_A3_F8 = 0x0408102040800000L;
+    public static final long DIAGONAL_A4_E8 = 0x0810204080000000L;
+    public static final long DIAGONAL_A5_D8 = 0x1020408000000000L;
+    public static final long DIAGONAL_A6_C8 = 0x2040800000000000L;
+    public static final long DIAGONAL_A7_B8 = 0x4080000000000000L;
+    public static final long DIAGONAL_A8_A8 = 0x8000000000000000L;
+
+    public static final long DIAGONAL_B1_H7 = 0x0001020408102040L;
+    public static final long DIAGONAL_C1_H6 = 0x0000010204081020L;
+    public static final long DIAGONAL_D1_H5 = 0x0000000102040810L;
+    public static final long DIAGONAL_E1_H4 = 0x0000000001020408L;
+    public static final long DIAGONAL_F1_H3 = 0x0000000000010204L;
+    public static final long DIAGONAL_G1_H2 = 0x0000000000000102L;
+    public static final long DIAGONAL_H1_H1 = 0x0000000000000001L;
+
+    public static final long DIAGONAL_H1_A8 = 0x8040201008040201L;
+    public static final long DIAGONAL_G1_A7 = 0x4020100804020100L;
+    public static final long DIAGONAL_F1_A6 = 0x2010080402010000L;
+    public static final long DIAGONAL_E1_A5 = 0x1008040201000000L;
+    public static final long DIAGONAL_D1_A4 = 0x0804020100000000L;
+    public static final long DIAGONAL_C1_A3 = 0x0402010000000000L;
+    public static final long DIAGONAL_B1_A2 = 0x0201000000000000L;
+    public static final long DIAGONAL_A1_A1 = 0x0100000000000000L;
+
+
+    // valid
+    public static final long WHITE_KING_SIDE_CASTLE_KING_SQUARE = 0x0000000000000002L;
+    public static final long BLACK_KING_SIDE_CASTLE_KING_SQUARE = 0x0200000000000000L;
+
+    // valid
+    public static final long WHITE_QUEEN_SIDE_CASTLE_KING_SQUARE = 0x0000000000000020L;
+    public static final long BLACK_QUEEN_SIDE_CASTLE_KING_SQUARE = 0x2000000000000000L;
+
+    // valid
+    public static final long WHITE_KING_SIDE_ROOK_SQUARE = 0x0000000000000001L;
+    public static final long WHITE_QUEEN_SIDE_ROOK_SQUARE = 0x0000000000000080L;
+
+    // valid
+    public static final long BLACK_KING_SIDE_ROOK_SQUARE = 0x0100000000000000L;
+    public static final long BLACK_QUEEN_SIDE_ROOK_SQUARE = 0x8000000000000000L;
+
+    // valid
+    public static final long WHITE_KING_SIDE_CASTLE_EMPTY_SQUARES_MASK = 0b110L;
+    public static final long WHITE_QUEEN_SIDE_CASTLE_EMPTY_SQUARES_MASK = 0b1110000L;
+
+    // valid
+    public static final long BLACK_KING_SIDE_CASTLE_EMPTY_SQUARES_MASK = 0x600000000000000L;
+    public static final long BLACK_QUEEN_SIDE_CASTLE_EMPTY_SQUARES_MASK = 0x7000000000000000L;
+
+    // valid
+    public static final long WHITE_KING_SIDE_CASTLE_NEED_TO_NOT_BE_ATTACKED_MASK = 0b1110L;
+    public static final long WHITE_QUEEN_SIDE_CASTLE_NEED_TO_NOT_BE_ATTACKED_MASK = 0b111000L;
+
+    // valid
+    public static final long BLACK_KING_SIDE_CASTLE_NEED_TO_NOT_BE_ATTACKED_MASK = 0xE00000000000000L;
+    public static final long BLACK_QUEEN_SIDE_CASTLE_NEED_TO_NOT_BE_ATTACKED_MASK = 0x3800000000000000L;
+
+    
 
     public static final String INITIAL_STARTING_POSITION = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
     public BitBoard() {
+
+        whiteTurn = true;
+
         // Initialisation des pièces à leurs positions de départ
         whitePawns = 0x000000000000FF00L;
         whiteKnights = 0x0000000000000042L;
@@ -69,8 +222,6 @@ public class BitBoard {
         whiteCastleKingSide = 1L;
         blackCastleQueenSide = 1L;
         blackCastleKingSide = 1L;
-
-        printBitBoard(bitboard);
 
     }
 
@@ -171,19 +322,50 @@ public class BitBoard {
 
     public void printBitBoard(long bitBoard) {
         PrintWriter writer = new PrintWriter(System.out);
-        for (int i = 0; i < 64; i++) {
-            long mask = 1L << i;
-            if ((bitBoard & mask) != 0) {
-                writer.print("1 ");
-            } else {
-                writer.print(". ");
+        
+        // Bordure supérieure
+        writer.println("   +-------------------------------+");
+        writer.println("   | a   b   c   d   e   f   g   h |");
+        writer.println("   +-------------------------------+");
+    
+        // Parcourir les rangées de haut en bas
+        for (int rank = 7; rank >= 0; rank--) {
+            writer.print((rank + 1) + "  |"); // Numéro de rangée sur le côté gauche
+            
+            // Parcourir chaque colonne de la rangée
+            for (int file = 7; file >= 0; file--) {
+                int squareIndex = rank * 8 + file;
+                long mask = 1L << squareIndex;
+                
+                if ((bitBoard & mask) != 0) {
+                    writer.print(" 1 ");
+                } else {
+                    writer.print("   ");
+                }
+    
+                // Ajouter un séparateur "|"
+                if (file != 0) {
+                    writer.print("|");
+                }
             }
-            if ((i + 1) % 8 == 0) {
-                writer.println();
+            
+            writer.println("| " + (rank + 1)); // Numéro de rangée sur le côté droit
+    
+            // Ajouter des séparateurs entre les rangées sauf pour la dernière
+            if (rank > 0) {
+                writer.println("   |---|---|---|---|---|---|---|---|");
             }
         }
+    
+        // Bordure inférieure
+        writer.println("   +-------------------------------+");
+        writer.println("   | a   b   c   d   e   f   g   h |");
+        writer.println("   +-------------------------------+");
+        
         writer.flush();
     }
+    
+    
     
 
     public void printChessBoard() {
@@ -367,9 +549,6 @@ public class BitBoard {
     
         // 4. Déplacer la pièce
         if ((whitePawns & fromBitboard) != 0 || (blackPawns & fromBitboard) != 0) {
-            System.out.println("Pion");
-            System.out.println(enPassantSquare);
-            System.out.println(toBitboard);
             // Pion
             // Gestion de la prise en passant
             if ((enPassantSquare & toBitboard) != 0) {
@@ -396,13 +575,25 @@ public class BitBoard {
             movePiece(isWhite ? whiteBishops : blackBishops, fromBitboard, toBitboard);
         } else if ((whiteRooks & fromBitboard) != 0 || (blackRooks & fromBitboard) != 0) {
             // Tour
+            // Gestion des roques
+            if (isWhite) {
+                if (fromSquare == 0) {
+                    whiteCastleQueenSide = 0L;
+                } else if (fromSquare == 7) {
+                    whiteCastleKingSide = 0L;
+                }
+            } else {
+                if (fromSquare == 56) {
+                    blackCastleQueenSide = 0L;
+                } else if (fromSquare == 63) {
+                    blackCastleKingSide = 0L;
+                }
+            }
             movePiece(isWhite ? whiteRooks : blackRooks, fromBitboard, toBitboard);
         } else if ((whiteQueens & fromBitboard) != 0 || (blackQueens & fromBitboard) != 0) {
             // Reine
             movePiece(isWhite ? whiteQueens : blackQueens, fromBitboard, toBitboard);
         } else if ((whiteKing & fromBitboard) != 0 || (blackKing & fromBitboard) != 0) {
-            System.out.println("King");
-            System.out.println(toSquare);
             // Roi
             // si le coup n'est pas un roque
             if (Math.abs(fromSquare - toSquare) != 2) {
@@ -411,53 +602,75 @@ public class BitBoard {
                 // Roque
                 if (isWhite) {
                     if (toSquare == 5 && whiteCastleQueenSide != 0) {
-                        System.out.println("Roque du côté de la reine");
-                        // Roque du côté de la reine
-                        whiteKing &= ~fromBitboard;
-                        whiteKing |= 1L << 5;
-                        whiteRooks &= ~(1L << 7);
-                        whiteRooks |= 1L << 4;
-
-                        whiteCastleQueenSide = 0L;
-                        whiteCastleKingSide = 0L;
+                        processWhiteCastleQueenSide(fromBitboard);
                     } else if (toSquare == 1 && whiteCastleKingSide != 0) {
-                        System.out.println("Roque du côté du roi");
-                        // Roque du côté du roi
-                        whiteKing &= ~fromBitboard;
-                        whiteKing |= 1L << 1;
-                        whiteRooks &= ~(1L << 0);
-                        whiteRooks |= 1L << 2;
-
-                        whiteCastleKingSide = 0L;
-                        whiteCastleQueenSide = 0L;
+                        processWhiteCastleKingSide(fromBitboard);
                     }
                 } else {
                     if (toSquare == 61 && blackCastleQueenSide != 0) {
-                        System.out.println("Roque du côté de la reine");
-                        // Roque du côté de la reine
-                        blackKing &= ~fromBitboard;
-                        blackKing |= 1L << 61;
-                        blackRooks &= ~(1L << 63);
-                        blackRooks |= 1L << 60;
-
-                        blackCastleQueenSide = 0L;
-                        blackCastleKingSide = 0L;
+                        processBlackCastleQueenSide(fromBitboard);
                     } else if (toSquare == 57 && blackCastleKingSide != 0) {
-                        System.out.println("Roque du côté du roi");
-                        // Roque du côté du roi
-                        blackKing &= ~fromBitboard;
-                        blackKing |= 1L << 57;
-                        blackRooks &= ~(1L << 56);
-                        blackRooks |= 1L << 58;
-
-                        blackCastleKingSide = 0L;
-                        blackCastleQueenSide = 0L;
+                        processBlackCastleKingSide(fromBitboard);
+                    } else if (toSquare == 57 && blackCastleKingSide != 0) {
+                        processBlackCastleKingSide(fromBitboard);
                     }
                 }
             }
         }
+
+        // 5. Promotion
+        if (promotion != ' ') {
+            promotePiece(toSquare, promotion, isWhite);
+        }
+
+        // 6. Mettre à jour le tour
+        whiteTurn = !whiteTurn;
     
         updateBitBoard();
+    }
+
+    public void processWhiteCastleKingSide(long fromBitboard) {
+        // Roque du côté du roi
+        whiteKing &= ~fromBitboard;
+        whiteKing |= 1L << 1;
+        whiteRooks &= ~(1L << 0);
+        whiteRooks |= 1L << 2;
+
+        whiteCastleKingSide = 0L;
+        whiteCastleQueenSide = 0L;
+    }
+
+    public void processWhiteCastleQueenSide(long fromBitboard) {
+        // Roque du côté de la reine
+        whiteKing &= ~fromBitboard;
+        whiteKing |= 1L << 5;
+        whiteRooks &= ~(1L << 7);
+        whiteRooks |= 1L << 4;
+
+        whiteCastleQueenSide = 0L;
+        whiteCastleKingSide = 0L;
+    }
+
+    public void processBlackCastleKingSide(long fromBitboard) {
+        // Roque du côté du roi
+        blackKing &= ~fromBitboard;
+        blackKing |= 1L << 57;
+        blackRooks &= ~(1L << 56);
+        blackRooks |= 1L << 58;
+
+        blackCastleKingSide = 0L;
+        blackCastleQueenSide = 0L;
+    }
+
+    public void processBlackCastleQueenSide(long fromBitboard) {
+        // Roque du côté de la reine
+        blackKing &= ~fromBitboard;
+        blackKing |= 1L << 61;
+        blackRooks &= ~(1L << 63);
+        blackRooks |= 1L << 60;
+
+        blackCastleQueenSide = 0L;
+        blackCastleKingSide = 0L;
     }
 
     private void updateBitBoard() {
@@ -472,7 +685,6 @@ public class BitBoard {
         int file = position.charAt(0) - 'a';  // 'e' -> 4
         int rank = position.charAt(1) - '1';  // '2' -> 1
         int result = 8 * rank + (7 - file);   // 8 * 1 + (7 - 4) = 12
-        System.out.println(result);
         return result;
     }
     
@@ -536,24 +748,6 @@ public class BitBoard {
         
     }
     
-    private void capturePiece(long toBitboard, boolean isWhite) {
-        if (isWhite) {
-            blackPawns &= ~toBitboard;
-            blackKnights &= ~toBitboard;
-            blackBishops &= ~toBitboard;
-            blackRooks &= ~toBitboard;
-            blackQueens &= ~toBitboard;
-            blackKing &= ~toBitboard;
-        } else {
-            whitePawns &= ~toBitboard;
-            whiteKnights &= ~toBitboard;
-            whiteBishops &= ~toBitboard;
-            whiteRooks &= ~toBitboard;
-            whiteQueens &= ~toBitboard;
-            whiteKing &= ~toBitboard;
-        }
-    }
-    
     private void promotePiece(int square, char promotion, boolean isWhite) {
         long bitboard = 1L << square;
         if (isWhite) {
@@ -573,6 +767,14 @@ public class BitBoard {
                 case 'N': blackKnights |= bitboard; break;
             }
         }
+    }
+
+    public static long getLSB(long bitboard) {
+        return bitboard & -bitboard;
+    }
+
+    public static long getMSB(long bitboard) {
+        return Long.highestOneBit(bitboard);
     }
 
     

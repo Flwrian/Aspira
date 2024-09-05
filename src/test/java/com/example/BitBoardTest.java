@@ -148,4 +148,17 @@ public class BitBoardTest {
 
     }
 
+    // verify enum square values
+    @Test
+    public void testSquare(){
+        assertEquals(0b10000000L, BitBoard.A1);
+        assertEquals(0b1000000L, BitBoard.B1);
+        assertEquals(0b100000L, BitBoard.C1);
+        assertEquals(0b10000L, BitBoard.D1);
+        assertEquals(0b1000L, BitBoard.E1);
+        assertEquals(0b100L, BitBoard.F1);
+        assertEquals(0b10L, BitBoard.G1);
+        assertEquals(0b1L, BitBoard.H1);
+    }
+
 }
