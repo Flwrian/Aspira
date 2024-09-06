@@ -1,30 +1,36 @@
 package com.bitboard;
 
-import java.util.ArrayList;
-
 public class MoveGenerator {
-    private BitBoard board;
 
-    public MoveGenerator(BitBoard board) {
-        this.board = board;
-    }
+    public static long generateMask(BitBoard board, boolean white) {
 
-    public long generateMask(boolean whiteToMove) {
-
-        if (whiteToMove) {
-            return generateWhiteMask();
+        if (white) {
+            return generateWhiteMask(board);
         } else {
-            return generateBlackMask();
+            return generateBlackMask(board);
         }
 
     }
 
-    public void printMask(boolean whiteToMove) {
-        long mask = generateMask(whiteToMove);
+    public static long generateOpponentMask(BitBoard board) {
+        if (board.whiteTurn) {
+            return generateBlackMask(board);
+        } else {
+            return generateWhiteMask(board);
+        }
+    }
+
+    public static void printMask(BitBoard board) {
+        long mask = generateOpponentMask(board);
         board.printBitBoard(mask);
     }
 
-    public int countBits(long mask) {
+    public static void printMask(BitBoard board, boolean white) {
+        long mask = generateMask(board, white);
+        board.printBitBoard(mask);
+    }
+
+    public static int countBits(long mask) {
         int count = 0;
         while (mask != 0) {
             mask &= mask - 1;
@@ -33,14 +39,13 @@ public class MoveGenerator {
         return count;
     }
 
-    public MoveList generateMoves(boolean whiteToMove) {
+    public static MoveList generateMoves(BitBoard board) {
         // maximum number of moves is 218
         MoveList moves = new MoveList(218);
-
         // We will iterate through the board and generate the moves for each piece
         
         // Pawns
-        long pawns = whiteToMove ? board.getWhitePawns() : board.getBlackPawns();
+        long pawns = board.whiteTurn ? board.getWhitePawns() : board.getBlackPawns();
 
         // We iterate through the pawns by getting the least significant bit and then removing it from the bitboard
         while (pawns != 0L) {
@@ -49,9 +54,10 @@ public class MoveGenerator {
 
             // We get the starting square of the pawn
             int from = BitBoard.getSquare(pawn);
+            System.out.println(from);
 
             // We generate the moves for the pawn
-            long pawnMoves = generatePawnMoves(pawn, whiteToMove);
+            long pawnMoves = generatePawnMoves(pawn, board);
 
             // We iterate through the moves and add them to the list
             while (pawnMoves != 0L) {
@@ -93,7 +99,7 @@ public class MoveGenerator {
         }
 
         // Knights
-        long knights = whiteToMove ? board.getWhiteKnights() : board.getBlackKnights();
+        long knights = board.whiteTurn ? board.getWhiteKnights() : board.getBlackKnights();
 
         while (knights != 0L) {
             long knight = BitBoard.getLSB(knights);
@@ -101,7 +107,7 @@ public class MoveGenerator {
 
             int from = BitBoard.getSquare(knight);
 
-            long knightMoves = whiteToMove ? generateWhiteKnightMoves(knight) : generateBlackKnightMoves(knight);
+            long knightMoves = board.whiteTurn ? generateWhiteKnightMoves(knight, board) : generateBlackKnightMoves(knight, board);
 
             while (knightMoves != 0L) {
                 long move = BitBoard.getLSB(knightMoves);
@@ -115,7 +121,7 @@ public class MoveGenerator {
         }
 
         // Bishops
-        long bishops = whiteToMove ? board.getWhiteBishops() : board.getBlackBishops();
+        long bishops = board.whiteTurn ? board.getWhiteBishops() : board.getBlackBishops();
 
         while (bishops != 0L) {
             long bishop = BitBoard.getLSB(bishops);
@@ -123,7 +129,7 @@ public class MoveGenerator {
 
             int from = BitBoard.getSquare(bishop);
 
-            long bishopMoves = whiteToMove ? generateWhiteBishopMoves(bishop) : generateBlackBishopMoves(bishop);
+            long bishopMoves = board.whiteTurn ? generateWhiteBishopMoves(bishop, board) : generateBlackBishopMoves(bishop, board);
 
             while (bishopMoves != 0L) {
                 long move = BitBoard.getLSB(bishopMoves);
@@ -137,7 +143,7 @@ public class MoveGenerator {
         }
 
         // Rooks
-        long rooks = whiteToMove ? board.getWhiteRooks() : board.getBlackRooks();
+        long rooks = board.whiteTurn ? board.getWhiteRooks() : board.getBlackRooks();
 
         while (rooks != 0L) {
             long rook = BitBoard.getLSB(rooks);
@@ -145,7 +151,7 @@ public class MoveGenerator {
 
             int from = BitBoard.getSquare(rook);
 
-            long rookMoves = whiteToMove ? generateWhiteRookMoves(rook) : generateBlackRookMoves(rook);
+            long rookMoves = board.whiteTurn ? generateWhiteRookMoves(rook, board) : generateBlackRookMoves(rook, board);
 
             while (rookMoves != 0L) {
                 long move = BitBoard.getLSB(rookMoves);
@@ -159,7 +165,7 @@ public class MoveGenerator {
         }
 
         // Queens
-        long queens = whiteToMove ? board.getWhiteQueens() : board.getBlackQueens();
+        long queens = board.whiteTurn ? board.getWhiteQueens() : board.getBlackQueens();
 
         while (queens != 0L) {
             long queen = BitBoard.getLSB(queens);
@@ -167,7 +173,7 @@ public class MoveGenerator {
 
             int from = BitBoard.getSquare(queen);
 
-            long queenMoves = whiteToMove ? generateWhiteQueenMoves(queen) : generateBlackQueenMoves(queen);
+            long queenMoves = board.whiteTurn ? generateWhiteQueenMoves(queen, board) : generateBlackQueenMoves(queen, board);
 
             while (queenMoves != 0L) {
                 long move = BitBoard.getLSB(queenMoves);
@@ -181,11 +187,11 @@ public class MoveGenerator {
         }
 
         // Kings
-        long king = whiteToMove ? board.getWhiteKing() : board.getBlackKing();
+        long king = board.whiteTurn ? board.getWhiteKing() : board.getBlackKing();
 
         int from = BitBoard.getSquare(king);
 
-        long kingMoves = generateKingMoves(king, whiteToMove);
+        long kingMoves = generateKingMoves(king, board.whiteTurn, board);
 
         while (kingMoves != 0L) {
             long move = BitBoard.getLSB(kingMoves);
@@ -208,12 +214,12 @@ public class MoveGenerator {
 
     }
 
-    public void countMoves(boolean whiteToMove) {
-        MoveList moves = generateMoves(whiteToMove);
+    public static void countMoves(BitBoard board) {
+        MoveList moves = generateMoves(board);
         System.out.println("Number of moves: " + moves.size());
     }
 
-    private long generateWhiteMask() {
+    private static long generateWhiteMask(BitBoard board) {
         long whiteAttacks = 0L;
 
         // Générer les mouvements des pions blancs
@@ -225,15 +231,15 @@ public class MoveGenerator {
         whiteAttacks |= whiteKnightMask;
 
         // Générer les mouvements des fous blancs
-        long whiteBishopMask = generateBishopMask(board.getWhiteBishops());
+        long whiteBishopMask = generateBishopMask(board.getWhiteBishops(), board);
         whiteAttacks |= whiteBishopMask;
 
         // Générer les mouvements des tours blanches
-        long whiteRookMask = generateRookMask(board.getWhiteRooks());
+        long whiteRookMask = generateRookMask(board.getWhiteRooks(), board);
         whiteAttacks |= whiteRookMask;
 
         // Générer les mouvements des reines blanches
-        long whiteQueenMask = generateQueenMask(board.getWhiteQueens());
+        long whiteQueenMask = generateQueenMask(board.getWhiteQueens(), board);
         whiteAttacks |= whiteQueenMask;
 
         // Générer les mouvements des rois blancs
@@ -244,7 +250,7 @@ public class MoveGenerator {
         return whiteAttacks;
     }
 
-    private long generateBlackMask() {
+    private static long generateBlackMask(BitBoard board) {
         long blackAttacks = 0L;
 
         // Générer les mouvements des pions noirs
@@ -256,15 +262,15 @@ public class MoveGenerator {
         blackAttacks |= blackKnightMask;
 
         // Générer les mouvements des fous noirs
-        long blackBishopMask = generateBishopMask(board.getBlackBishops());
+        long blackBishopMask = generateBishopMask(board.getBlackBishops(), board);
         blackAttacks |= blackBishopMask;
 
         // Générer les mouvements des tours noires
-        long blackRookMask = generateRookMask(board.getBlackRooks());
+        long blackRookMask = generateRookMask(board.getBlackRooks(), board);
         blackAttacks |= blackRookMask;
 
         // Générer les mouvements des reines noires
-        long blackQueenMask = generateQueenMask(board.getBlackQueens());
+        long blackQueenMask = generateQueenMask(board.getBlackQueens(), board);
         blackAttacks |= blackQueenMask;
 
         // Générer les mouvements des rois noirs
@@ -274,7 +280,7 @@ public class MoveGenerator {
         return blackAttacks;
     }
 
-    private long generatePawnMask(long pawns, boolean white) {
+    private static long generatePawnMask(long pawns, boolean white) {
         long pawnMask = 0L;
 
         if (white) {
@@ -294,10 +300,10 @@ public class MoveGenerator {
         return pawnMask;
     }
 
-    public long generatePawnMoves(long pawns, boolean white) {
+    public static long generatePawnMoves(long pawns, BitBoard board) {
         long pawnMoves = 0L;
 
-        if (white) {
+        if (board.whiteTurn) {
             long singlePush = (pawns << 8) & ~board.getBoard();  // Avancer d'une case
             long doublePush = ((pawns & BitBoard.RANK_2) << 16) & ~board.getBoard();  // Avancer de deux cases depuis la rangée initiale
             pawnMoves |= singlePush | doublePush;
@@ -319,7 +325,7 @@ public class MoveGenerator {
 
     }
 
-    public long generateKnightMask(long knights) {
+    public static long generateKnightMask(long knights) {
         // Le cavalier peut se déplacer en L, 2 cases dans une direction et 1 case dans une autre
         long knightMoves = 0L;
 
@@ -339,7 +345,7 @@ public class MoveGenerator {
     }
 
     // Generate knight legal moves
-    public long generateWhiteKnightMoves(long knights) {
+    public static long generateWhiteKnightMoves(long knights, BitBoard board) {
         // Le cavalier peut se déplacer en L, 2 cases dans une direction et 1 case dans une autre et ne peut pas aller sur une case occupée par une pièce de la même couleur
         long knightMoves = 0L;
 
@@ -354,7 +360,7 @@ public class MoveGenerator {
 
 
 
-    private long generateBishopMask(long bishops) {
+    private static long generateBishopMask(long bishops, BitBoard board) {
         // Le fou peut se déplacer dans toutes les diagonales mais le mask s'arrête lorsqu'il rencontre une pièce (inclusif)
 
         long bishopMask = 0L;
@@ -406,13 +412,13 @@ public class MoveGenerator {
         
     }
 
-    private long generateWhiteBishopMoves(long bishops) {
+    private static long generateWhiteBishopMoves(long bishops, BitBoard board) {
         // La seule différence entre les mouvements des fous et les masques des fous est que selon la couleur, les fous ne peuvent pas capturer une pièce de la même couleur
 
         long bishopMoves = 0L;
 
         // Déplacements en diagonale
-        long bishopMask = generateBishopMask(bishops);
+        long bishopMask = generateBishopMask(bishops, board);
 
         // On ne peut pas capturer une pièce de la même couleur
         bishopMoves = bishopMask & ~board.getWhitePieces();
@@ -421,7 +427,7 @@ public class MoveGenerator {
     }
     
 
-    private long generateRookMask(long rooks) {
+    private static long generateRookMask(long rooks, BitBoard board) {
         // La tour peut se déplacer en ligne droite et le mask s'arrête lorsqu'il rencontre une pièce (inclusif)
         long rookMoves = 0L;
 
@@ -472,13 +478,13 @@ public class MoveGenerator {
         
     }
 
-    public long generateWhiteRookMoves(long rooks) {
+    public static long generateWhiteRookMoves(long rooks, BitBoard board) {
         // La seule différence entre les mouvements des tours et les masques des tours est que selon la couleur, les tours ne peuvent pas capturer une pièce de la même couleur
 
         long rookMoves = 0L;
 
         // Déplacements en ligne droite
-        long rookMask = generateRookMask(rooks);
+        long rookMask = generateRookMask(rooks, board);
 
         // On ne peut pas capturer une pièce de la même couleur
         rookMoves = rookMask & ~board.getWhitePieces();
@@ -486,26 +492,26 @@ public class MoveGenerator {
         return rookMoves;
     }
 
-    private long generateQueenMask(long queens) {
+    private static long generateQueenMask(long queens, BitBoard board) {
         // La reine peut se déplacer en diagonale et en ligne droite soit les mouvements du fou et de la tour
         long queenMoves = 0L;
 
         // Déplacements en diagonale
-        long straightMoves = generateRookMask(queens);
-        long diagonalMoves = generateBishopMask(queens);
+        long straightMoves = generateRookMask(queens, board);
+        long diagonalMoves = generateBishopMask(queens, board);
 
         queenMoves |= straightMoves | diagonalMoves;
 
         return queenMoves;
     }
 
-    private long generateWhiteQueenMoves(long queens) {
+    private static long generateWhiteQueenMoves(long queens, BitBoard board) {
         // La seule différence entre les mouvements des reines et les masques des reines est que selon la couleur, les reines ne peuvent pas capturer une pièce de la même couleur
 
         long queenMoves = 0L;
 
         // Déplacements en diagonale et en ligne droite
-        long queenMask = generateQueenMask(queens);
+        long queenMask = generateQueenMask(queens, board);
 
         // On ne peut pas capturer une pièce de la même couleur
         queenMoves = queenMask & ~board.getWhitePieces();
@@ -513,7 +519,7 @@ public class MoveGenerator {
         return queenMoves;
     }
 
-    private long generateKingMask(long king, boolean white){
+    private static long generateKingMask(long king, boolean white){
         // Le roi peut se déplacer d'une case dans toutes les directions et peut roquer
         long kingMoves = 0L;
 
@@ -532,7 +538,7 @@ public class MoveGenerator {
         return kingMoves;
     }
 
-    public long generateKingMoves(long king, boolean white) {
+    public static long generateKingMoves(long king, boolean white, BitBoard board) {
         // Le roi peut se déplacer d'une case dans toutes les directions et peut roquer
         long kingMoves = generateKingMask(king, white);
 
@@ -555,7 +561,7 @@ public class MoveGenerator {
                     // Si il n'y a pas de pièces entre le roi et la tour
                     if((BitBoard.WHITE_KING_SIDE_CASTLE_EMPTY_SQUARES_MASK & board.getBoard()) == 0L) {
                         // Si les cases ne sont pas attaquées
-                        if((BitBoard.WHITE_KING_SIDE_CASTLE_NEED_TO_NOT_BE_ATTACKED_MASK & generateMask(false)) == 0L) {
+                        if((BitBoard.WHITE_KING_SIDE_CASTLE_NEED_TO_NOT_BE_ATTACKED_MASK & generateOpponentMask(board)) == 0L) {
                             // On peut roquer
                             kingMoves |= BitBoard.WHITE_KING_SIDE_CASTLE_KING_SQUARE;
                         }
@@ -570,7 +576,7 @@ public class MoveGenerator {
                     // Si il n'y a pas de pièces entre le roi et la tour
                     if((BitBoard.WHITE_QUEEN_SIDE_CASTLE_EMPTY_SQUARES_MASK & board.getBoard()) == 0L) {
                         // Si les cases ne sont pas attaquées
-                        if((BitBoard.WHITE_QUEEN_SIDE_CASTLE_NEED_TO_NOT_BE_ATTACKED_MASK & generateMask(false)) == 0L) {
+                        if((BitBoard.WHITE_QUEEN_SIDE_CASTLE_NEED_TO_NOT_BE_ATTACKED_MASK & generateOpponentMask(board)) == 0L) {
                             // On peut roquer
                             kingMoves |= BitBoard.WHITE_QUEEN_SIDE_CASTLE_KING_SQUARE;
                         }
@@ -587,7 +593,7 @@ public class MoveGenerator {
                     // Si il n'y a pas de pièces entre le roi et la tour
                     if((BitBoard.BLACK_KING_SIDE_CASTLE_EMPTY_SQUARES_MASK & board.getBoard()) == 0L) {
                         // Si les cases ne sont pas attaquées
-                        if((BitBoard.BLACK_KING_SIDE_CASTLE_NEED_TO_NOT_BE_ATTACKED_MASK & generateMask(true)) == 0L) {
+                        if((BitBoard.BLACK_KING_SIDE_CASTLE_NEED_TO_NOT_BE_ATTACKED_MASK & generateOpponentMask(board)) == 0L) {
                             // On peut roquer
                             kingMoves |= BitBoard.BLACK_KING_SIDE_CASTLE_KING_SQUARE;
                         }
@@ -602,7 +608,7 @@ public class MoveGenerator {
                     // Si il n'y a pas de pièces entre le roi et la tour
                     if((BitBoard.BLACK_QUEEN_SIDE_CASTLE_EMPTY_SQUARES_MASK & board.getBoard()) == 0L) {
                         // Si les cases ne sont pas attaquées
-                        if((BitBoard.BLACK_QUEEN_SIDE_CASTLE_NEED_TO_NOT_BE_ATTACKED_MASK & generateMask(true)) == 0L) {
+                        if((BitBoard.BLACK_QUEEN_SIDE_CASTLE_NEED_TO_NOT_BE_ATTACKED_MASK & generateOpponentMask(board)) == 0L) {
                             // On peut roquer
                             kingMoves |= BitBoard.BLACK_QUEEN_SIDE_CASTLE_KING_SQUARE;
                         }
@@ -614,7 +620,7 @@ public class MoveGenerator {
         return kingMoves;
     }
 
-    public long generateBlackKnightMoves(long knights) {
+    public static long generateBlackKnightMoves(long knights, BitBoard board) {
         // Le cavalier peut se déplacer en L, 2 cases dans une direction et 1 case dans une autre et ne peut pas aller sur une case occupée par une pièce de la même couleur
         long knightMoves = 0L;
 
@@ -627,13 +633,13 @@ public class MoveGenerator {
         return knightMoves;
     }
 
-    public long generateBlackBishopMoves(long bishops) {
+    public static long generateBlackBishopMoves(long bishops, BitBoard board) {
         // La seule différence entre les mouvements des fous et les masques des fous est que selon la couleur, les fous ne peuvent pas capturer une pièce de la même couleur
 
         long bishopMoves = 0L;
 
         // Déplacements en diagonale
-        long bishopMask = generateBishopMask(bishops);
+        long bishopMask = generateBishopMask(bishops, board);
 
         // On ne peut pas capturer une pièce de la même couleur
         bishopMoves = bishopMask & ~board.getBlackPieces();
@@ -641,13 +647,13 @@ public class MoveGenerator {
         return bishopMoves;
     }
 
-    public long generateBlackRookMoves(long rooks) {
+    public static long generateBlackRookMoves(long rooks, BitBoard board) {
         // La seule différence entre les mouvements des tours et les masques des tours est que selon la couleur, les tours ne peuvent pas capturer une pièce de la même couleur
 
         long rookMoves = 0L;
 
         // Déplacements en ligne droite
-        long rookMask = generateRookMask(rooks);
+        long rookMask = generateRookMask(rooks, board);
 
         // On ne peut pas capturer une pièce de la même couleur
         rookMoves = rookMask & ~board.getBlackPieces();
@@ -655,13 +661,13 @@ public class MoveGenerator {
         return rookMoves;
     }
 
-    public long generateBlackQueenMoves(long queens) {
+    public static long generateBlackQueenMoves(long queens, BitBoard board) {
         // La seule différence entre les mouvements des reines et les masques des reines est que selon la couleur, les reines ne peuvent pas capturer une pièce de la même couleur
 
         long queenMoves = 0L;
 
         // Déplacements en diagonale et en ligne droite
-        long queenMask = generateQueenMask(queens);
+        long queenMask = generateQueenMask(queens, board);
 
         // On ne peut pas capturer une pièce de la même couleur
         queenMoves = queenMask & ~board.getBlackPieces();

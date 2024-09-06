@@ -276,6 +276,9 @@ public class MoveList implements Iterable<Move>, List<Move> {
             builder.append("\t"+moves[i]+"\n");
         }
 
+        // add size
+        builder.append("Size: "+size()+"\n");
+
         return builder.toString();
     }
 
@@ -333,4 +336,6 @@ public class MoveList implements Iterable<Move>, List<Move> {
         moves.sort(null);
         System.out.println(moves);
     }
+
+    
 }

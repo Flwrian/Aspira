@@ -149,14 +149,19 @@ public final class Move {
         return Objects.hash(from, to, pieceFrom, pieceTo);
     }
 
+    // public String toString() {
+    //     return "SlowMove{" +
+    //             "from=" + from +
+    //             ", to=" + to +
+    //             ", pieceFrom=" + pieceFrom +
+    //             ", pieceTo=" + pieceTo +
+    //             '}';
+    // }
+
+    // string representation of the move
     @Override
     public String toString() {
-        return "SlowMove{" +
-                "from=" + from +
-                ", to=" + to +
-                ", pieceFrom=" + pieceFrom +
-                ", pieceTo=" + pieceTo +
-                '}';
+        return BitBoard.getSquareIndexNotation(from) + BitBoard.getSquareIndexNotation(to);
     }
 
 

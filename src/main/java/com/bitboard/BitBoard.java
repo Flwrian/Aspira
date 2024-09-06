@@ -415,6 +415,7 @@ public class BitBoard {
         String[] pieces = {"P", "N", "B", "R", "Q", "K", "p", "n", "b", "r", "q", "k"};
         String[] board = new String[64];
     
+        // Remplir le tableau board avec les pièces ou des points pour les cases vides
         for (int i = 0; i < 64; i++) {
             long bitboard = 1L << i;
             if ((whitePawns & bitboard) != 0) {
@@ -442,22 +443,45 @@ public class BitBoard {
             } else if ((blackKing & bitboard) != 0) {
                 board[i] = pieces[11];
             } else {
-                board[i] = ".";
+                board[i] = " ";
             }
         }
-
-        System.out.println("  h g f e d c b a");
-        System.out.println("  -----------------");
-        for (int i = 0; i < 8; i++) {
-            System.out.print((i + 1) + "|");
-            for (int j = 0; j < 8; j++) {
-                System.out.print(board[i * 8 + j] + " ");
+    
+        // Bordure supérieure
+        System.out.println("   +-------------------------------+");
+        System.out.println("   | a   b   c   d   e   f   g   h |");
+        System.out.println("   +-------------------------------+");
+    
+        // Parcourir les rangées de haut en bas
+        for (int rank = 7; rank >= 0; rank--) {
+            System.out.print((rank + 1) + "  |"); // Numéro de rangée sur le côté gauche
+            
+            // Parcourir chaque colonne de la rangée
+            for (int file = 7; file >= 0; file--) {
+                int squareIndex = rank * 8 + file;
+                System.out.print(" " + board[squareIndex] + " ");
+                
+                // Ajouter un séparateur "|"
+                if (file != 0) {
+                    System.out.print("|");
+                }
             }
-            System.out.println("|" + (i + 1));
+    
+            // Numéro de rangée sur le côté droit
+            System.out.println("| " + (rank + 1));
+            
+            // Ajouter des séparateurs entre les rangées sauf pour la dernière
+            if (rank > 0) {
+                System.out.println("   |---|---|---|---|---|---|---|---|");
+            }
         }
-        System.out.println("  -----------------");
-        System.out.println("  h g f e d c b a");
+    
+        // Bordure inférieure
+        System.out.println("   +-------------------------------+");
+        System.out.println("   | a   b   c   d   e   f   g   h |");
+        System.out.println("   +-------------------------------+");
     }
+    
 
     // Get bitboard for a square
     public long getSquareBitboard(String square) {
@@ -541,6 +565,10 @@ public class BitBoard {
     }
 
     public void makeMove(Move move) {
+    
+        // save 
+        saveBoardHistory(move);
+        
         // 1. Interpréter le mouvement
         // int fromSquare = getSquare(move.substring(0, 2));  // par exemple, "e2" -> 12 (case de départ)
         // int toSquare = getSquare(move.substring(2, 4));    // par exemple, "e4" -> 28 (case d'arrivée)
@@ -561,7 +589,6 @@ public class BitBoard {
             // Pion
             // Gestion de la prise en passant
             if ((enPassantSquare & toBitboard) != 0) {
-                System.out.println("Prise en passant");
                 if (isWhite) {
                     blackPawns &= ~(toBitboard >> 8); // Capturer le pion noir qui est pris en passant
                 } else {
@@ -653,10 +680,36 @@ public class BitBoard {
         // 6. Mettre à jour le tour
         whiteTurn = !whiteTurn;
 
-        // 7. Sauvegarder l'historique
-        saveBoardHistory(move);
-    
         updateBitBoard();
+    }
+
+    // legal moves
+    public MoveList getLegalMoves(){
+        MoveList moveList = MoveGenerator.generateMoves(this);
+        // Pour chaque coup, vérifier si le roi est en échec après le coup
+        // Si le roi est en échec, le coup n'est pas légal
+        // Sinon, le coup est légal
+        for (int i = 0; i < moveList.size(); i++) {
+            Move move = moveList.get(i);
+            makeMove(move);
+            if (isKingInCheck(whiteTurn)) {
+                moveList.remove(i);
+                i--;
+            }
+            undoMove();
+        }
+
+        return moveList;
+    }
+
+    private boolean isKingInCheck(boolean whiteTurn) {
+        // Generate opponent mask attack
+        long opponentAttackMask = MoveGenerator.generateOpponentMask(this);
+
+        // Get king square
+        long kingSquare = whiteTurn ? whiteKing : blackKing;
+
+        return (opponentAttackMask & kingSquare) != 0;
     }
 
     public void processWhiteCastleKingSide(long fromBitboard) {
@@ -818,8 +871,24 @@ public class BitBoard {
         }
     }
 
+    public void printBitBoardRaw(){
+        System.out.println(Long.toBinaryString(bitboard));
+    }
+
     public static int getSquare(long bitboard) {
         return Long.numberOfTrailingZeros(bitboard);
+    }
+
+    public static int getSquare(int rank, int file) {
+        return 8 * rank + file;
+    }
+
+    public static String getSquareIndexNotation(int square) {
+        String[] files = {"a", "b", "c", "d", "e", "f", "g", "h"};
+        int rank = square / 8;
+        int file = square % 8;
+        return files[file] + (rank + 1);
+
     }
 
     

@@ -52,4 +52,6 @@ public class BoardHistory {
         this.move = move;
     }
 
+    
+
 }
