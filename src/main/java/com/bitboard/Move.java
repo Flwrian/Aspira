@@ -41,12 +41,6 @@ public final class Move {
         this.pieceTo = board.getPiece(to);
     }
 
-    public Move(int from, int to, byte type) {
-        this.from = from;
-        this.to = to;
-        this.type = type;
-    }
-
 
     public Move copy() {
         Move copy = new Move(from, to, pieceFrom, pieceTo);

@@ -1,6 +1,7 @@
 package com.bitboard;
 
 import java.io.PrintWriter;
+import java.util.Stack;
 
 public class BitBoard {
 
@@ -24,9 +25,6 @@ public class BitBoard {
     public long blackPieces;
 
     public long bitboard;
-
-    private long whiteAttacks;
-    private long blackAttacks;
 
     public long whiteCastleQueenSide;
     public long whiteCastleKingSide;
@@ -194,6 +192,8 @@ public class BitBoard {
     public static final int QUEEN = 5;
     public static final int KING = 6;
 
+    private Stack<BoardHistory> history;
+
     
 
     public static final String INITIAL_STARTING_POSITION = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
@@ -222,14 +222,50 @@ public class BitBoard {
 
         bitboard = whitePieces | blackPieces;
 
-        whiteAttacks = 0L;
-        blackAttacks = 0L;
-
         whiteCastleQueenSide = 1L;
         whiteCastleKingSide = 1L;
         blackCastleQueenSide = 1L;
         blackCastleKingSide = 1L;
 
+        enPassantSquare = 0L;
+
+        history = new Stack<>();
+
+
+    }
+
+    private void saveBoardHistory(Move move) {
+        BoardHistory boardHistory = new BoardHistory(bitboard, move, whitePawns, whiteKnights, whiteBishops, whiteRooks, whiteQueens, whiteKing, blackPawns, blackKnights, blackBishops, blackRooks, blackQueens, blackKing, whiteCastleQueenSide, whiteCastleKingSide, blackCastleQueenSide, blackCastleKingSide, enPassantSquare, whiteTurn);
+        history.push(boardHistory);
+    }
+
+    public void undoMove() {
+        if (!history.isEmpty()) {
+            BoardHistory boardHistory = history.pop();
+            restoreBoardHistory(boardHistory);
+        }
+    }
+
+    public void restoreBoardHistory(BoardHistory boardHistory) {
+        bitboard = boardHistory.bitboard;
+        whitePawns = boardHistory.whitePawns;
+        whiteKnights = boardHistory.whiteKnights;
+        whiteBishops = boardHistory.whiteBishops;
+        whiteRooks = boardHistory.whiteRooks;
+        whiteQueens = boardHistory.whiteQueens;
+        whiteKing = boardHistory.whiteKing;
+        blackPawns = boardHistory.blackPawns;
+        blackKnights = boardHistory.blackKnights;
+        blackBishops = boardHistory.blackBishops;
+        blackRooks = boardHistory.blackRooks;
+        blackQueens = boardHistory.blackQueens;
+        blackKing = boardHistory.blackKing;
+        whiteCastleQueenSide = boardHistory.whiteCastleQueenSide;
+        whiteCastleKingSide = boardHistory.whiteCastleKingSide;
+        blackCastleQueenSide = boardHistory.blackCastleQueenSide;
+        blackCastleKingSide = boardHistory.blackCastleKingSide;
+        enPassantSquare = boardHistory.enPassantSquare;
+        whiteTurn = boardHistory.whiteTurn;
     }
 
     public void loadFromFen(String fen) {
@@ -422,43 +458,6 @@ public class BitBoard {
         System.out.println("  -----------------");
         System.out.println("  h g f e d c b a");
     }
-    
-
-            
-    
-    
-
-    public String getPieceAtSquare(String square) {
-        int index = getSquare(square);
-        long bitboard = 1L << index;
-        if ((whitePawns & bitboard) != 0) {
-            return "P";
-        } else if ((whiteKnights & bitboard) != 0) {
-            return "N";
-        } else if ((whiteBishops & bitboard) != 0) {
-            return "B";
-        } else if ((whiteRooks & bitboard) != 0) {
-            return "R";
-        } else if ((whiteQueens & bitboard) != 0) {
-            return "Q";
-        } else if ((whiteKing & bitboard) != 0) {
-            return "K";
-        } else if ((blackPawns & bitboard) != 0) {
-            return "p";
-        } else if ((blackKnights & bitboard) != 0) {
-            return "n";
-        } else if ((blackBishops & bitboard) != 0) {
-            return "b";
-        } else if ((blackRooks & bitboard) != 0) {
-            return "r";
-        } else if ((blackQueens & bitboard) != 0) {
-            return "q";
-        } else if ((blackKing & bitboard) != 0) {
-            return "k";
-        } else {
-            return ".";
-        }
-    }
 
     // Get bitboard for a square
     public long getSquareBitboard(String square) {
@@ -541,11 +540,14 @@ public class BitBoard {
         return blackKing;
     }
 
-    public void makeMove(String move) {
+    public void makeMove(Move move) {
         // 1. Interpréter le mouvement
-        int fromSquare = getSquare(move.substring(0, 2));  // par exemple, "e2" -> 12 (case de départ)
-        int toSquare = getSquare(move.substring(2, 4));    // par exemple, "e4" -> 28 (case d'arrivée)
-        char promotion = move.length() == 5 ? move.charAt(4) : ' '; // Gestion de la promotion
+        // int fromSquare = getSquare(move.substring(0, 2));  // par exemple, "e2" -> 12 (case de départ)
+        // int toSquare = getSquare(move.substring(2, 4));    // par exemple, "e4" -> 28 (case d'arrivée)
+        // char promotion = move.length() == 5 ? move.charAt(4) : ' '; // Gestion de la promotion
+
+        int fromSquare = move.from;
+        int toSquare = move.to;
     
         // 2. Déterminer quelle pièce se déplace
         long fromBitboard = 1L << fromSquare;
@@ -573,6 +575,29 @@ public class BitBoard {
                 enPassantSquare = isWhite ? (toBitboard >> 8) : (toBitboard << 8);
             } else {
                 enPassantSquare = 0L; // Réinitialiser la case en passant
+            }
+
+            // Gestion de la promotion
+            if(move.type == Move.PROMOTION) {
+                if (isWhite) {
+                    int piece = move.pieceFrom;
+                    switch (piece) {
+                        case PAWN: whitePawns &= ~toBitboard; break;
+                        case KNIGHT: whiteKnights |= toBitboard; break;
+                        case BISHOP: whiteBishops |= toBitboard; break;
+                        case ROOK: whiteRooks |= toBitboard; break;
+                        case QUEEN: whiteQueens |= toBitboard; break;
+                    }
+                } else {
+                    int piece = move.pieceFrom;
+                    switch (piece) {
+                        case PAWN: blackPawns &= ~toBitboard; break;
+                        case KNIGHT: blackKnights |= toBitboard; break;
+                        case BISHOP: blackBishops |= toBitboard; break;
+                        case ROOK: blackRooks |= toBitboard; break;
+                        case QUEEN: blackQueens |= toBitboard; break;
+                    }
+                }
             }
         } else if ((whiteKnights & fromBitboard) != 0 || (blackKnights & fromBitboard) != 0) {
             // Cavalier
@@ -625,13 +650,11 @@ public class BitBoard {
             }
         }
 
-        // 5. Promotion
-        if (promotion != ' ') {
-            promotePiece(toSquare, promotion, isWhite);
-        }
-
         // 6. Mettre à jour le tour
         whiteTurn = !whiteTurn;
+
+        // 7. Sauvegarder l'historique
+        saveBoardHistory(move);
     
         updateBitBoard();
     }
@@ -753,27 +776,6 @@ public class BitBoard {
 
         updateBitBoard();
         
-    }
-    
-    private void promotePiece(int square, char promotion, boolean isWhite) {
-        long bitboard = 1L << square;
-        if (isWhite) {
-            whitePawns &= ~bitboard;  // Retirer le pion
-            switch (promotion) {
-                case 'Q': whiteQueens |= bitboard; break;
-                case 'R': whiteRooks |= bitboard; break;
-                case 'B': whiteBishops |= bitboard; break;
-                case 'N': whiteKnights |= bitboard; break;
-            }
-        } else {
-            blackPawns &= ~bitboard;  // Retirer le pion
-            switch (promotion) {
-                case 'Q': blackQueens |= bitboard; break;
-                case 'R': blackRooks |= bitboard; break;
-                case 'B': blackBishops |= bitboard; break;
-                case 'N': blackKnights |= bitboard; break;
-            }
-        }
     }
 
     public static long getLSB(long bitboard) {
