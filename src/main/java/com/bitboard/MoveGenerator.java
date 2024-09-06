@@ -33,37 +33,184 @@ public class MoveGenerator {
         return count;
     }
 
-    public long[] generateMoves(boolean whiteToMove) {
-        long[] moves = new long[6];
+    public MoveList generateMoves(boolean whiteToMove) {
+        // maximum number of moves is 218
+        MoveList moves = new MoveList(218);
 
-        if (whiteToMove) {
-            moves[0] = generatePawnMoves(board.getWhitePawns(), true);
-            moves[1] = generateWhiteKnightMoves(board.getWhiteKnights());
-            moves[2] = generateWhiteBishopMoves(board.getWhiteBishops());
-            moves[3] = generateWhiteRookMoves(board.getWhiteRooks());
-            moves[4] = generateWhiteQueenMoves(board.getWhiteQueens());
-            moves[5] = generateKingMoves(board.getWhiteKing(), true);
-        } else {
-            moves[0] = generatePawnMoves(board.getBlackPawns(), false);
-            moves[1] = generateBlackKnightMoves(board.getBlackKnights());
-            moves[2] = generateBlackBishopMoves(board.getBlackBishops());
-            moves[3] = generateBlackRookMoves(board.getBlackRooks());
-            moves[4] = generateBlackQueenMoves(board.getBlackQueens());
-            moves[5] = generateKingMoves(board.getBlackKing(), false);
+        // We will iterate through the board and generate the moves for each piece
+        
+        // Pawns
+        long pawns = whiteToMove ? board.getWhitePawns() : board.getBlackPawns();
+
+        // We iterate through the pawns by getting the least significant bit and then removing it from the bitboard
+        while (pawns != 0L) {
+            long pawn = BitBoard.getLSB(pawns);
+            pawns &= pawns - 1;
+
+            // We get the starting square of the pawn
+            int from = BitBoard.getSquare(pawn);
+
+            // We generate the moves for the pawn
+            long pawnMoves = generatePawnMoves(pawn, whiteToMove);
+
+            // We iterate through the moves and add them to the list
+            while (pawnMoves != 0L) {
+                long move = BitBoard.getLSB(pawnMoves);
+                pawnMoves &= pawnMoves - 1;
+
+                int to = BitBoard.getSquare(move);
+
+                // If the move is a promotion, we generate all the possible promotions
+                if (to >= 56 || to <= 7) {
+                    Move promotionQueen = new Move(from, to, board.getPiece(from), board.getPiece(to));
+                    promotionQueen.setType(Move.PROMOTION);
+
+                    Move promotionRook = new Move(from, to, board.getPiece(from), board.getPiece(to));
+                    promotionRook.setType(Move.PROMOTION);
+
+                    Move promotionBishop = new Move(from, to, board.getPiece(from), board.getPiece(to));
+                    promotionBishop.setType(Move.PROMOTION);
+
+                    Move promotionKnight = new Move(from, to, board.getPiece(from), board.getPiece(to));
+                    promotionKnight.setType(Move.PROMOTION);
+
+                    moves.add(promotionQueen);
+                    moves.add(promotionRook);
+                    moves.add(promotionBishop);
+                    moves.add(promotionKnight);
+                }
+
+                if (to == board.enPassantSquare) {
+                    Move enPassent = new Move(from, to, board.getPiece(from), board.getPiece(to));
+                    enPassent.setType(Move.EN_PASSENT);
+                    moves.add(enPassent);
+                }
+
+                Move normalMove = new Move(from, to, board.getPiece(from), board.getPiece(to));
+                moves.add(normalMove);
+            }
+
+        }
+
+        // Knights
+        long knights = whiteToMove ? board.getWhiteKnights() : board.getBlackKnights();
+
+        while (knights != 0L) {
+            long knight = BitBoard.getLSB(knights);
+            knights &= knights - 1;
+
+            int from = BitBoard.getSquare(knight);
+
+            long knightMoves = whiteToMove ? generateWhiteKnightMoves(knight) : generateBlackKnightMoves(knight);
+
+            while (knightMoves != 0L) {
+                long move = BitBoard.getLSB(knightMoves);
+                knightMoves &= knightMoves - 1;
+
+                int to = BitBoard.getSquare(move);
+
+                Move normalMove = new Move(from, to, board.getPiece(from), board.getPiece(to));
+                moves.add(normalMove);
+            }
+        }
+
+        // Bishops
+        long bishops = whiteToMove ? board.getWhiteBishops() : board.getBlackBishops();
+
+        while (bishops != 0L) {
+            long bishop = BitBoard.getLSB(bishops);
+            bishops &= bishops - 1;
+
+            int from = BitBoard.getSquare(bishop);
+
+            long bishopMoves = whiteToMove ? generateWhiteBishopMoves(bishop) : generateBlackBishopMoves(bishop);
+
+            while (bishopMoves != 0L) {
+                long move = BitBoard.getLSB(bishopMoves);
+                bishopMoves &= bishopMoves - 1;
+
+                int to = BitBoard.getSquare(move);
+
+                Move normalMove = new Move(from, to, board.getPiece(from), board.getPiece(to));
+                moves.add(normalMove);
+            }
+        }
+
+        // Rooks
+        long rooks = whiteToMove ? board.getWhiteRooks() : board.getBlackRooks();
+
+        while (rooks != 0L) {
+            long rook = BitBoard.getLSB(rooks);
+            rooks &= rooks - 1;
+
+            int from = BitBoard.getSquare(rook);
+
+            long rookMoves = whiteToMove ? generateWhiteRookMoves(rook) : generateBlackRookMoves(rook);
+
+            while (rookMoves != 0L) {
+                long move = BitBoard.getLSB(rookMoves);
+                rookMoves &= rookMoves - 1;
+
+                int to = BitBoard.getSquare(move);
+
+                Move normalMove = new Move(from, to, board.getPiece(from), board.getPiece(to));
+                moves.add(normalMove);
+            }
+        }
+
+        // Queens
+        long queens = whiteToMove ? board.getWhiteQueens() : board.getBlackQueens();
+
+        while (queens != 0L) {
+            long queen = BitBoard.getLSB(queens);
+            queens &= queens - 1;
+
+            int from = BitBoard.getSquare(queen);
+
+            long queenMoves = whiteToMove ? generateWhiteQueenMoves(queen) : generateBlackQueenMoves(queen);
+
+            while (queenMoves != 0L) {
+                long move = BitBoard.getLSB(queenMoves);
+                queenMoves &= queenMoves - 1;
+
+                int to = BitBoard.getSquare(move);
+
+                Move normalMove = new Move(from, to, board.getPiece(from), board.getPiece(to));
+                moves.add(normalMove);
+            }
+        }
+
+        // Kings
+        long king = whiteToMove ? board.getWhiteKing() : board.getBlackKing();
+
+        int from = BitBoard.getSquare(king);
+
+        long kingMoves = generateKingMoves(king, whiteToMove);
+
+        while (kingMoves != 0L) {
+            long move = BitBoard.getLSB(kingMoves);
+            kingMoves &= kingMoves - 1;
+
+            int to = BitBoard.getSquare(move);
+
+            // Castling
+            if (Math.abs(from - to) == 2) {
+                Move castling = new Move(from, to, board.getPiece(from), board.getPiece(to));
+                castling.setType(Move.CASTLING);
+                moves.add(castling);
+            }
+
+            Move normalMove = new Move(from, to, board.getPiece(from), board.getPiece(to));
+            moves.add(normalMove);
         }
 
         return moves;
+
     }
 
-
-
-    public int countMoves(boolean whiteToMove) {
-        long[] moves = generateMoves(whiteToMove);
-        int count = 0;
-        for (long move : moves) {
-            count += countBits(move);
-        }
-        return count;
+    public void countMoves(boolean whiteToMove) {
+        MoveList moves = generateMoves(whiteToMove);
+        System.out.println("Number of moves: " + moves.size());
     }
 
     private long generateWhiteMask() {
@@ -148,37 +295,28 @@ public class MoveGenerator {
     }
 
     public long generatePawnMoves(long pawns, boolean white) {
-        ArrayList<Long> moves = new ArrayList<Long>();
+        long pawnMoves = 0L;
 
         if (white) {
             long singlePush = (pawns << 8) & ~board.getBoard();  // Avancer d'une case
             long doublePush = ((pawns & BitBoard.RANK_2) << 16) & ~board.getBoard();  // Avancer de deux cases depuis la rangée initiale
-            moves.add(singlePush);
-            moves.add(doublePush);
+            pawnMoves |= singlePush | doublePush;
             // Captures diagonales, gauche et droite
             long capturesLeft = (pawns << 7) & board.getBlackPieces() & ~BitBoard.FILE_H;
             long capturesRight = (pawns << 9) & board.getBlackPieces() & ~BitBoard.FILE_A;
-            moves.add(capturesLeft);
-            moves.add(capturesRight);
+            pawnMoves |= capturesLeft | capturesRight;
         } else {
             long singlePush = (pawns >> 8) & ~board.getBoard();  // Avancer d'une case
             long doublePush = ((pawns & BitBoard.RANK_7) >> 16) & ~board.getBoard();  // Avancer de deux cases depuis la rangée initiale
-            moves.add(singlePush);
-            moves.add(doublePush);
+            pawnMoves |= singlePush | doublePush;
             // Captures diagonales, gauche et droite
             long capturesLeft = (pawns >> 9) & board.getWhitePieces() & ~BitBoard.FILE_H;
             long capturesRight = (pawns >> 7) & board.getWhitePieces() & ~BitBoard.FILE_A;
-            moves.add(capturesLeft);
-            moves.add(capturesRight);
+            pawnMoves |= capturesLeft | capturesRight;
         }
 
-        // Créer un bitboard unique à partir de la liste de mouvements
-        long allMoves = 0L;
-        for (long move : moves) {
-            allMoves |= move;
-        }
+        return pawnMoves;
 
-        return allMoves;
     }
 
     public long generateKnightMask(long knights) {

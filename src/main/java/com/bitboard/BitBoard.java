@@ -187,6 +187,13 @@ public class BitBoard {
     public static final long BLACK_KING_SIDE_CASTLE_NEED_TO_NOT_BE_ATTACKED_MASK = 0xE00000000000000L;
     public static final long BLACK_QUEEN_SIDE_CASTLE_NEED_TO_NOT_BE_ATTACKED_MASK = 0x3800000000000000L;
 
+    public static final int PAWN = 1;
+    public static final int KNIGHT = 2;
+    public static final int BISHOP = 3;
+    public static final int ROOK = 4;
+    public static final int QUEEN = 5;
+    public static final int KING = 6;
+
     
 
     public static final String INITIAL_STARTING_POSITION = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
@@ -777,8 +784,43 @@ public class BitBoard {
         return Long.highestOneBit(bitboard);
     }
 
+    // Get piece method
+    public int getPiece(int square) {
+        long bitboard = 1L << square;
+        if ((whitePawns & bitboard) != 0) {
+            return 1;
+        } else if ((whiteKnights & bitboard) != 0) {
+            return 2;
+        } else if ((whiteBishops & bitboard) != 0) {
+            return 3;
+        } else if ((whiteRooks & bitboard) != 0) {
+            return 4;
+        } else if ((whiteQueens & bitboard) != 0) {
+            return 5;
+        } else if ((whiteKing & bitboard) != 0) {
+            return 6;
+        } else if ((blackPawns & bitboard) != 0) {
+            return 7;
+        } else if ((blackKnights & bitboard) != 0) {
+            return 8;
+        } else if ((blackBishops & bitboard) != 0) {
+            return 9;
+        } else if ((blackRooks & bitboard) != 0) {
+            return 10;
+        } else if ((blackQueens & bitboard) != 0) {
+            return 11;
+        } else if ((blackKing & bitboard) != 0) {
+            return 12;
+        } else {
+            return 0;
+        }
+    }
+
+    public static int getSquare(long bitboard) {
+        return Long.numberOfTrailingZeros(bitboard);
+    }
+
     
 
 
 }
-
