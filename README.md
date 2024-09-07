@@ -22,3 +22,33 @@ I am aware that there are more efficient ways to program a chess engine. I am no
 ## Improvements
 - [ ] Make the engine faster by using bitboards and other optimizations (see [here](https://www.chessprogramming.org/Bitboards))
 - [ ] Use Zobrist hashing to speed up the engine
+
+#V2 09/07/2024
+
+V2 of the engine will be a fully working chess engine. Faster & better.
+
+# Plan
+
+The previous version was a bit bad in terms of performance and the game itself since there was no such things as en passant or castling.
+
+So I went on to fix those problems.
+
+## Speed
+
+My goal was to make things faster using differents techniques such as :
+
+- bitboards
+- better movegen
+- drop space constraint for better runtime
+
+## Rules
+
+This time, I wanted to make something that could really compete with me and also other bots. With the previous version, since there was no castling and en passant, the AI couldn't really play if those moves were played.
+
+Now, the engine is fully working with every rules.
+
+## Testing
+
+I made testing better using Perft test.
+
+Testing is very important to know if there are no bugs or if performances increase.
