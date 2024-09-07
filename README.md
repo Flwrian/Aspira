@@ -23,7 +23,7 @@ I am aware that there are more efficient ways to program a chess engine. I am no
 - [ ] Make the engine faster by using bitboards and other optimizations (see [here](https://www.chessprogramming.org/Bitboards))
 - [ ] Use Zobrist hashing to speed up the engine
 
-#V2 09/07/2024
+# V2 09/07/2024
 
 V2 of the engine will be a fully working chess engine. Faster & better.
 
