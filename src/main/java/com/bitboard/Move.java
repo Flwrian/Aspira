@@ -21,6 +21,7 @@ public final class Move {
     int pieceTo;
 
     byte    type;
+    boolean isWhite;
 
 
     long orderPriority;
@@ -111,6 +112,10 @@ public final class Move {
         this.to = to;
     }
 
+    public void setWhite(boolean isWhite) {
+        this.isWhite = isWhite;
+    }
+
     public void setPieceFrom(int pieceFrom) {
         this.pieceFrom = pieceFrom;
     }
@@ -185,24 +190,46 @@ public final class Move {
         //     return BitBoard.getSquareIndexNotation(from) + "x" + BitBoard.getSquareIndexNotation(to);
         // }
 
-        // if (type == PROMOTION) {
-        //     String promotionPiece = "";
-        //     switch (pieceTo) {
-        //         case BitBoard.QUEEN:
-        //             promotionPiece = "Q";
-        //             break;
-        //         case BitBoard.ROOK:
-        //             promotionPiece = "R";
-        //             break;
-        //         case BitBoard.BISHOP:
-        //             promotionPiece = "B";
-        //             break;
-        //         case BitBoard.KNIGHT:
-        //             promotionPiece = "N";
-        //             break;
-        //     }
-        //     return BitBoard.getSquareIndexNotation(from) + BitBoard.getSquareIndexNotation(to) + "=" + promotionPiece;
-        // }
+        if (type == PROMOTION) {
+            // get if the piece is white or black
+            
+            String promotionPiece = "";
+            if (isWhite) {
+                switch (pieceTo) {
+                    case BitBoard.QUEEN:
+                        promotionPiece = "Q";
+                        break;
+                    case BitBoard.ROOK:
+                        promotionPiece = "R";
+                        break;
+                    case BitBoard.BISHOP:
+                        promotionPiece = "B";
+                        break;
+                    case BitBoard.KNIGHT:
+                        promotionPiece = "N";
+                        break;
+                }
+            } 
+
+            else {
+                switch (pieceTo) {
+                    case BitBoard.QUEEN:
+                        promotionPiece = "q";
+                        break;
+                    case BitBoard.ROOK:
+                        promotionPiece = "r";
+                        break;
+                    case BitBoard.BISHOP:
+                        promotionPiece = "b";
+                        break;
+                    case BitBoard.KNIGHT:
+                        promotionPiece = "n";
+                        break;
+                }
+            }
+            
+            return BitBoard.getSquareIndexNotation(from) + BitBoard.getSquareIndexNotation(to) + promotionPiece;
+        }
 
         return BitBoard.getSquareIndexNotation(from) + BitBoard.getSquareIndexNotation(to);
     }

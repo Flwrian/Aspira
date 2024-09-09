@@ -864,34 +864,46 @@ public class BitBoard {
                 if (move.type == Move.EN_PASSENT) {
                     long capturedPawn = enPassantSquare >> 8;
                     blackPawns &= ~capturedPawn;
+
+                    // Move pawn
+                    whitePawns &= ~fromBitboard;
+                    whitePawns |= toBitboard;
                 }
     
                 // Handle double pawn push
                 if (move.type == Move.DOUBLE_PAWN_PUSH) {
                     enPassantSquare = toBitboard >> 8;
+
+                    // Move pawn
+                    whitePawns &= ~fromBitboard;
+                    whitePawns |= toBitboard;
                 } else {
                     enPassantSquare = 0L; // Reset en passant square
-                }
+
+                    // Handle promotion
+                    if (move.type == Move.PROMOTION) {
+                        switch (move.pieceTo) {
+                            case KNIGHT:
+                                whiteKnights |= toBitboard; break;
+                            case BISHOP:
+                                whiteBishops |= toBitboard; break;
+                            case ROOK:
+                                whiteRooks |= toBitboard; break;
+                            case QUEEN:
+                                whiteQueens |= toBitboard; break;
+                        }
+
+                        // remove pawn
+                        whitePawns &= ~fromBitboard;
     
-                // Handle promotion
-                if (move.type == Move.PROMOTION) {
-                    switch (move.pieceFrom) {
-                        case PAWN:
-                            whitePawns &= ~toBitboard; break;
-                        case KNIGHT:
-                            whiteKnights |= toBitboard; break;
-                        case BISHOP:
-                            whiteBishops |= toBitboard; break;
-                        case ROOK:
-                            whiteRooks |= toBitboard; break;
-                        case QUEEN:
-                            whiteQueens |= toBitboard; break;
                     }
+                    else{
+                        // Move pawn
+                        whitePawns &= ~fromBitboard;
+                        whitePawns |= toBitboard;
+                    }
+
                 }
-    
-                // Move pawn
-                whitePawns &= ~fromBitboard;
-                whitePawns |= toBitboard;
     
             // Cavaliers blancs
             } else if ((whiteKnights & fromBitboard) != 0) {
@@ -940,34 +952,47 @@ public class BitBoard {
                 if (move.type == Move.EN_PASSENT) {
                     long capturedPawn = enPassantSquare << 8;
                     whitePawns &= ~capturedPawn;
+
+                    // Move pawn
+                    blackPawns &= ~fromBitboard;
+                    blackPawns |= toBitboard;
                 }
     
                 // Handle double pawn push
                 if (move.type == Move.DOUBLE_PAWN_PUSH) {
                     enPassantSquare = toBitboard << 8;
+
+                    // Move pawn
+                    blackPawns &= ~fromBitboard;
+                    blackPawns |= toBitboard;
                 } else {
                     enPassantSquare = 0L; // Reset en passant square
-                }
+
+                    
+                    // Handle promotion
+                    if (move.type == Move.PROMOTION) {
+                        switch (move.pieceTo) {
+                            case KNIGHT:
+                                blackKnights |= toBitboard; break;
+                            case BISHOP:
+                                blackBishops |= toBitboard; break;
+                            case ROOK:
+                                blackRooks |= toBitboard; break;
+                            case QUEEN:
+                                blackQueens |= toBitboard; break;
+                        }
+
+                        // remove pawn
+                        blackPawns &= ~fromBitboard;
     
-                // Handle promotion
-                if (move.type == Move.PROMOTION) {
-                    switch (move.pieceFrom) {
-                        case PAWN:
-                            blackPawns &= ~toBitboard; break;
-                        case KNIGHT:
-                            blackKnights |= toBitboard; break;
-                        case BISHOP:
-                            blackBishops |= toBitboard; break;
-                        case ROOK:
-                            blackRooks |= toBitboard; break;
-                        case QUEEN:
-                            blackQueens |= toBitboard; break;
+                    }
+                    else{
+                        // Move pawn
+                        blackPawns &= ~fromBitboard;
+                        blackPawns |= toBitboard;
                     }
                 }
     
-                // Move pawn
-                blackPawns &= ~fromBitboard;
-                blackPawns |= toBitboard;
     
             // Cavaliers noirs
             } else if ((blackKnights & fromBitboard) != 0) {
@@ -1064,8 +1089,40 @@ public class BitBoard {
         int fromSquare = getSquare(move.substring(0, 2));
         int toSquare = getSquare(move.substring(2, 4));
         int pieceFrom = getPiece(fromSquare);
-        Move m = new Move(fromSquare, toSquare, pieceFrom, pieceFrom);
-        makeMove(m);
+
+        // piece to if last character is not a digit
+        int pieceTo = 0;
+
+        // if last character is q or r or b or n
+        if (move.length() == 5) {
+            char lastChar = Character.toLowerCase(move.charAt(4));
+            switch (lastChar) {
+                case 'q':
+                    pieceTo = QUEEN;
+                    break;
+                case 'r':
+                    pieceTo = ROOK;
+                    break;
+                case 'b':
+                    pieceTo = BISHOP;
+                    break;
+                case 'n':
+                    pieceTo = KNIGHT;
+                    break;
+            }
+        }
+
+        if (move.length() == 5) {
+            System.out.println("Promotion move");
+            System.out.println("to piece: " + pieceTo);
+            Move m = new Move(fromSquare, toSquare, pieceFrom, pieceTo);
+            m.setType(Move.PROMOTION);
+            m.setWhite(whiteTurn);
+            makeMove(m);
+        } else {
+            Move m = new Move(fromSquare, toSquare, pieceFrom, pieceFrom);
+            makeMove(m);
+        }
     }
 
     // pseudo legal

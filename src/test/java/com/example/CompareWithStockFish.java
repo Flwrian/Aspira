@@ -301,11 +301,11 @@ public class CompareWithStockFish {
 
         BitBoard bitBoard = new BitBoard();
         
-        // bitBoard.loadFromFen("Bnbqkbnr/2pp1ppp/4p3/pp6/6P1/8/PPPPPP1P/RNBQK1NR b KQk - 0 1");
+        bitBoard.loadFromFen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1");
 
+        // bitBoard.makeMove("g2f1r");
+        
         bitBoard.printChessBoard();
-
-
         CompareWithStockFish compareWithStockFish = new CompareWithStockFish();
         compareWithStockFish.compareWithStockFish(depth, bitBoard);
 

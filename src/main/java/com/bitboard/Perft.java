@@ -122,10 +122,10 @@ public class Perft {
         // load a position
 
 
-        // bitBoard.loadFromFen("8/8/5k2/8/8/2K5/8/8 w - - 0 1");
+        bitBoard.loadFromFen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1");
         // // b7b5
         long time = System.currentTimeMillis();
-        System.out.println(perft(bitBoard, 6));
+        System.out.println(perft(bitBoard, 5));
         System.out.println("Seconds: " + (System.currentTimeMillis() - time) / 1000.0);
 
 

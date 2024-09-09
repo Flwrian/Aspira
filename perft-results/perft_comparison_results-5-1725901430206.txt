@@ -1,0 +1,360 @@
+FEN: r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1
+=== Flowgine Perft Results ===
+[PerftDivide]
+[Depth: 5]
+[x]
+g2h3: 3817734
+g2g3: 3470360
+g2g4: 4133514
+b2b3: 3775142
+a2a3: 4636936
+a2a4: 4231411
+d5e6: 4735322
+d5d6: 3841630
+c3d1: 4013160
+c3b1: 4013496
+c3a4: 4648049
+c3b5: 4328179
+e5d3: 3293852
+e5g4: 3414139
+e5c4: 3499841
+e5g6: 3954510
+e5c6: 4088553
+e5f7: 4170452
+e5d7: 4409828
+e2f1: 4099359
+e2d1: 3081091
+e2d3: 4073667
+e2c4: 4188081
+e2b5: 4039853
+e2a6: 3558896
+d2c1: 3800164
+d2e3: 4414082
+d2f4: 3948031
+d2g5: 4379166
+d2h6: 3973770
+h1g1: 3991394
+h1f1: 3691045
+a1d1: 3578840
+a1c1: 3824791
+a1b1: 3837961
+f3h3: 5080383
+f3g3: 4673912
+f3e3: 4488734
+f3d3: 3963742
+f3g4: 4520369
+f3f4: 4339794
+f3h5: 4759666
+f3f5: 5296183
+f3f6: 3991192
+e1g1: 4125598
+e1f1: 3382346
+e1d1: 3565690
+e1c1: 3562126
+
+Nodes searched: 194706034
+
+=== StockFish Perft Results ===
+Stockfish 16.1 by the Stockfish developers (see AUTHORS file)
+info string NNUE evaluation using nn-baff1ede1f90.nnue
+info string NNUE evaluation using nn-b1a57edbea57.nnue
+a2a3: 4627439
+b2b3: 3768824
+g2g3: 3472039
+d5d6: 3835265
+a2a4: 4387586
+g2g4: 3338154
+g2h3: 3819456
+d5e6: 4727437
+c3b1: 3996171
+c3d1: 3995761
+c3a4: 4628497
+c3b5: 4317482
+e5d3: 3288812
+e5c4: 3494887
+e5g4: 3415992
+e5c6: 4083458
+e5g6: 3949417
+e5d7: 4404043
+e5f7: 4164923
+d2c1: 3793390
+d2e3: 4407041
+d2f4: 3941257
+d2g5: 4370915
+d2h6: 3967365
+e2d1: 3074219
+e2f1: 4095479
+e2d3: 4066966
+e2c4: 4182989
+e2b5: 4032348
+e2a6: 3553501
+a1b1: 3827454
+a1c1: 3814203
+a1d1: 3568344
+h1f1: 3685756
+h1g1: 3989454
+f3d3: 3949570
+f3e3: 4477772
+f3g3: 4669768
+f3h3: 5067173
+f3f4: 4327936
+f3g4: 4514010
+f3f5: 5271134
+f3h5: 4743335
+f3f6: 3975992
+e1d1: 3559113
+e1f1: 3377351
+e1g1: 4119629
+e1c1: 3551583
+
+Nodes searched: 193690690
+
+
+
+=== Comparison of Individual Move Nodes ===
+[ - Depth: 5 - ]
+--------------------
+[x] Invalid number of nodes: 
+Flowgine: a1b1 - 3837961
+StockFish: a1b1 - 3827454
+--------------------
+--------------------
+[x] Invalid number of nodes: 
+Flowgine: a1c1 - 3824791
+StockFish: a1c1 - 3814203
+--------------------
+--------------------
+[x] Invalid number of nodes: 
+Flowgine: a1d1 - 3578840
+StockFish: a1d1 - 3568344
+--------------------
+--------------------
+[x] Invalid number of nodes: 
+Flowgine: a2a3 - 4636936
+StockFish: a2a3 - 4627439
+--------------------
+--------------------
+[x] Invalid number of nodes: 
+Flowgine: a2a4 - 4231411
+StockFish: a2a4 - 4387586
+--------------------
+--------------------
+[x] Invalid number of nodes: 
+Flowgine: b2b3 - 3775142
+StockFish: b2b3 - 3768824
+--------------------
+--------------------
+[x] Invalid number of nodes: 
+Flowgine: c3a4 - 4648049
+StockFish: c3a4 - 4628497
+--------------------
+--------------------
+[x] Invalid number of nodes: 
+Flowgine: c3b1 - 4013496
+StockFish: c3b1 - 3996171
+--------------------
+--------------------
+[x] Invalid number of nodes: 
+Flowgine: c3b5 - 4328179
+StockFish: c3b5 - 4317482
+--------------------
+--------------------
+[x] Invalid number of nodes: 
+Flowgine: c3d1 - 4013160
+StockFish: c3d1 - 3995761
+--------------------
+--------------------
+[x] Invalid number of nodes: 
+Flowgine: d2c1 - 3800164
+StockFish: d2c1 - 3793390
+--------------------
+--------------------
+[x] Invalid number of nodes: 
+Flowgine: d2e3 - 4414082
+StockFish: d2e3 - 4407041
+--------------------
+--------------------
+[x] Invalid number of nodes: 
+Flowgine: d2f4 - 3948031
+StockFish: d2f4 - 3941257
+--------------------
+--------------------
+[x] Invalid number of nodes: 
+Flowgine: d2g5 - 4379166
+StockFish: d2g5 - 4370915
+--------------------
+--------------------
+[x] Invalid number of nodes: 
+Flowgine: d2h6 - 3973770
+StockFish: d2h6 - 3967365
+--------------------
+--------------------
+[x] Invalid number of nodes: 
+Flowgine: d5d6 - 3841630
+StockFish: d5d6 - 3835265
+--------------------
+--------------------
+[x] Invalid number of nodes: 
+Flowgine: d5e6 - 4735322
+StockFish: d5e6 - 4727437
+--------------------
+--------------------
+[x] Invalid number of nodes: 
+Flowgine: e1c1 - 3562126
+StockFish: e1c1 - 3551583
+--------------------
+--------------------
+[x] Invalid number of nodes: 
+Flowgine: e1d1 - 3565690
+StockFish: e1d1 - 3559113
+--------------------
+--------------------
+[x] Invalid number of nodes: 
+Flowgine: e1f1 - 3382346
+StockFish: e1f1 - 3377351
+--------------------
+--------------------
+[x] Invalid number of nodes: 
+Flowgine: e1g1 - 4125598
+StockFish: e1g1 - 4119629
+--------------------
+--------------------
+[x] Invalid number of nodes: 
+Flowgine: e2a6 - 3558896
+StockFish: e2a6 - 3553501
+--------------------
+--------------------
+[x] Invalid number of nodes: 
+Flowgine: e2b5 - 4039853
+StockFish: e2b5 - 4032348
+--------------------
+--------------------
+[x] Invalid number of nodes: 
+Flowgine: e2c4 - 4188081
+StockFish: e2c4 - 4182989
+--------------------
+--------------------
+[x] Invalid number of nodes: 
+Flowgine: e2d1 - 3081091
+StockFish: e2d1 - 3074219
+--------------------
+--------------------
+[x] Invalid number of nodes: 
+Flowgine: e2d3 - 4073667
+StockFish: e2d3 - 4066966
+--------------------
+--------------------
+[x] Invalid number of nodes: 
+Flowgine: e2f1 - 4099359
+StockFish: e2f1 - 4095479
+--------------------
+--------------------
+[x] Invalid number of nodes: 
+Flowgine: e5c4 - 3499841
+StockFish: e5c4 - 3494887
+--------------------
+--------------------
+[x] Invalid number of nodes: 
+Flowgine: e5c6 - 4088553
+StockFish: e5c6 - 4083458
+--------------------
+--------------------
+[x] Invalid number of nodes: 
+Flowgine: e5d3 - 3293852
+StockFish: e5d3 - 3288812
+--------------------
+--------------------
+[x] Invalid number of nodes: 
+Flowgine: e5d7 - 4409828
+StockFish: e5d7 - 4404043
+--------------------
+--------------------
+[x] Invalid number of nodes: 
+Flowgine: e5f7 - 4170452
+StockFish: e5f7 - 4164923
+--------------------
+--------------------
+[x] Invalid number of nodes: 
+Flowgine: e5g4 - 3414139
+StockFish: e5g4 - 3415992
+--------------------
+--------------------
+[x] Invalid number of nodes: 
+Flowgine: e5g6 - 3954510
+StockFish: e5g6 - 3949417
+--------------------
+--------------------
+[x] Invalid number of nodes: 
+Flowgine: f3d3 - 3963742
+StockFish: f3d3 - 3949570
+--------------------
+--------------------
+[x] Invalid number of nodes: 
+Flowgine: f3e3 - 4488734
+StockFish: f3e3 - 4477772
+--------------------
+--------------------
+[x] Invalid number of nodes: 
+Flowgine: f3f4 - 4339794
+StockFish: f3f4 - 4327936
+--------------------
+--------------------
+[x] Invalid number of nodes: 
+Flowgine: f3f5 - 5296183
+StockFish: f3f5 - 5271134
+--------------------
+--------------------
+[x] Invalid number of nodes: 
+Flowgine: f3f6 - 3991192
+StockFish: f3f6 - 3975992
+--------------------
+--------------------
+[x] Invalid number of nodes: 
+Flowgine: f3g3 - 4673912
+StockFish: f3g3 - 4669768
+--------------------
+--------------------
+[x] Invalid number of nodes: 
+Flowgine: f3g4 - 4520369
+StockFish: f3g4 - 4514010
+--------------------
+--------------------
+[x] Invalid number of nodes: 
+Flowgine: f3h3 - 5080383
+StockFish: f3h3 - 5067173
+--------------------
+--------------------
+[x] Invalid number of nodes: 
+Flowgine: f3h5 - 4759666
+StockFish: f3h5 - 4743335
+--------------------
+--------------------
+[x] Invalid number of nodes: 
+Flowgine: g2g3 - 3470360
+StockFish: g2g3 - 3472039
+--------------------
+--------------------
+[x] Invalid number of nodes: 
+Flowgine: g2g4 - 4133514
+StockFish: g2g4 - 3338154
+--------------------
+--------------------
+[x] Invalid number of nodes: 
+Flowgine: g2h3 - 3817734
+StockFish: g2h3 - 3819456
+--------------------
+--------------------
+[x] Invalid number of nodes: 
+Flowgine: h1f1 - 3691045
+StockFish: h1f1 - 3685756
+--------------------
+--------------------
+[x] Invalid number of nodes: 
+Flowgine: h1g1 - 3991394
+StockFish: h1g1 - 3989454
+--------------------
+
+=== Total Nodes Comparison ===
+[**X**] Invalid total nodes:
+Flowgine: 194706034
+StockFish: 193690690

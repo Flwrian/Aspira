@@ -72,6 +72,8 @@ public class MoveGenerator {
                 if (Math.abs(from - to) == 16) {
                     Move doublePawnPush = new Move(from, to, board.getPiece(from), board.getPiece(to));
                     doublePawnPush.setType(Move.DOUBLE_PAWN_PUSH);
+                    doublePawnPush.setWhite(board.whiteTurn);
+                    
                     moves.add(doublePawnPush);
                 }
 
@@ -80,15 +82,19 @@ public class MoveGenerator {
                     if (to >= 56 || to <= 7) {
                         Move promotionQueen = new Move(from, to, board.getPiece(from), BitBoard.QUEEN);
                         promotionQueen.setType(Move.PROMOTION);
+                        promotionQueen.setWhite(board.whiteTurn);
 
                         Move promotionRook = new Move(from, to, board.getPiece(from), BitBoard.ROOK);
                         promotionRook.setType(Move.PROMOTION);
+                        promotionRook.setWhite(board.whiteTurn);
 
                         Move promotionBishop = new Move(from, to, board.getPiece(from), BitBoard.BISHOP);
                         promotionBishop.setType(Move.PROMOTION);
+                        promotionBishop.setWhite(board.whiteTurn);
 
                         Move promotionKnight = new Move(from, to, board.getPiece(from), BitBoard.KNIGHT);
                         promotionKnight.setType(Move.PROMOTION);
+                        promotionKnight.setWhite(board.whiteTurn);
 
                         moves.add(promotionQueen);
                         moves.add(promotionRook);
@@ -99,10 +105,12 @@ public class MoveGenerator {
                     else if (to == BitBoard.getSquare(board.enPassantSquare)) {
                         Move enPassent = new Move(from, to, board.getPiece(from), board.getPiece(to));
                         enPassent.setType(Move.EN_PASSENT);
+                        enPassent.setWhite(board.whiteTurn);
                         moves.add(enPassent);
                     }
                     else {
                         Move normalMove = new Move(from, to, board.getPiece(from), board.getPiece(to));
+                        normalMove.setWhite(board.whiteTurn);
                         moves.add(normalMove);
                     }
                 }
@@ -128,6 +136,7 @@ public class MoveGenerator {
                 int to = BitBoard.getSquare(move);
 
                 Move normalMove = new Move(from, to, board.getPiece(from), board.getPiece(to));
+                normalMove.setWhite(board.whiteTurn);
                 moves.add(normalMove);
             }
         }
@@ -150,6 +159,7 @@ public class MoveGenerator {
                 int to = BitBoard.getSquare(move);
 
                 Move normalMove = new Move(from, to, board.getPiece(from), board.getPiece(to));
+                normalMove.setWhite(board.whiteTurn);
                 moves.add(normalMove);
             }
         }
@@ -172,6 +182,8 @@ public class MoveGenerator {
                 int to = BitBoard.getSquare(move);
 
                 Move normalMove = new Move(from, to, board.getPiece(from), board.getPiece(to));
+                normalMove.setWhite(board.whiteTurn);
+                
                 moves.add(normalMove);
             }
         }
@@ -194,6 +206,8 @@ public class MoveGenerator {
                 int to = BitBoard.getSquare(move);
 
                 Move normalMove = new Move(from, to, board.getPiece(from), board.getPiece(to));
+                normalMove.setWhite(board.whiteTurn);
+
                 moves.add(normalMove);
             }
         }
@@ -215,11 +229,14 @@ public class MoveGenerator {
             if (Math.abs(from - to) == 2) {
                 Move castling = new Move(from, to, board.getPiece(from), board.getPiece(to));
                 castling.setType(Move.CASTLING);
+                castling.setWhite(board.whiteTurn);
                 moves.add(castling);
             }
 
             else{
                 Move normalMove = new Move(from, to, board.getPiece(from), board.getPiece(to));
+                normalMove.setWhite(board.whiteTurn);
+
                 moves.add(normalMove);
             }
 
