@@ -108,7 +108,7 @@ public class CompareWithStockFish {
     
         // Écrire les résultats dans un fichier avec commé clé le depth et le timestamp
         long timestamp = System.currentTimeMillis();
-        String fileName = "perft_comparison_results-" + depth + "-" + timestamp + ".txt";
+        String fileName = "./perft-results/perft_comparison_results-" + depth + "-" + timestamp + ".txt";
         try {
             FileWriter writer = new FileWriter(fileName);
             writer.write(result.toString());

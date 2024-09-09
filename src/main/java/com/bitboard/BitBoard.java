@@ -137,6 +137,17 @@ public class BitBoard {
         A8, B8, C8, D8, E8, F8, G8, H8
     };
 
+    public static final int[] SQUARES_INDEX_MAP = {
+        7, 6, 5, 4, 3, 2, 1, 0,
+        15, 14, 13, 12, 11, 10, 9, 8,
+        23, 22, 21, 20, 19, 18, 17, 16,
+        31, 30, 29, 28, 27, 26, 25, 24,
+        39, 38, 37, 36, 35, 34, 33, 32,
+        47, 46, 45, 44, 43, 42, 41, 40,
+        55, 54, 53, 52, 51, 50, 49, 48,
+        63, 62, 61, 60, 59, 58, 57, 56
+    };
+
     // knight pre-encoded moves
     public static final long[] KNIGHT_MOVES = {
         ( B3 | C2), 
@@ -1018,6 +1029,11 @@ public class BitBoard {
         makeMove(m);
     }
 
+    // pseudo legal
+    public MoveList getPseudoLegalMoves() {
+        return MoveGenerator.generateMoves(this);
+    }
+
     // legal moves
     public MoveList getLegalMoves(){
         MoveList moveList = MoveGenerator.generateMoves(this);
@@ -1201,14 +1217,27 @@ public class BitBoard {
         System.out.println(Long.toBinaryString(bitboard));
     }
 
+    // public static int getSquare(long bitboard) {
+    //     // use the square map
+    //     for (int i = 0; i < 64; i++) {
+    //         if ((SQUARES_MAP[i] & bitboard) != 0) {
+    //             return i;
+    //         }
+    //     }
+    //     return -1;
+    // }
+
     public static int getSquare(long bitboard) {
-        // use the square map
-        for (int i = 0; i < 64; i++) {
-            if ((SQUARES_MAP[i] & bitboard) != 0) {
-                return i;
-            }
-        }
-        return -1;
+        int lsbPosition = Long.numberOfTrailingZeros(bitboard);
+
+        // Calculer la ligne et la colonne
+        int row = lsbPosition / 8;  // Ligne (de 0 à 7)
+        int col = lsbPosition % 8;  // Colonne (de 0 à 7)
+
+        // Miroir horizontal: inverser la colonne mais garder la ligne
+        int mirroredSquare = (row * 8) + (7 - col);
+        
+        return mirroredSquare;
     }
 
     private int getSquare(String position) {

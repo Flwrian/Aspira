@@ -9,15 +9,18 @@ public class Main {
         Game game = new Game();
         
         Engine engine = new Engine(game.getBoard());
-        engine.showKnps();
-        engine.setAlgorithm(new AlphaBetaPruningAlgorithm(5));
+        // engine.showKnps();
+        int valid = engine.getNbLegalMoves(6);
+        System.out.println(valid);
+        
+        // engine.setAlgorithm(new AlphaBetaPruningAlgorithm(6));
 
-        Engine engine2 = new Engine(game.getBoard());
-        engine2.setAlgorithm(new AlphaBetaPruningAlgorithm(2));
+        // Engine engine2 = new Engine(game.getBoard());
+        // engine2.setAlgorithm(new AlphaBetaPruningAlgorithm(2));
 
-        game.setWhite(engine);
-        game.setBlack(engine2);
+        // game.setWhite(engine);
+        // game.setBlack(engine2);
 
-        game.play();
+        // game.play();
     }
 }

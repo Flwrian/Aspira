@@ -3,6 +3,7 @@ package com.bitboard;
 public class Perft {
     
     public static long perft(BitBoard bitBoard, int depth) {
+
         
         if (depth == 0) {
             return 1;
@@ -16,6 +17,7 @@ public class Perft {
             nodes += perft(bitBoard, depth - 1);
             bitBoard.undoMove();
         }
+
         
         return nodes;
     }
@@ -120,11 +122,11 @@ public class Perft {
         // load a position
 
 
-        bitBoard.loadFromFen("B7/8/8/8/8/8/8/8 w - - 0 1");
+        // bitBoard.loadFromFen("8/8/8/8/8/8/3P4/8 w - - 0 1");
         // // b7b5
-        bitBoard.printChessBoard();
-        bitBoard.printBitBoard(MoveGenerator.generateMask(bitBoard));
-        System.out.println(bitBoard.getLegalMoves().size());
+        long time = System.currentTimeMillis();
+        System.out.println(perft(bitBoard, 6));
+        System.out.println("Seconds: " + (System.currentTimeMillis() - time) / 1000.0);
 
 
 

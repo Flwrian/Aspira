@@ -65,7 +65,6 @@ public class MoveGenerator {
             while (pawnMoves != 0L) {
                 long move = BitBoard.getLSB(pawnMoves);
                 pawnMoves &= pawnMoves - 1;
-
                 int to = BitBoard.getSquare(move);
                 // System.out.println(board.enPassantSquare);
 
