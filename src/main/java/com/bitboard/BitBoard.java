@@ -1,6 +1,7 @@
 package com.bitboard;
 
 import java.io.PrintWriter;
+import java.util.ArrayDeque;
 import java.util.Stack;
 
 public class BitBoard {
@@ -286,7 +287,7 @@ public class BitBoard {
     public static final int QUEEN = 5;
     public static final int KING = 6;
 
-    private Stack<BoardHistory> history;
+    private ArrayDeque<BoardHistory> history;
 
     
 
@@ -323,7 +324,7 @@ public class BitBoard {
 
         enPassantSquare = 0L;
 
-        history = new Stack<>();
+        history = new ArrayDeque<>();
 
 
     }
@@ -836,156 +837,206 @@ public class BitBoard {
     }
 
     public void makeMove(Move move) {
-    
-        // save 
-        saveBoardHistory(move);
-        
-        // 1. Interpréter le mouvement
-        // int fromSquare = getSquare(move.substring(0, 2));  // par exemple, "e2" -> 12 (case de départ)
-        // int toSquare = getSquare(move.substring(2, 4));    // par exemple, "e4" -> 28 (case d'arrivée)
-        // char promotion = move.length() == 5 ? move.charAt(4) : ' '; // Gestion de la promotion
 
+        // Save the current board state
+        saveBoardHistory(move);
+    
+        // Get the source and destination squares
         int fromSquare = move.from;
         int toSquare = move.to;
-
+    
+        //! a optimiser
         fromSquare = 7 - fromSquare % 8 + fromSquare / 8 * 8;
         toSquare = 7 - toSquare % 8 + toSquare / 8 * 8;
     
-        // 2. Convertir les cases en bitboards
+        // Convert squares to bitboards
         long fromBitboard = 1L << fromSquare;
         long toBitboard = 1L << toSquare;
-
-        handleCapture(toBitboard);
     
-        // 3. Déterminer si la pièce est blanche ou noire
-        boolean isWhite = whiteTurn;
+        
+        // Separate logic for white and black moves
+        if (whiteTurn) {
+            handleCaptureWhite(toBitboard);
+            // Pions blancs
+            if ((whitePawns & fromBitboard) != 0) {
     
-        // 4. Déplacer la pièce
-        if ((whitePawns & fromBitboard) != 0 || (blackPawns & fromBitboard) != 0) {
-            
-            // Gestion de la prise en passant
-            if (move.type == Move.EN_PASSENT) {
-                if (isWhite) {
+                // Handle en passant capture
+                if (move.type == Move.EN_PASSENT) {
                     long capturedPawn = enPassantSquare >> 8;
-                    
                     blackPawns &= ~capturedPawn;
-
+                }
+    
+                // Handle double pawn push
+                if (move.type == Move.DOUBLE_PAWN_PUSH) {
+                    enPassantSquare = toBitboard >> 8;
                 } else {
+                    enPassantSquare = 0L; // Reset en passant square
+                }
+    
+                // Handle promotion
+                if (move.type == Move.PROMOTION) {
+                    switch (move.pieceFrom) {
+                        case PAWN:
+                            whitePawns &= ~toBitboard; break;
+                        case KNIGHT:
+                            whiteKnights |= toBitboard; break;
+                        case BISHOP:
+                            whiteBishops |= toBitboard; break;
+                        case ROOK:
+                            whiteRooks |= toBitboard; break;
+                        case QUEEN:
+                            whiteQueens |= toBitboard; break;
+                    }
+                }
+    
+                // Move pawn
+                whitePawns &= ~fromBitboard;
+                whitePawns |= toBitboard;
+    
+            // Cavaliers blancs
+            } else if ((whiteKnights & fromBitboard) != 0) {
+                whiteKnights &= ~fromBitboard;
+                whiteKnights |= toBitboard;
+    
+            // Fous blancs
+            } else if ((whiteBishops & fromBitboard) != 0) {
+                whiteBishops &= ~fromBitboard;
+                whiteBishops |= toBitboard;
+    
+            // Tours blanches
+            } else if ((whiteRooks & fromBitboard) != 0) {
+                if (fromSquare == 7) whiteCastleQueenSide = 0L;
+                if (fromSquare == 0) whiteCastleKingSide = 0L;
+                whiteRooks &= ~fromBitboard;
+                whiteRooks |= toBitboard;
+    
+            // Dames blanches
+            } else if ((whiteQueens & fromBitboard) != 0) {
+                whiteQueens &= ~fromBitboard;
+                whiteQueens |= toBitboard;
+    
+            // Roi blanc
+            } else if ((whiteKing & fromBitboard) != 0) {
+                if (Math.abs(fromSquare - toSquare) != 2) {
+                    whiteCastleQueenSide = 0L;
+                    whiteCastleKingSide = 0L;
+                    whiteKing &= ~fromBitboard;
+                    whiteKing |= toBitboard;
+                } else {
+                    // Handle castling for white
+                    if (toSquare == 5) {
+                        processWhiteCastleQueenSide(fromBitboard);
+                    } else if (toSquare == 1) {
+                        processWhiteCastleKingSide(fromBitboard);
+                    }
+                }
+            }
+        } else {
+            handleCaptureBlack(toBitboard);
+            // Pions noirs
+            if ((blackPawns & fromBitboard) != 0) {
+    
+                // Handle en passant capture
+                if (move.type == Move.EN_PASSENT) {
                     long capturedPawn = enPassantSquare << 8;
                     whitePawns &= ~capturedPawn;
                 }
-            }
-            movePiece(isWhite ? whitePawns : blackPawns, fromBitboard, toBitboard);
-
-            
-            // Mettre à jour la case en passant si le pion avance de deux cases
-            if (move.type == Move.DOUBLE_PAWN_PUSH) {
-                // System.out.println("524288 = E3");
-                // System.out.println("34 mes couilles = E5");
-                if (isWhite) {
-                    enPassantSquare = toBitboard >> 8;
-                } else {
+    
+                // Handle double pawn push
+                if (move.type == Move.DOUBLE_PAWN_PUSH) {
                     enPassantSquare = toBitboard << 8;
-                }
-                // System.out.println("enPassantSquare = " + enPassantSquare);
-            } else {
-                enPassantSquare = 0L; // Réinitialiser la case en passant
-            }
-
-            // Gestion de la promotion
-            if(move.type == Move.PROMOTION) {
-                if (isWhite) {
-                    int piece = move.pieceFrom;
-                    switch (piece) {
-                        case PAWN: whitePawns &= ~toBitboard; break;
-                        case KNIGHT: whiteKnights |= toBitboard; break;
-                        case BISHOP: whiteBishops |= toBitboard; break;
-                        case ROOK: whiteRooks |= toBitboard; break;
-                        case QUEEN: whiteQueens |= toBitboard; break;
-                    }
                 } else {
-                    int piece = move.pieceFrom;
-                    switch (piece) {
-                        case PAWN: blackPawns &= ~toBitboard; break;
-                        case KNIGHT: blackKnights |= toBitboard; break;
-                        case BISHOP: blackBishops |= toBitboard; break;
-                        case ROOK: blackRooks |= toBitboard; break;
-                        case QUEEN: blackQueens |= toBitboard; break;
+                    enPassantSquare = 0L; // Reset en passant square
+                }
+    
+                // Handle promotion
+                if (move.type == Move.PROMOTION) {
+                    switch (move.pieceFrom) {
+                        case PAWN:
+                            blackPawns &= ~toBitboard; break;
+                        case KNIGHT:
+                            blackKnights |= toBitboard; break;
+                        case BISHOP:
+                            blackBishops |= toBitboard; break;
+                        case ROOK:
+                            blackRooks |= toBitboard; break;
+                        case QUEEN:
+                            blackQueens |= toBitboard; break;
                     }
                 }
-            }
-        } else if ((whiteKnights & fromBitboard) != 0 || (blackKnights & fromBitboard) != 0) {
-            // Cavalier
-            movePiece(isWhite ? whiteKnights : blackKnights, fromBitboard, toBitboard);
-        } else if ((whiteBishops & fromBitboard) != 0 || (blackBishops & fromBitboard) != 0) {
-            // Fou
-            movePiece(isWhite ? whiteBishops : blackBishops, fromBitboard, toBitboard);
-        } else if ((whiteRooks & fromBitboard) != 0 || (blackRooks & fromBitboard) != 0) {
-            // Tour
-            // Gestion des roques
-            if (isWhite) {
-                if (fromSquare == 7) {
-                    whiteCastleQueenSide = 0L;
-                } else if (fromSquare == 0) {
-                    whiteCastleKingSide = 0L;
-                }
-            } else {
-                if (fromSquare == 63) {
-                    blackCastleQueenSide = 0L;
-                } else if (fromSquare == 56) {
-                    blackCastleKingSide = 0L;
-                }
-            }
-            movePiece(isWhite ? whiteRooks : blackRooks, fromBitboard, toBitboard);
-        } else if ((whiteQueens & fromBitboard) != 0 || (blackQueens & fromBitboard) != 0) {
-            // Reine
-            movePiece(isWhite ? whiteQueens : blackQueens, fromBitboard, toBitboard);
-        } else if ((whiteKing & fromBitboard) != 0 || (blackKing & fromBitboard) != 0) {
-            // Roi
-            // si le coup n'est pas un roque
-            if (Math.abs(fromSquare - toSquare) != 2) {
-                movePiece(isWhite ? whiteKing : blackKing, fromBitboard, toBitboard);
-                // Gestion des roques
-                if (isWhite) {
-                    whiteCastleQueenSide = 0L;
-                    whiteCastleKingSide = 0L;
-                } else {
+    
+                // Move pawn
+                blackPawns &= ~fromBitboard;
+                blackPawns |= toBitboard;
+    
+            // Cavaliers noirs
+            } else if ((blackKnights & fromBitboard) != 0) {
+                blackKnights &= ~fromBitboard;
+                blackKnights |= toBitboard;
+    
+            // Fous noirs
+            } else if ((blackBishops & fromBitboard) != 0) {
+                blackBishops &= ~fromBitboard;
+                blackBishops |= toBitboard;
+    
+            // Tours noires
+            } else if ((blackRooks & fromBitboard) != 0) {
+                if (fromSquare == 63) blackCastleQueenSide = 0L;
+                if (fromSquare == 56) blackCastleKingSide = 0L;
+                blackRooks &= ~fromBitboard;
+                blackRooks |= toBitboard;
+    
+            // Dames noires
+            } else if ((blackQueens & fromBitboard) != 0) {
+                blackQueens &= ~fromBitboard;
+                blackQueens |= toBitboard;
+    
+            // Roi noir
+            } else if ((blackKing & fromBitboard) != 0) {
+                if (Math.abs(fromSquare - toSquare) != 2) {
                     blackCastleQueenSide = 0L;
                     blackCastleKingSide = 0L;
-                }
-            } else {
-                // Roque
-                if (isWhite) {
-                    if (toSquare == 5 && whiteCastleQueenSide != 0) {
-                        processWhiteCastleQueenSide(fromBitboard);
-                    } else if (toSquare == 1 && whiteCastleKingSide != 0) {
-                        processWhiteCastleKingSide(fromBitboard);
-                    }
+                    blackKing &= ~fromBitboard;
+                    blackKing |= toBitboard;
                 } else {
-                    if (toSquare == 61 && blackCastleQueenSide != 0) {
+                    // Handle castling for black
+                    if (toSquare == 61) {
                         processBlackCastleQueenSide(fromBitboard);
-                    } else if (toSquare == 57 && blackCastleKingSide != 0) {
-                        processBlackCastleKingSide(fromBitboard);
-                    } else if (toSquare == 57 && blackCastleKingSide != 0) {
+                    } else if (toSquare == 57) {
                         processBlackCastleKingSide(fromBitboard);
                     }
                 }
             }
         }
-
-        // 6. Mettre à jour le tour
+    
+        // Update turn and reset en passant square if not a double pawn push
         whiteTurn = !whiteTurn;
-
-        if(move.type != Move.DOUBLE_PAWN_PUSH) {
+        if (move.type != Move.DOUBLE_PAWN_PUSH) {
             enPassantSquare = 0L;
         }
-
-        
-
+    
+        // Update the bitboard representation
         updateBitBoard();
     }
+    
 
-    public void handleCapture(long toBitboard) {
+    public void handleCaptureWhite(long toBitboard) {
+        if ((blackPawns & toBitboard) != 0) {
+            blackPawns &= ~toBitboard;
+        } else if ((blackKnights & toBitboard) != 0) {
+            blackKnights &= ~toBitboard;
+        } else if ((blackBishops & toBitboard) != 0) {
+            blackBishops &= ~toBitboard;
+        } else if ((blackRooks & toBitboard) != 0) {
+            blackRooks &= ~toBitboard;
+        } else if ((blackQueens & toBitboard) != 0) {
+            blackQueens &= ~toBitboard;
+        } else if ((blackKing & toBitboard) != 0) {
+            blackKing &= ~toBitboard;
+        }
+    }
+
+    public void handleCaptureBlack(long toBitboard) {
         if ((whitePawns & toBitboard) != 0) {
             whitePawns &= ~toBitboard;
         } else if ((whiteKnights & toBitboard) != 0) {
@@ -998,18 +1049,6 @@ public class BitBoard {
             whiteQueens &= ~toBitboard;
         } else if ((whiteKing & toBitboard) != 0) {
             whiteKing &= ~toBitboard;
-        } else if ((blackPawns & toBitboard) != 0) {
-            blackPawns &= ~toBitboard;
-        } else if ((blackKnights & toBitboard) != 0) {
-            blackKnights &= ~toBitboard;
-        } else if ((blackBishops & toBitboard) != 0) {
-            blackBishops &= ~toBitboard;
-        } else if ((blackRooks & toBitboard) != 0) {
-            blackRooks &= ~toBitboard;
-        } else if ((blackQueens & toBitboard) != 0) {
-            blackQueens &= ~toBitboard;
-        } else if ((blackKing & toBitboard) != 0) {
-            blackKing &= ~toBitboard;
         }
     }
 
@@ -1110,67 +1149,6 @@ public class BitBoard {
         blackPieces = blackPawns | blackKnights | blackBishops | blackRooks | blackQueens | blackKing;
 
         bitboard = whitePieces | blackPieces;
-    }
-
-    
-    private void movePiece(long pieceBitboard, long fromBitboard, long toBitboard) {
-        pieceBitboard &= ~fromBitboard;  // Retirer la pièce de la case de départ
-        pieceBitboard |= toBitboard;     // Placer la pièce sur la case d'arrivée
-
-        // Update the piece bitboard
-        if ((whitePawns & fromBitboard) != 0 || (blackPawns & fromBitboard) != 0) {
-            if ((whitePawns & fromBitboard) != 0) {
-                whitePawns &= ~fromBitboard;
-                whitePawns |= toBitboard;
-            } else {
-                blackPawns &= ~fromBitboard;
-                blackPawns |= toBitboard;
-            }
-        } else if ((whiteKnights & fromBitboard) != 0 || (blackKnights & fromBitboard) != 0) {
-            if ((whiteKnights & fromBitboard) != 0) {
-                whiteKnights &= ~fromBitboard;
-                whiteKnights |= toBitboard;
-            } else {
-                blackKnights &= ~fromBitboard;
-                blackKnights |= toBitboard;
-            }
-        } else if ((whiteBishops & fromBitboard) != 0 || (blackBishops & fromBitboard) != 0) {
-            if ((whiteBishops & fromBitboard) != 0) {
-                whiteBishops &= ~fromBitboard;
-                whiteBishops |= toBitboard;
-            } else {
-                blackBishops &= ~fromBitboard;
-                blackBishops |= toBitboard;
-            }
-        } else if ((whiteRooks & fromBitboard) != 0 || (blackRooks & fromBitboard) != 0) {
-            if ((whiteRooks & fromBitboard) != 0) {
-                whiteRooks &= ~fromBitboard;
-                whiteRooks |= toBitboard;
-            } else {
-                blackRooks &= ~fromBitboard;
-                blackRooks |= toBitboard;
-            }
-        } else if ((whiteQueens & fromBitboard) != 0 || (blackQueens & fromBitboard) != 0) {
-            if ((whiteQueens & fromBitboard) != 0) {
-                whiteQueens &= ~fromBitboard;
-                whiteQueens |= toBitboard;
-            } else {
-                blackQueens &= ~fromBitboard;
-                blackQueens |= toBitboard;
-            }
-        } else if ((whiteKing & fromBitboard) != 0 || (blackKing & fromBitboard) != 0) {
-            if ((whiteKing & fromBitboard) != 0) {
-                whiteKing &= ~fromBitboard;
-                whiteKing |= toBitboard;
-            } else {
-                blackKing &= ~fromBitboard;
-                blackKing |= toBitboard;
-            }
-
-        }
-
-        updateBitBoard();
-        
     }
 
     public static long getLSB(long bitboard) {

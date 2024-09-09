@@ -10,7 +10,9 @@ public class Main {
         
         Engine engine = new Engine(game.getBoard());
         // engine.showKnps();
-        int valid = engine.getNbLegalMoves(6);
+        int valid = engine.getNbValidMoves(6);
+        System.out.println(valid);
+        valid = engine.getNbLegalMoves(6);
         System.out.println(valid);
         
         // engine.setAlgorithm(new AlphaBetaPruningAlgorithm(6));
