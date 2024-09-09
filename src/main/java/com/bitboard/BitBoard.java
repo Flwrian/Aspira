@@ -125,6 +125,89 @@ public class BitBoard {
     public static final long G8 = G7 << 8;
     public static final long H8 = H7 << 8;
 
+    // map each square e.g A1 -> 0
+    public static final long[] SQUARES_MAP = {
+        A1, B1, C1, D1, E1, F1, G1, H1,
+        A2, B2, C2, D2, E2, F2, G2, H2,
+        A3, B3, C3, D3, E3, F3, G3, H3,
+        A4, B4, C4, D4, E4, F4, G4, H4,
+        A5, B5, C5, D5, E5, F5, G5, H5,
+        A6, B6, C6, D6, E6, F6, G6, H6,
+        A7, B7, C7, D7, E7, F7, G7, H7,
+        A8, B8, C8, D8, E8, F8, G8, H8
+    };
+
+    // knight pre-encoded moves
+    public static final long[] KNIGHT_MOVES = {
+        ( B3 | C2), 
+        ( C3 | D2 | A3),
+        ( D3 | E2 | A2 | B3),
+        ( E3 | F2 | B2 | C3),
+        ( F3 | G2 | C2 | D3),
+        ( G3 | H2 | D2 | E3),
+        ( H3 | E2 | F3),
+        ( F2 | G3),
+        ( B4 | C3 | C1),
+        ( C4 | D3 | D1 | A4),
+        ( D4 | E3 | E1 | A1 | A3 | B4),
+        ( E4 | F3 | F1 | B1 | B3 | C4),
+        ( F4 | G3 | G1 | C1 | C3 | D4),
+        ( G4 | H3 | H1 | D1 | D3 | E4),
+        ( H4 | E1 | E3 | F4),
+        ( F1 | F3 | G4),
+        ( B5 | C4 | C2 | B1),
+        ( C5 | D4 | D2 | C1 | A1 | A5),
+        ( D5 | E4 | E2 | D1 | B1 | A2 | A4 | B5),
+        ( E5 | F4 | F2 | E1 | C1 | B2 | B4 | C5),
+        ( F5 | G4 | G2 | F1 | D1 | C2 | C4 | D5),
+        ( G5 | H4 | H2 | G1 | E1 | D2 | D4 | E5),
+        ( H5 | H1 | F1 | E2 | E4 | F5),
+        ( G1 | F2 | F4 | G5),
+        ( B6 | C5 | C3 | B2),
+        ( C6 | D5 | D3 | C2 | A2 | A6),
+        ( D6 | E5 | E3 | D2 | B2 | A3 | A5 | B6),
+        ( E6 | F5 | F3 | E2 | C2 | B3 | B5 | C6),
+        ( F6 | G5 | G3 | F2 | D2 | C3 | C5 | D6),
+        ( G6 | H5 | H3 | G2 | E2 | D3 | D5 | E6),
+        ( H6 | H2 | F2 | E3 | E5 | F6),
+        ( G2 | F3 | F5 | G6),
+        ( B7 | C6 | C4 | B3),
+        ( C7 | D6 | D4 | C3 | A3 | A7),
+        ( D7 | E6 | E4 | D3 | B3 | A4 | A6 | B7),
+        ( E7 | F6 | F4 | E3 | C3 | B4 | B6 | C7),
+        ( F7 | G6 | G4 | F3 | D3 | C4 | C6 | D7),
+        ( G7 | H6 | H4 | G3 | E3 | D4 | D6 | E7),
+        ( H7 | H3 | F3 | E4 | E6 | F7),
+        ( G3 | F4 | F6 | G7),
+        ( B8 | C7 | C5 | B4),
+        ( C8 | D7 | D5 | C4 | A4 | A8),
+        ( D8 | E7 | E5 | D4 | B4 | A5 | A7 | B8),
+        ( E8 | F7 | F5 | E4 | C4 | B5 | B7 | C8),
+        ( F8 | G7 | G5 | F4 | D4 | C5 | C7 | D8),
+        ( G8 | H7 | H5 | G4 | E4 | D5 | D7 | E8),
+        ( H8 | H4 | F4 | E5 | E7 | F8),
+        ( G4 | F5 | F7 | G8),
+        ( C8 | C6 | B5),
+        ( D8 | D6 | C5 | A5),
+        ( E8 | E6 | D5 | B5 | A6 | A8),
+        ( F8 | F6 | E5 | C5 | B6 | B8),
+        ( G8 | G6 | F5 | D5 | C6 | C8),
+        ( H8 | H6 | G5 | E5 | D6 | D8),
+        ( H5 | F5 | E6 | E8), 
+        ( G5 | F6 | F8),
+        ( C7 | B6),
+        ( D7 | C6 | A6),
+        ( E7 | D6 | B6 | A7),
+        ( F7 | E6 | C6 | B7),
+        ( G7 | F6 | D6 | C7),
+        ( H7 | G6 | E6 | D7),
+        ( H6 | F6 | E7),
+        ( G6 | F7)
+    };
+    
+    
+
+
     // diagonals and anti-diagonals
     public static final long DIAGONAL_A1_H8 = 0x0102040810204080L;
     public static final long DIAGONAL_A2_G8 = 0x0204081020408000L;
@@ -326,6 +409,9 @@ public class BitBoard {
             col = 0;
         }
 
+        // turn
+        whiteTurn = fenParts[1].equals("w");
+
         // castling rights
         if (fenParts[2].contains("K")) {
             whiteCastleKingSide = 1L;
@@ -353,8 +439,10 @@ public class BitBoard {
 
         // en passant square
         if (!fenParts[3].equals("-")) {
-            int square = getSquare(fenParts[3]);
-            enPassantSquare = 1L << square;
+            System.out.println(fenParts[3]);
+            int file = fenParts[3].charAt(0) - 'a';
+            int rank = fenParts[3].charAt(1) - '1';
+            enPassantSquare = 1L << (rank * 8 + (7 - file));
         } else {
             enPassantSquare = 0L;
         }
@@ -363,7 +451,179 @@ public class BitBoard {
         updateBitBoard();
     }
 
+    public String getFen() {
+        StringBuilder fen = new StringBuilder();
+        for (int i = 0; i < 64; i += 8) {
+            int empty = 0;
+            for (int j = 0; j < 8; j++) {
+                long bitboard = 1L << (63 - (i + j));
+                if ((whitePawns & bitboard) != 0) {
+                    if (empty > 0) {
+                        fen.append(empty);
+                        empty = 0;
+                    }
+                    fen.append("P");
+                } else if ((whiteKnights & bitboard) != 0) {
+                    if (empty > 0) {
+                        fen.append(empty);
+                        empty = 0;
+                    }
+                    fen.append("N");
+                } else if ((whiteBishops & bitboard) != 0) {
+                    if (empty > 0) {
+                        fen.append(empty);
+                        empty = 0;
+                    }
+                    fen.append("B");
+                } else if ((whiteRooks & bitboard) != 0) {
+                    if (empty > 0) {
+                        fen.append(empty);
+                        empty = 0;
+                    }
+                    fen.append("R");
+                } else if ((whiteQueens & bitboard) != 0) {
+                    if (empty > 0) {
+                        fen.append(empty);
+                        empty = 0;
+                    }
+                    fen.append("Q");
+                } else if ((whiteKing & bitboard) != 0) {
+                    if (empty > 0) {
+                        fen.append(empty);
+                        empty = 0;
+                    }
+                    fen.append("K");
+                } else if ((blackPawns & bitboard) != 0) {
+                    if (empty > 0) {
+                        fen.append(empty);
+                        empty = 0;
+                    }
+                    fen.append("p");
+                } else if ((blackKnights & bitboard) != 0) {
+                    if (empty > 0) {
+                        fen.append(empty);
+                        empty = 0;
+                    }
+                    fen.append("n");
+                } else if ((blackBishops & bitboard) != 0) {
+                    if (empty > 0) {
+                        fen.append(empty);
+                        empty = 0;
+                    }
+                    fen.append("b");
+                } else if ((blackRooks & bitboard) != 0) {
+                    if (empty > 0) {
+                        fen.append(empty);
+                        empty = 0;
+                    }
+                    fen.append("r");
+                } else if ((blackQueens & bitboard) != 0) {
+                    if (empty > 0) {
+                        fen.append(empty);
+                        empty = 0;
+                    }
+                    fen.append("q");
+                } else if ((blackKing & bitboard) != 0) {
+                    if (empty > 0) {
+                        fen.append(empty);
+                        empty = 0;
+                    }
+                    fen.append("k");
+                } else {
+                    empty++;
+                }
+            }
+            if (empty > 0) {
+                fen.append(empty);
+            }
+            if (i < 56) {
+                fen.append("/");
+            }
+        }
+
+        fen.append(" ");
+        fen.append(whiteTurn ? "w" : "b");
+        fen.append(" ");
+        if (whiteCastleKingSide == 1L) {
+            fen.append("K");
+        }
+        if (whiteCastleQueenSide == 1L) {
+            fen.append("Q");
+        }
+        if (blackCastleKingSide == 1L) {
+            fen.append("k");
+        }
+        if (blackCastleQueenSide == 1L) {
+            fen.append("q");
+        }
+        if (whiteCastleKingSide == 0L && whiteCastleQueenSide == 0L && blackCastleKingSide == 0L && blackCastleQueenSide == 0L) {
+            fen.append("-");
+        }
+        fen.append(" ");
+        if (enPassantSquare != 0L) {
+            for (int i = 0; i < 64; i++) {
+                if ((enPassantSquare == SQUARES_MAP[i])) {
+                    fen.append((char)('a' + (i % 8)));
+                    fen.append((char)('1' + (i / 8)));
+                }
+            }
+        } else {
+            fen.append("-");
+        }
+        fen.append(" ");
+        fen.append("0");
+        fen.append(" ");
+        fen.append("1");
+
+        return fen.toString();
+    }
+
     public void printBitBoard(long bitBoard) {
+        PrintWriter writer = new PrintWriter(System.out);
+        
+        // Bordure supérieure
+        writer.println("   +-------------------------------+");
+        writer.println("   | a   b   c   d   e   f   g   h |");
+        writer.println("   +-------------------------------+");
+    
+        // Parcourir les rangées de haut en bas
+        for (int rank = 7; rank >= 0; rank--) {
+            writer.print((rank + 1) + "  |"); // Numéro de rangée sur le côté gauche
+            
+            // Parcourir chaque colonne de la rangée
+            for (int file = 7; file >= 0; file--) {
+                int squareIndex = rank * 8 + file;
+                long mask = 1L << squareIndex;
+                
+                if ((bitBoard & mask) != 0) {
+                    writer.print(" 1 ");
+                } else {
+                    writer.print("   ");
+                }
+    
+                // Ajouter un séparateur "|"
+                if (file != 0) {
+                    writer.print("|");
+                }
+            }
+            
+            writer.println("| " + (rank + 1)); // Numéro de rangée sur le côté droit
+    
+            // Ajouter des séparateurs entre les rangées sauf pour la dernière
+            if (rank > 0) {
+                writer.println("   |---|---|---|---|---|---|---|---|");
+            }
+        }
+    
+        // Bordure inférieure
+        writer.println("   +-------------------------------+");
+        writer.println("   | a   b   c   d   e   f   g   h |");
+        writer.println("   +-------------------------------+");
+        
+        writer.flush();
+    }
+
+    public static void printBitBoards(long bitBoard) {
         PrintWriter writer = new PrintWriter(System.out);
         
         // Bordure supérieure
@@ -576,30 +836,47 @@ public class BitBoard {
 
         int fromSquare = move.from;
         int toSquare = move.to;
+
+        fromSquare = 7 - fromSquare % 8 + fromSquare / 8 * 8;
+        toSquare = 7 - toSquare % 8 + toSquare / 8 * 8;
     
-        // 2. Déterminer quelle pièce se déplace
+        // 2. Convertir les cases en bitboards
         long fromBitboard = 1L << fromSquare;
         long toBitboard = 1L << toSquare;
+
+        handleCapture(toBitboard);
     
         // 3. Déterminer si la pièce est blanche ou noire
-        boolean isWhite = (whitePieces & fromBitboard) != 0;
+        boolean isWhite = whiteTurn;
     
         // 4. Déplacer la pièce
         if ((whitePawns & fromBitboard) != 0 || (blackPawns & fromBitboard) != 0) {
-            // Pion
+            
             // Gestion de la prise en passant
-            if ((enPassantSquare & toBitboard) != 0) {
+            if (move.type == Move.EN_PASSENT) {
                 if (isWhite) {
-                    blackPawns &= ~(toBitboard >> 8); // Capturer le pion noir qui est pris en passant
+                    long capturedPawn = enPassantSquare >> 8;
+                    
+                    blackPawns &= ~capturedPawn;
+
                 } else {
-                    whitePawns &= ~(toBitboard << 8); // Capturer le pion blanc qui est pris en passant
+                    long capturedPawn = enPassantSquare << 8;
+                    whitePawns &= ~capturedPawn;
                 }
             }
             movePiece(isWhite ? whitePawns : blackPawns, fromBitboard, toBitboard);
-    
+
+            
             // Mettre à jour la case en passant si le pion avance de deux cases
-            if (Math.abs(fromSquare - toSquare) == 16) {
-                enPassantSquare = isWhite ? (toBitboard >> 8) : (toBitboard << 8);
+            if (move.type == Move.DOUBLE_PAWN_PUSH) {
+                // System.out.println("524288 = E3");
+                // System.out.println("34 mes couilles = E5");
+                if (isWhite) {
+                    enPassantSquare = toBitboard >> 8;
+                } else {
+                    enPassantSquare = toBitboard << 8;
+                }
+                // System.out.println("enPassantSquare = " + enPassantSquare);
             } else {
                 enPassantSquare = 0L; // Réinitialiser la case en passant
             }
@@ -636,15 +913,15 @@ public class BitBoard {
             // Tour
             // Gestion des roques
             if (isWhite) {
-                if (fromSquare == 0) {
+                if (fromSquare == 7) {
                     whiteCastleQueenSide = 0L;
-                } else if (fromSquare == 7) {
+                } else if (fromSquare == 0) {
                     whiteCastleKingSide = 0L;
                 }
             } else {
-                if (fromSquare == 56) {
+                if (fromSquare == 63) {
                     blackCastleQueenSide = 0L;
-                } else if (fromSquare == 63) {
+                } else if (fromSquare == 56) {
                     blackCastleKingSide = 0L;
                 }
             }
@@ -657,6 +934,14 @@ public class BitBoard {
             // si le coup n'est pas un roque
             if (Math.abs(fromSquare - toSquare) != 2) {
                 movePiece(isWhite ? whiteKing : blackKing, fromBitboard, toBitboard);
+                // Gestion des roques
+                if (isWhite) {
+                    whiteCastleQueenSide = 0L;
+                    whiteCastleKingSide = 0L;
+                } else {
+                    blackCastleQueenSide = 0L;
+                    blackCastleKingSide = 0L;
+                }
             } else {
                 // Roque
                 if (isWhite) {
@@ -680,7 +965,57 @@ public class BitBoard {
         // 6. Mettre à jour le tour
         whiteTurn = !whiteTurn;
 
+        if(move.type != Move.DOUBLE_PAWN_PUSH) {
+            enPassantSquare = 0L;
+        }
+
+        
+
         updateBitBoard();
+    }
+
+    public void handleCapture(long toBitboard) {
+        if ((whitePawns & toBitboard) != 0) {
+            whitePawns &= ~toBitboard;
+        } else if ((whiteKnights & toBitboard) != 0) {
+            whiteKnights &= ~toBitboard;
+        } else if ((whiteBishops & toBitboard) != 0) {
+            whiteBishops &= ~toBitboard;
+        } else if ((whiteRooks & toBitboard) != 0) {
+            whiteRooks &= ~toBitboard;
+        } else if ((whiteQueens & toBitboard) != 0) {
+            whiteQueens &= ~toBitboard;
+        } else if ((whiteKing & toBitboard) != 0) {
+            whiteKing &= ~toBitboard;
+        } else if ((blackPawns & toBitboard) != 0) {
+            blackPawns &= ~toBitboard;
+        } else if ((blackKnights & toBitboard) != 0) {
+            blackKnights &= ~toBitboard;
+        } else if ((blackBishops & toBitboard) != 0) {
+            blackBishops &= ~toBitboard;
+        } else if ((blackRooks & toBitboard) != 0) {
+            blackRooks &= ~toBitboard;
+        } else if ((blackQueens & toBitboard) != 0) {
+            blackQueens &= ~toBitboard;
+        } else if ((blackKing & toBitboard) != 0) {
+            blackKing &= ~toBitboard;
+        }
+    }
+
+    public void makeRandomMove() {
+        MoveList moveList = getLegalMoves();
+        if (moveList.size() > 0) {
+            int randomIndex = (int) (Math.random() * moveList.size());
+            makeMove(moveList.get(randomIndex));
+        }
+    }
+
+    public void makeMove(String move) {
+        int fromSquare = getSquare(move.substring(0, 2));
+        int toSquare = getSquare(move.substring(2, 4));
+        int pieceFrom = getPiece(fromSquare);
+        Move m = new Move(fromSquare, toSquare, pieceFrom, pieceFrom);
+        makeMove(m);
     }
 
     // legal moves
@@ -692,7 +1027,7 @@ public class BitBoard {
         for (int i = 0; i < moveList.size(); i++) {
             Move move = moveList.get(i);
             makeMove(move);
-            if (isKingInCheck(whiteTurn)) {
+            if (isKingInCheck(!whiteTurn)) {
                 moveList.remove(i);
                 i--;
             }
@@ -704,12 +1039,10 @@ public class BitBoard {
 
     private boolean isKingInCheck(boolean whiteTurn) {
         // Generate opponent mask attack
-        long opponentAttackMask = MoveGenerator.generateOpponentMask(this);
+        long opponentAttacks = MoveGenerator.generateMask(this, !whiteTurn);
+        long king = whiteTurn ? whiteKing : blackKing;
+        return (opponentAttacks & king) != 0;
 
-        // Get king square
-        long kingSquare = whiteTurn ? whiteKing : blackKing;
-
-        return (opponentAttackMask & kingSquare) != 0;
     }
 
     public void processWhiteCastleKingSide(long fromBitboard) {
@@ -762,14 +1095,7 @@ public class BitBoard {
 
         bitboard = whitePieces | blackPieces;
     }
-    
-    private int getSquare(String position) {
-        // Convertit une position comme "e2" en un index 0-63
-        int file = position.charAt(0) - 'a';  // 'e' -> 4
-        int rank = position.charAt(1) - '1';  // '2' -> 1
-        int result = 8 * rank + (7 - file);   // 8 * 1 + (7 - 4) = 12
-        return result;
-    }
+
     
     private void movePiece(long pieceBitboard, long fromBitboard, long toBitboard) {
         pieceBitboard &= ~fromBitboard;  // Retirer la pièce de la case de départ
@@ -876,11 +1202,25 @@ public class BitBoard {
     }
 
     public static int getSquare(long bitboard) {
-        return Long.numberOfTrailingZeros(bitboard);
+        // use the square map
+        for (int i = 0; i < 64; i++) {
+            if ((SQUARES_MAP[i] & bitboard) != 0) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    private int getSquare(String position) {
+        // Convertit une position comme "e2" en un index 0-63
+        int file = position.charAt(0) - 'a';  // 'e' -> 4
+        int rank = position.charAt(1) - '1';  // '2' -> 1
+        int result = 8 * rank + file;   // 8 * 1 + (7 - 4) = 12
+        return result;
     }
 
     public static int getSquare(int rank, int file) {
-        return 8 * rank + file;
+        return 8 * rank + (7 - file);
     }
 
     public static String getSquareIndexNotation(int square) {
@@ -889,6 +1229,41 @@ public class BitBoard {
         int file = square % 8;
         return files[file] + (rank + 1);
 
+    }
+
+    public void printEnPassantSquare() {
+        for (int i = 0; i < 64; i++) {
+            if ((enPassantSquare == SQUARES_MAP[i])) {
+                System.out.println("En passant square: " + getSquareIndexNotation(i));
+            }
+        }
+    }
+
+    @Override
+    public String toString() {
+        return "Bitboard {" +
+                "whitePawns=" + Long.toBinaryString(whitePawns) +
+                ", whiteKnights=" + Long.toBinaryString(whiteKnights) +
+                ", whiteBishops=" + Long.toBinaryString(whiteBishops) +
+                ", whiteRooks=" + Long.toBinaryString(whiteRooks) +
+                ", whiteKing=" + Long.toBinaryString(whiteKing) +
+                ", whiteQueens=" + Long.toBinaryString(whiteQueens) +
+                ", blackPawns=" + Long.toBinaryString(blackPawns) +
+                ", blackKnights=" + Long.toBinaryString(blackKnights) +
+                ", blackBishops=" + Long.toBinaryString(blackBishops) +
+                ", blackRooks=" + Long.toBinaryString(blackRooks) +
+                ", blackKing=" + Long.toBinaryString(blackKing) +
+                ", blackQueens=" + Long.toBinaryString(blackQueens) +
+                ", whitePieces=" + Long.toBinaryString(whitePieces) +
+                ", blackPieces=" + Long.toBinaryString(blackPieces) +
+                ", bitboard=" + Long.toBinaryString(bitboard) +
+                ", whiteCastleQueenSide=" + Long.toBinaryString(whiteCastleQueenSide) +
+                ", whiteCastleKingSide=" + Long.toBinaryString(whiteCastleKingSide) +
+                ", blackCastleQueenSide=" + Long.toBinaryString(blackCastleQueenSide) +
+                ", blackCastleKingSide=" + Long.toBinaryString(blackCastleKingSide) +
+                ", enPassantSquare=" + Long.toBinaryString(enPassantSquare) +
+                ", whiteTurn=" + whiteTurn +
+                '}';
     }
 
     

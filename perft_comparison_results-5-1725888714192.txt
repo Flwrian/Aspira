@@ -1,0 +1,82 @@
+FEN: rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
+=== Flowgine Perft Results ===
+[PerftDivide]
+[Depth: 5]
+[x]
+h2h3: 181044
+h2h4: 218829
+g2g3: 217210
+g2g4: 214048
+f2f3: 178889
+f2f4: 198473
+e2e3: 402988
+e2e4: 405385
+d2d3: 328511
+d2d4: 361790
+c2c3: 222861
+c2c4: 240082
+b2b3: 215255
+b2b4: 216145
+a2a3: 181046
+a2a4: 217832
+g1h3: 198502
+g1f3: 233491
+b1c3: 234656
+b1a3: 198572
+
+Nodes searched: 4865609
+
+=== StockFish Perft Results ===
+Stockfish 16.1 by the Stockfish developers (see AUTHORS file)
+info string NNUE evaluation using nn-baff1ede1f90.nnue
+info string NNUE evaluation using nn-b1a57edbea57.nnue
+a2a3: 181046
+b2b3: 215255
+c2c3: 222861
+d2d3: 328511
+e2e3: 402988
+f2f3: 178889
+g2g3: 217210
+h2h3: 181044
+a2a4: 217832
+b2b4: 216145
+c2c4: 240082
+d2d4: 361790
+e2e4: 405385
+f2f4: 198473
+g2g4: 214048
+h2h4: 218829
+b1a3: 198572
+b1c3: 234656
+g1f3: 233491
+g1h3: 198502
+
+Nodes searched: 4865609
+
+
+
+=== Comparison of Individual Move Nodes ===
+[ - Depth: 5 - ]
+[v] Flowgine: a2a3 - 181046 | StockFish: a2a3 - 181046
+[v] Flowgine: a2a4 - 217832 | StockFish: a2a4 - 217832
+[v] Flowgine: b1a3 - 198572 | StockFish: b1a3 - 198572
+[v] Flowgine: b1c3 - 234656 | StockFish: b1c3 - 234656
+[v] Flowgine: b2b3 - 215255 | StockFish: b2b3 - 215255
+[v] Flowgine: b2b4 - 216145 | StockFish: b2b4 - 216145
+[v] Flowgine: c2c3 - 222861 | StockFish: c2c3 - 222861
+[v] Flowgine: c2c4 - 240082 | StockFish: c2c4 - 240082
+[v] Flowgine: d2d3 - 328511 | StockFish: d2d3 - 328511
+[v] Flowgine: d2d4 - 361790 | StockFish: d2d4 - 361790
+[v] Flowgine: e2e3 - 402988 | StockFish: e2e3 - 402988
+[v] Flowgine: e2e4 - 405385 | StockFish: e2e4 - 405385
+[v] Flowgine: f2f3 - 178889 | StockFish: f2f3 - 178889
+[v] Flowgine: f2f4 - 198473 | StockFish: f2f4 - 198473
+[v] Flowgine: g1f3 - 233491 | StockFish: g1f3 - 233491
+[v] Flowgine: g1h3 - 198502 | StockFish: g1h3 - 198502
+[v] Flowgine: g2g3 - 217210 | StockFish: g2g3 - 217210
+[v] Flowgine: g2g4 - 214048 | StockFish: g2g4 - 214048
+[v] Flowgine: h2h3 - 181044 | StockFish: h2h3 - 181044
+[v] Flowgine: h2h4 - 218829 | StockFish: h2h4 - 218829
+
+=== Total Nodes Comparison ===
+[*V*] Valid total nodes: 4865609

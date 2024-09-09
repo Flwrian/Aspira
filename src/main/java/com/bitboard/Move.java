@@ -8,9 +8,10 @@ public final class Move {
 
 
     public static final byte DEFAULT = 0;
-    public static final byte EN_PASSENT = 1;
-    public static final byte PROMOTION = 2;
-    public static final byte CASTLING = 3;
+    public static final byte DOUBLE_PAWN_PUSH = 2;
+    public static final byte EN_PASSENT = 3;
+    public static final byte PROMOTION = 4;
+    public static final byte CASTLING = 5;
 
 
     int from;
@@ -39,6 +40,21 @@ public final class Move {
         this.to = to;
         this.pieceFrom = board.getPiece(from);
         this.pieceTo = board.getPiece(to);
+    }
+
+    public Move (String move) {
+        // example move: e2e4
+        int rankFrom = 8 - Character.getNumericValue(move.charAt(1));
+        int fileFrom = move.charAt(0) - 'a';
+        int rankTo = 8 - Character.getNumericValue(move.charAt(3));
+        int fileTo = move.charAt(2) - 'a';
+
+        this.from = (7 - rankFrom) * 8 + fileFrom;
+        this.to = (7 - rankTo) * 8 + fileTo;
+
+        this.pieceFrom = 0;
+        this.pieceTo = 0;
+        System.out.println("Move: " + move + " from: " + from + " to: " + to);
     }
 
 
@@ -161,6 +177,33 @@ public final class Move {
     // string representation of the move
     @Override
     public String toString() {
+        // if (type == CASTLING) {
+        //     return "O-O";
+        // }
+
+        // if (type == EN_PASSENT) {
+        //     return BitBoard.getSquareIndexNotation(from) + "x" + BitBoard.getSquareIndexNotation(to);
+        // }
+
+        // if (type == PROMOTION) {
+        //     String promotionPiece = "";
+        //     switch (pieceTo) {
+        //         case BitBoard.QUEEN:
+        //             promotionPiece = "Q";
+        //             break;
+        //         case BitBoard.ROOK:
+        //             promotionPiece = "R";
+        //             break;
+        //         case BitBoard.BISHOP:
+        //             promotionPiece = "B";
+        //             break;
+        //         case BitBoard.KNIGHT:
+        //             promotionPiece = "N";
+        //             break;
+        //     }
+        //     return BitBoard.getSquareIndexNotation(from) + BitBoard.getSquareIndexNotation(to) + "=" + promotionPiece;
+        // }
+
         return BitBoard.getSquareIndexNotation(from) + BitBoard.getSquareIndexNotation(to);
     }
 

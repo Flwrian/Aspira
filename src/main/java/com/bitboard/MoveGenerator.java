@@ -20,6 +20,10 @@ public class MoveGenerator {
         }
     }
 
+    public static long generateMask(BitBoard board) {
+        return generateMask(board, board.whiteTurn);
+    }
+
     public static void printMask(BitBoard board) {
         long mask = generateOpponentMask(board);
         board.printBitBoard(mask);
@@ -54,8 +58,6 @@ public class MoveGenerator {
 
             // We get the starting square of the pawn
             int from = BitBoard.getSquare(pawn);
-            System.out.println(from);
-
             // We generate the moves for the pawn
             long pawnMoves = generatePawnMoves(pawn, board);
 
@@ -65,35 +67,46 @@ public class MoveGenerator {
                 pawnMoves &= pawnMoves - 1;
 
                 int to = BitBoard.getSquare(move);
+                // System.out.println(board.enPassantSquare);
 
-                // If the move is a promotion, we generate all the possible promotions
-                if (to >= 56 || to <= 7) {
-                    Move promotionQueen = new Move(from, to, board.getPiece(from), board.getPiece(to));
-                    promotionQueen.setType(Move.PROMOTION);
-
-                    Move promotionRook = new Move(from, to, board.getPiece(from), board.getPiece(to));
-                    promotionRook.setType(Move.PROMOTION);
-
-                    Move promotionBishop = new Move(from, to, board.getPiece(from), board.getPiece(to));
-                    promotionBishop.setType(Move.PROMOTION);
-
-                    Move promotionKnight = new Move(from, to, board.getPiece(from), board.getPiece(to));
-                    promotionKnight.setType(Move.PROMOTION);
-
-                    moves.add(promotionQueen);
-                    moves.add(promotionRook);
-                    moves.add(promotionBishop);
-                    moves.add(promotionKnight);
+                // if double pawn push
+                if (Math.abs(from - to) == 16) {
+                    Move doublePawnPush = new Move(from, to, board.getPiece(from), board.getPiece(to));
+                    doublePawnPush.setType(Move.DOUBLE_PAWN_PUSH);
+                    moves.add(doublePawnPush);
                 }
 
-                if (to == board.enPassantSquare) {
-                    Move enPassent = new Move(from, to, board.getPiece(from), board.getPiece(to));
-                    enPassent.setType(Move.EN_PASSENT);
-                    moves.add(enPassent);
-                }
+                else {
+                    // If the move is a promotion, we generate all the possible promotions
+                    if (to >= 56 || to <= 7) {
+                        Move promotionQueen = new Move(from, to, board.getPiece(from), BitBoard.QUEEN);
+                        promotionQueen.setType(Move.PROMOTION);
 
-                Move normalMove = new Move(from, to, board.getPiece(from), board.getPiece(to));
-                moves.add(normalMove);
+                        Move promotionRook = new Move(from, to, board.getPiece(from), BitBoard.ROOK);
+                        promotionRook.setType(Move.PROMOTION);
+
+                        Move promotionBishop = new Move(from, to, board.getPiece(from), BitBoard.BISHOP);
+                        promotionBishop.setType(Move.PROMOTION);
+
+                        Move promotionKnight = new Move(from, to, board.getPiece(from), BitBoard.KNIGHT);
+                        promotionKnight.setType(Move.PROMOTION);
+
+                        moves.add(promotionQueen);
+                        moves.add(promotionRook);
+                        moves.add(promotionBishop);
+                        moves.add(promotionKnight);
+                    }
+
+                    else if (to == BitBoard.getSquare(board.enPassantSquare)) {
+                        Move enPassent = new Move(from, to, board.getPiece(from), board.getPiece(to));
+                        enPassent.setType(Move.EN_PASSENT);
+                        moves.add(enPassent);
+                    }
+                    else {
+                        Move normalMove = new Move(from, to, board.getPiece(from), board.getPiece(to));
+                        moves.add(normalMove);
+                    }
+                }
             }
 
         }
@@ -206,8 +219,11 @@ public class MoveGenerator {
                 moves.add(castling);
             }
 
-            Move normalMove = new Move(from, to, board.getPiece(from), board.getPiece(to));
-            moves.add(normalMove);
+            else{
+                Move normalMove = new Move(from, to, board.getPiece(from), board.getPiece(to));
+                moves.add(normalMove);
+            }
+
         }
 
         return moves;
@@ -305,20 +321,38 @@ public class MoveGenerator {
 
         if (board.whiteTurn) {
             long singlePush = (pawns << 8) & ~board.getBoard();  // Avancer d'une case
-            long doublePush = ((pawns & BitBoard.RANK_2) << 16) & ~board.getBoard();  // Avancer de deux cases depuis la rangée initiale
+            // Avancer de deux cases depuis la rangée initiale mais seulement si les cases sont vides
+            long doublePush = ((pawns << 16) & ~board.getBoard() & (singlePush << 8) & BitBoard.RANK_4);
             pawnMoves |= singlePush | doublePush;
             // Captures diagonales, gauche et droite
-            long capturesLeft = (pawns << 7) & board.getBlackPieces() & ~BitBoard.FILE_H;
-            long capturesRight = (pawns << 9) & board.getBlackPieces() & ~BitBoard.FILE_A;
+            long capturesLeft = (pawns << 7) & board.getBlackPieces() & ~BitBoard.FILE_A;
+            long capturesRight = (pawns << 9) & board.getBlackPieces() & ~BitBoard.FILE_H;
             pawnMoves |= capturesLeft | capturesRight;
+
+            // en passant
+            if (board.enPassantSquare != 0L) {
+                long enPassantLeft = (pawns << 7) & board.enPassantSquare & ~BitBoard.FILE_A;
+                long enPassantRight = (pawns << 9) & board.enPassantSquare & ~BitBoard.FILE_H;
+                pawnMoves |= enPassantLeft | enPassantRight;
+            }
+
         } else {
             long singlePush = (pawns >> 8) & ~board.getBoard();  // Avancer d'une case
-            long doublePush = ((pawns & BitBoard.RANK_7) >> 16) & ~board.getBoard();  // Avancer de deux cases depuis la rangée initiale
+            long doublePush = ((pawns >> 16) & ~board.getBoard() & (singlePush >> 8) & BitBoard.RANK_5);  // Avancer de deux cases depuis la rangée initiale
             pawnMoves |= singlePush | doublePush;
             // Captures diagonales, gauche et droite
-            long capturesLeft = (pawns >> 9) & board.getWhitePieces() & ~BitBoard.FILE_H;
-            long capturesRight = (pawns >> 7) & board.getWhitePieces() & ~BitBoard.FILE_A;
+            long capturesLeft = (pawns >> 7) & board.getWhitePieces() & ~BitBoard.FILE_H;
+            long capturesRight = (pawns >> 9) & board.getWhitePieces() & ~BitBoard.FILE_A;
             pawnMoves |= capturesLeft | capturesRight;
+
+
+            // en passant
+            if (board.enPassantSquare != 0L) {
+                long enPassantLeft = (pawns >> 7) & board.enPassantSquare & ~BitBoard.FILE_H;
+                long enPassantRight = (pawns >> 9) & board.enPassantSquare & ~BitBoard.FILE_A;
+                pawnMoves |= enPassantLeft | enPassantRight;
+            }
+            
         }
 
         return pawnMoves;
@@ -326,22 +360,20 @@ public class MoveGenerator {
     }
 
     public static long generateKnightMask(long knights) {
-        // Le cavalier peut se déplacer en L, 2 cases dans une direction et 1 case dans une autre
-        long knightMoves = 0L;
+        long knightMask = 0L;
 
-        // Déplacements en forme de L
-        long upLeft = (knights << 15) & ~BitBoard.FILE_A & ~BitBoard.FILE_B;
-        long upRight = (knights << 17) & ~BitBoard.FILE_H & ~BitBoard.FILE_G;
-        long leftUp = (knights << 6) & ~BitBoard.FILE_A & ~BitBoard.FILE_B;
-        long rightUp = (knights << 10) & ~BitBoard.FILE_H & ~BitBoard.FILE_G;
-        long downLeft = (knights >> 17) & ~BitBoard.FILE_A & ~BitBoard.FILE_B;
-        long downRight = (knights >> 15) & ~BitBoard.FILE_H & ~BitBoard.FILE_G;
-        long leftDown = (knights >> 10) & ~BitBoard.FILE_A & ~BitBoard.FILE_B;
-        long rightDown = (knights >> 6) & ~BitBoard.FILE_H & ~BitBoard.FILE_G;
+        while (knights != 0L) {
+            long knight = BitBoard.getLSB(knights);
+            knights &= knights - 1; // 
 
-        knightMoves |= upLeft | upRight | leftUp | rightUp | downLeft | downRight | leftDown | rightDown;
+            // run the knight through the precomputed knight moves
+            long knightMoves = BitBoard.KNIGHT_MOVES[BitBoard.getSquare(knight)];
 
-        return knightMoves;
+            knightMask |= knightMoves;
+        }
+
+        return knightMask;
+        
     }
 
     // Generate knight legal moves
@@ -392,7 +424,7 @@ public class MoveGenerator {
             }
 
             while (downLeft != 0L) {
-                downLeft = (downLeft >> 9) & ~BitBoard.FILE_A;
+                downLeft = (downLeft >> 9) & ~BitBoard.FILE_A & ~BitBoard.RANK_8;
                 bishopMask |= downLeft;
                 if ((downLeft & board.getBoard()) != 0L) {
                     break;
@@ -400,7 +432,7 @@ public class MoveGenerator {
             }
 
             while (downRight != 0L) {
-                downRight = (downRight >> 7) & ~BitBoard.FILE_H;
+                downRight = (downRight >> 7) & ~BitBoard.FILE_H & ~BitBoard.RANK_8;
                 bishopMask |= downRight;
                 if ((downRight & board.getBoard()) != 0L) {
                     break;
@@ -519,19 +551,22 @@ public class MoveGenerator {
         return queenMoves;
     }
 
-    private static long generateKingMask(long king, boolean white){
+    public static long generateKingMask(long king, boolean white){
         // Le roi peut se déplacer d'une case dans toutes les directions et peut roquer
         long kingMoves = 0L;
 
         // Déplacements d'une case
-        long up = (king << 8);
-        long down = (king >> 8);
+        long up = (king << 8) & ~BitBoard.RANK_1;
+        long down = (king >> 8) & ~BitBoard.RANK_8;
         long left = (king << 1) & ~BitBoard.FILE_H;
         long right = (king >> 1) & ~BitBoard.FILE_A;
-        long upLeft = (king << 9) & ~BitBoard.FILE_H;
-        long upRight = (king << 7) & ~BitBoard.FILE_A;
-        long downLeft = (king >> 7) & ~BitBoard.FILE_H;
-        long downRight = (king >> 9) & ~BitBoard.FILE_A;
+        
+        // Déplacements en diagonale
+        long upLeft = (king << 7) & ~BitBoard.FILE_A & ~BitBoard.RANK_1;
+        long upRight = (king << 9) & ~BitBoard.FILE_H & ~BitBoard.RANK_1;
+        long downLeft = (king >> 9) & ~BitBoard.FILE_A & ~BitBoard.RANK_8;
+        long downRight = (king >> 7) & ~BitBoard.FILE_H & ~BitBoard.RANK_8;
+
 
         kingMoves |= up | down | left | right | upLeft | upRight | downLeft | downRight;
 
@@ -557,7 +592,7 @@ public class MoveGenerator {
             // Si on a les droits de roquer du côté de du roi
             if(board.whiteCastleKingSide == 1L) {
                 // Si la tour est à sa place
-                if((board.whiteRooks & BitBoard.BLACK_KING_SIDE_ROOK_SQUARE) != 0L) {
+                if((board.whiteRooks & BitBoard.WHITE_KING_SIDE_ROOK_SQUARE) != 0L) {
                     // Si il n'y a pas de pièces entre le roi et la tour
                     if((BitBoard.WHITE_KING_SIDE_CASTLE_EMPTY_SQUARES_MASK & board.getBoard()) == 0L) {
                         // Si les cases ne sont pas attaquées
@@ -572,7 +607,7 @@ public class MoveGenerator {
             // Si on a les droits de roquer du côté de la dame
             if(board.whiteCastleQueenSide == 1L) {
                 // Si la tour est à sa place
-                if((board.whiteRooks & BitBoard.BLACK_QUEEN_SIDE_ROOK_SQUARE) != 0L) {
+                if((board.whiteRooks & BitBoard.WHITE_QUEEN_SIDE_ROOK_SQUARE) != 0L) {
                     // Si il n'y a pas de pièces entre le roi et la tour
                     if((BitBoard.WHITE_QUEEN_SIDE_CASTLE_EMPTY_SQUARES_MASK & board.getBoard()) == 0L) {
                         // Si les cases ne sont pas attaquées
