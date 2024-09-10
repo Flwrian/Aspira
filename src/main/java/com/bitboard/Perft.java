@@ -69,7 +69,7 @@ public class Perft {
         String result = "";
         result += "[PerftDivide]\n";
         result += "[Depth: " + depth + "]\n";
-        result += "[x]\n";
+        result += "[ === ]\n";
 
         MoveList moveList = bitBoard.getLegalMoves();
         long totalNodes = 0;

@@ -205,6 +205,8 @@ public class MoveGenerator {
 
                 int to = BitBoard.getSquare(move);
 
+                
+
                 Move normalMove = new Move(from, to, board.getPiece(from), board.getPiece(to));
                 normalMove.setWhite(board.whiteTurn);
 
@@ -245,6 +247,168 @@ public class MoveGenerator {
         return moves;
 
     }
+
+    public static MoveList generateCaptureMoves(BitBoard board) {
+        MoveList captureMoves = new MoveList(218);
+    
+        // Pawns
+        long pawns = board.whiteTurn ? board.getWhitePawns() : board.getBlackPawns();
+        while (pawns != 0L) {
+            long pawn = BitBoard.getLSB(pawns);
+            pawns &= pawns - 1;
+    
+            int from = BitBoard.getSquare(pawn);
+            long pawnMoves = generatePawnMoves(pawn, board);
+    
+            while (pawnMoves != 0L) {
+                long move = BitBoard.getLSB(pawnMoves);
+                pawnMoves &= pawnMoves - 1;
+                int to = BitBoard.getSquare(move);
+    
+                // Vérifie s'il s'agit d'une capture
+                if (board.getPiece(to) != BitBoard.EMPTY) {
+                    if (to >= 56 || to <= 7) {  // Promotion capture
+                        Move captureQueen = new Move(from, to, board.getPiece(from), board.getPiece(to));
+                        captureQueen.setType(Move.PROMOTION);
+                        captureQueen.setWhite(board.whiteTurn);
+                        captureMoves.add(captureQueen);
+    
+                        Move captureRook = new Move(from, to, board.getPiece(from), board.getPiece(to));
+                        captureRook.setType(Move.PROMOTION);
+                        captureRook.setWhite(board.whiteTurn);
+                        captureMoves.add(captureRook);
+    
+                        Move captureBishop = new Move(from, to, board.getPiece(from), board.getPiece(to));
+                        captureBishop.setType(Move.PROMOTION);
+                        captureBishop.setWhite(board.whiteTurn);
+                        captureMoves.add(captureBishop);
+    
+                        Move captureKnight = new Move(from, to, board.getPiece(from), board.getPiece(to));
+                        captureKnight.setType(Move.PROMOTION);
+                        captureKnight.setWhite(board.whiteTurn);
+                        captureMoves.add(captureKnight);
+                    } else {
+                        Move captureMove = new Move(from, to, board.getPiece(from), board.getPiece(to));
+                        captureMove.setWhite(board.whiteTurn);
+                        captureMoves.add(captureMove);
+                    }
+                }
+            }
+        }
+    
+        // Knights
+        long knights = board.whiteTurn ? board.getWhiteKnights() : board.getBlackKnights();
+        while (knights != 0L) {
+            long knight = BitBoard.getLSB(knights);
+            knights &= knights - 1;
+    
+            int from = BitBoard.getSquare(knight);
+            long knightMoves = board.whiteTurn ? generateWhiteKnightMoves(knight, board) : generateBlackKnightMoves(knight, board);
+    
+            while (knightMoves != 0L) {
+                long move = BitBoard.getLSB(knightMoves);
+                knightMoves &= knightMoves - 1;
+    
+                int to = BitBoard.getSquare(move);
+    
+                if (board.getPiece(to) != BitBoard.EMPTY) { // Capture only
+                    Move captureMove = new Move(from, to, board.getPiece(from), board.getPiece(to));
+                    captureMove.setWhite(board.whiteTurn);
+                    captureMoves.add(captureMove);
+                }
+            }
+        }
+    
+        // Bishops
+        long bishops = board.whiteTurn ? board.getWhiteBishops() : board.getBlackBishops();
+        while (bishops != 0L) {
+            long bishop = BitBoard.getLSB(bishops);
+            bishops &= bishops - 1;
+    
+            int from = BitBoard.getSquare(bishop);
+            long bishopMoves = board.whiteTurn ? generateWhiteBishopMoves(bishop, board) : generateBlackBishopMoves(bishop, board);
+    
+            while (bishopMoves != 0L) {
+                long move = BitBoard.getLSB(bishopMoves);
+                bishopMoves &= bishopMoves - 1;
+    
+                int to = BitBoard.getSquare(move);
+    
+                if (board.getPiece(to) != BitBoard.EMPTY) {  // Capture only
+                    Move captureMove = new Move(from, to, board.getPiece(from), board.getPiece(to));
+                    captureMove.setWhite(board.whiteTurn);
+                    captureMoves.add(captureMove);
+                }
+            }
+        }
+    
+        // Rooks
+        long rooks = board.whiteTurn ? board.getWhiteRooks() : board.getBlackRooks();
+        while (rooks != 0L) {
+            long rook = BitBoard.getLSB(rooks);
+            rooks &= rooks - 1;
+    
+            int from = BitBoard.getSquare(rook);
+            long rookMoves = board.whiteTurn ? generateWhiteRookMoves(rook, board) : generateBlackRookMoves(rook, board);
+    
+            while (rookMoves != 0L) {
+                long move = BitBoard.getLSB(rookMoves);
+                rookMoves &= rookMoves - 1;
+    
+                int to = BitBoard.getSquare(move);
+    
+                if (board.getPiece(to) != BitBoard.EMPTY) {  // Capture only
+                    Move captureMove = new Move(from, to, board.getPiece(from), board.getPiece(to));
+                    captureMove.setWhite(board.whiteTurn);
+                    captureMoves.add(captureMove);
+                }
+            }
+        }
+    
+        // Queens
+        long queens = board.whiteTurn ? board.getWhiteQueens() : board.getBlackQueens();
+        while (queens != 0L) {
+            long queen = BitBoard.getLSB(queens);
+            queens &= queens - 1;
+    
+            int from = BitBoard.getSquare(queen);
+            long queenMoves = board.whiteTurn ? generateWhiteQueenMoves(queen, board) : generateBlackQueenMoves(queen, board);
+    
+            while (queenMoves != 0L) {
+                long move = BitBoard.getLSB(queenMoves);
+                queenMoves &= queenMoves - 1;
+    
+                int to = BitBoard.getSquare(move);
+    
+                if (board.getPiece(to) != BitBoard.EMPTY) {  // Capture only
+                    Move captureMove = new Move(from, to, board.getPiece(from), board.getPiece(to));
+                    captureMove.setWhite(board.whiteTurn);
+                    captureMoves.add(captureMove);
+                }
+            }
+        }
+    
+        // Kings
+        long king = board.whiteTurn ? board.getWhiteKing() : board.getBlackKing();
+        int from = BitBoard.getSquare(king);
+        long kingMoves = generateKingMoves(king, board.whiteTurn, board);
+    
+        while (kingMoves != 0L) {
+            long move = BitBoard.getLSB(kingMoves);
+            kingMoves &= kingMoves - 1;
+    
+            int to = BitBoard.getSquare(move);
+    
+            if (board.getPiece(to) != BitBoard.EMPTY) {  // Capture only
+                Move captureMove = new Move(from, to, board.getPiece(from), board.getPiece(to));
+                captureMove.setWhite(board.whiteTurn);
+                captureMoves.add(captureMove);
+            }
+        }
+    
+        return captureMoves;
+    }
+    
 
     public static void countMoves(BitBoard board) {
         MoveList moves = generateMoves(board);

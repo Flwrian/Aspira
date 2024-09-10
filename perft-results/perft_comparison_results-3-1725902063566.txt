@@ -1,0 +1,83 @@
+FEN: rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
+=== Flowgine Perft Results ===
+[ 23 ms ]
+[PerftDivide]
+[Depth: 3]
+[ === ]
+h2h3: 380
+h2h4: 420
+g2g3: 420
+g2g4: 421
+f2f3: 380
+f2f4: 401
+e2e3: 599
+e2e4: 600
+d2d3: 539
+d2d4: 560
+c2c3: 420
+c2c4: 441
+b2b3: 420
+b2b4: 421
+a2a3: 380
+a2a4: 420
+g1h3: 400
+g1f3: 440
+b1c3: 440
+b1a3: 400
+
+Nodes searched: 8902
+
+=== StockFish Perft Results ===
+Stockfish 16.1 by the Stockfish developers (see AUTHORS file)
+info string NNUE evaluation using nn-baff1ede1f90.nnue
+info string NNUE evaluation using nn-b1a57edbea57.nnue
+a2a3: 380
+b2b3: 420
+c2c3: 420
+d2d3: 539
+e2e3: 599
+f2f3: 380
+g2g3: 420
+h2h3: 380
+a2a4: 420
+b2b4: 421
+c2c4: 441
+d2d4: 560
+e2e4: 600
+f2f4: 401
+g2g4: 421
+h2h4: 420
+b1a3: 400
+b1c3: 440
+g1f3: 440
+g1h3: 400
+
+Nodes searched: 8902
+
+
+
+=== Comparison of Individual Move Nodes ===
+[ - Depth: 3 - ]
+[v] Flowgine: a2a3 - 380 | StockFish: a2a3 - 380
+[v] Flowgine: a2a4 - 420 | StockFish: a2a4 - 420
+[v] Flowgine: b1a3 - 400 | StockFish: b1a3 - 400
+[v] Flowgine: b1c3 - 440 | StockFish: b1c3 - 440
+[v] Flowgine: b2b3 - 420 | StockFish: b2b3 - 420
+[v] Flowgine: b2b4 - 421 | StockFish: b2b4 - 421
+[v] Flowgine: c2c3 - 420 | StockFish: c2c3 - 420
+[v] Flowgine: c2c4 - 441 | StockFish: c2c4 - 441
+[v] Flowgine: d2d3 - 539 | StockFish: d2d3 - 539
+[v] Flowgine: d2d4 - 560 | StockFish: d2d4 - 560
+[v] Flowgine: e2e3 - 599 | StockFish: e2e3 - 599
+[v] Flowgine: e2e4 - 600 | StockFish: e2e4 - 600
+[v] Flowgine: f2f3 - 380 | StockFish: f2f3 - 380
+[v] Flowgine: f2f4 - 401 | StockFish: f2f4 - 401
+[v] Flowgine: g1f3 - 440 | StockFish: g1f3 - 440
+[v] Flowgine: g1h3 - 400 | StockFish: g1h3 - 400
+[v] Flowgine: g2g3 - 420 | StockFish: g2g3 - 420
+[v] Flowgine: g2g4 - 421 | StockFish: g2g4 - 421
+[v] Flowgine: h2h3 - 380 | StockFish: h2h3 - 380
+[v] Flowgine: h2h4 - 420 | StockFish: h2h4 - 420
+
+=== Total Nodes Comparison ===
+[*V*] Valid total nodes: 8902

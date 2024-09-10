@@ -280,6 +280,7 @@ public class BitBoard {
     public static final long BLACK_KING_SIDE_CASTLE_NEED_TO_NOT_BE_ATTACKED_MASK = 0xE00000000000000L;
     public static final long BLACK_QUEEN_SIDE_CASTLE_NEED_TO_NOT_BE_ATTACKED_MASK = 0x3800000000000000L;
 
+    public static final int EMPTY = 0;
     public static final int PAWN = 1;
     public static final int KNIGHT = 2;
     public static final int BISHOP = 3;
@@ -292,6 +293,7 @@ public class BitBoard {
     
 
     public static final String INITIAL_STARTING_POSITION = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+
 
     public BitBoard() {
 
@@ -768,6 +770,7 @@ public class BitBoard {
 
     // Get the white pieces bitboard
     public long getWhitePieces() {
+        updateBitBoard();
         return whitePieces;
     }
 
@@ -1077,12 +1080,12 @@ public class BitBoard {
         }
     }
 
-    public void makeRandomMove() {
+    public Move makeRandomMove() {
         MoveList moveList = getLegalMoves();
-        if (moveList.size() > 0) {
-            int randomIndex = (int) (Math.random() * moveList.size());
-            makeMove(moveList.get(randomIndex));
-        }
+        int randomIndex = (int) (Math.random() * moveList.size());
+        Move move = moveList.get(randomIndex);
+        makeMove(move);
+        return move;
     }
 
     public void makeMove(String move) {
@@ -1149,7 +1152,19 @@ public class BitBoard {
         return moveList;
     }
 
-    private boolean isKingInCheck(boolean whiteTurn) {
+    // pseudo legal
+    public boolean isCheckMate() {
+        MoveList moveList = getLegalMoves();
+        return moveList.size() == 0 && isKingInCheck(whiteTurn);
+    }
+
+    // pseudo legal
+    public boolean isStaleMate() {
+        MoveList moveList = getPseudoLegalMoves();
+        return moveList.size() == 0 && !isKingInCheck(whiteTurn);
+    }
+
+    public boolean isKingInCheck(boolean whiteTurn) {
         // Generate opponent mask attack
         long opponentAttacks = MoveGenerator.generateMask(this, !whiteTurn);
         long king = whiteTurn ? whiteKing : blackKing;
@@ -1303,6 +1318,7 @@ public class BitBoard {
         }
     }
 
+
     @Override
     public String toString() {
         return "Bitboard {" +
@@ -1328,6 +1344,57 @@ public class BitBoard {
                 ", enPassantSquare=" + Long.toBinaryString(enPassantSquare) +
                 ", whiteTurn=" + whiteTurn +
                 '}';
+    }
+
+    public MoveList getCaptureMoves() {
+        MoveList moveList = getLegalMoves();
+        MoveList captureMoves = new MoveList(218);
+        for (Move move : moveList) {
+            if (isCaptureMove(move)) {
+                captureMoves.add(move);
+            }
+        }
+        System.out.println("Capture moves: " + captureMoves);
+        return captureMoves;
+    }
+
+    private boolean isCaptureMove(Move move) {
+        int toSquare = move.to;
+        long toBitboard = 1L << toSquare;
+        if (whiteTurn) {
+            if ((blackPawns & toBitboard) != 0) {
+                return true;
+            } else if ((blackKnights & toBitboard) != 0) {
+                return true;
+            } else if ((blackBishops & toBitboard) != 0) {
+                return true;
+            } else if ((blackRooks & toBitboard) != 0) {
+                return true;
+            } else if ((blackQueens & toBitboard) != 0) {
+                return true;
+            } else if ((blackKing & toBitboard) != 0) {
+                return true;
+            }
+        } else {
+            if ((whitePawns & toBitboard) != 0) {
+                return true;
+            } else if ((whiteKnights & toBitboard) != 0) {
+                return true;
+            } else if ((whiteBishops & toBitboard) != 0) {
+                return true;
+            } else if ((whiteRooks & toBitboard) != 0) {
+                return true;
+            } else if ((whiteQueens & toBitboard) != 0) {
+                return true;
+            } else if ((whiteKing & toBitboard) != 0) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public boolean isWhite(long piece) {
+        return (whitePieces & piece) != 0;
     }
 
     
