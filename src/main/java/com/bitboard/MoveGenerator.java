@@ -641,15 +641,15 @@ public class MoveGenerator {
 
             // Déplacements en diagonale
             while (upLeft != 0L) {
-                upLeft = (upLeft << 7) & ~BitBoard.FILE_A;
+                upLeft = (upLeft << 7) & ~BitBoard.FILE_A & ~BitBoard.RANK_1;
                 bishopMask |= upLeft;
                 if ((upLeft & board.getBoard()) != 0L) {
                     break;
                 }
             }
-
+            
             while (upRight != 0L) {
-                upRight = (upRight << 9) & ~BitBoard.FILE_H;
+                upRight = (upRight << 9) & ~BitBoard.FILE_H & ~BitBoard.RANK_1;
                 bishopMask |= upRight;
                 if ((upRight & board.getBoard()) != 0L) {
                     break;

@@ -55,14 +55,14 @@ public class BitBoard {
     public static final long FILE_B = 0x4040404040404040L;
     public static final long FILE_A = 0x8080808080808080L;
 
-    public static final long A1 = 0b10000000L;
-    public static final long B1 = A1 >>> 1;
-    public static final long C1 = B1 >>> 1;
-    public static final long D1 = C1 >>> 1;
-    public static final long E1 = D1 >>> 1;
-    public static final long F1 = E1 >>> 1;
-    public static final long G1 = F1 >>> 1;
-    public static final long H1 = G1 >>> 1;
+    public static final long A1 = 0b1L;
+    public static final long B1 = A1 << 1;
+    public static final long C1 = B1 << 1;
+    public static final long D1 = C1 << 1;
+    public static final long E1 = D1 << 1;
+    public static final long F1 = E1 << 1;
+    public static final long G1 = F1 << 1;
+    public static final long H1 = G1 << 1;
 
     public static final long A2 = A1 << 8;
     public static final long B2 = B1 << 8;
@@ -140,14 +140,14 @@ public class BitBoard {
     };
 
     public static final int[] SQUARES_INDEX_MAP = {
-        7, 6, 5, 4, 3, 2, 1, 0,
-        15, 14, 13, 12, 11, 10, 9, 8,
-        23, 22, 21, 20, 19, 18, 17, 16,
-        31, 30, 29, 28, 27, 26, 25, 24,
-        39, 38, 37, 36, 35, 34, 33, 32,
-        47, 46, 45, 44, 43, 42, 41, 40,
-        55, 54, 53, 52, 51, 50, 49, 48,
-        63, 62, 61, 60, 59, 58, 57, 56
+        0, 1, 2, 3, 4, 5, 6, 7,
+        8, 9, 10, 11, 12, 13, 14, 15,
+        16, 17, 18, 19, 20, 21, 22, 23,
+        24, 25, 26, 27, 28, 29, 30, 31,
+        32, 33, 34, 35, 36, 37, 38, 39,
+        40, 41, 42, 43, 44, 45, 46, 47,
+        48, 49, 50, 51, 52, 53, 54, 55,
+        56, 57, 58, 59, 60, 61, 62, 63
     };
 
     // knight pre-encoded moves
@@ -217,36 +217,7 @@ public class BitBoard {
         ( H6 | F6 | E7),
         ( G6 | F7)
     };
-    
-    
 
-
-    // diagonals and anti-diagonals
-    public static final long DIAGONAL_A1_H8 = 0x0102040810204080L;
-    public static final long DIAGONAL_A2_G8 = 0x0204081020408000L;
-    public static final long DIAGONAL_A3_F8 = 0x0408102040800000L;
-    public static final long DIAGONAL_A4_E8 = 0x0810204080000000L;
-    public static final long DIAGONAL_A5_D8 = 0x1020408000000000L;
-    public static final long DIAGONAL_A6_C8 = 0x2040800000000000L;
-    public static final long DIAGONAL_A7_B8 = 0x4080000000000000L;
-    public static final long DIAGONAL_A8_A8 = 0x8000000000000000L;
-
-    public static final long DIAGONAL_B1_H7 = 0x0001020408102040L;
-    public static final long DIAGONAL_C1_H6 = 0x0000010204081020L;
-    public static final long DIAGONAL_D1_H5 = 0x0000000102040810L;
-    public static final long DIAGONAL_E1_H4 = 0x0000000001020408L;
-    public static final long DIAGONAL_F1_H3 = 0x0000000000010204L;
-    public static final long DIAGONAL_G1_H2 = 0x0000000000000102L;
-    public static final long DIAGONAL_H1_H1 = 0x0000000000000001L;
-
-    public static final long DIAGONAL_H1_A8 = 0x8040201008040201L;
-    public static final long DIAGONAL_G1_A7 = 0x4020100804020100L;
-    public static final long DIAGONAL_F1_A6 = 0x2010080402010000L;
-    public static final long DIAGONAL_E1_A5 = 0x1008040201000000L;
-    public static final long DIAGONAL_D1_A4 = 0x0804020100000000L;
-    public static final long DIAGONAL_C1_A3 = 0x0402010000000000L;
-    public static final long DIAGONAL_B1_A2 = 0x0201000000000000L;
-    public static final long DIAGONAL_A1_A1 = 0x0100000000000000L;
 
 
     // valid
@@ -303,19 +274,26 @@ public class BitBoard {
         whiteTurn = true;
 
         // Initialisation des pièces à leurs positions de départ
-        whitePawns = 0x000000000000FF00L;
-        whiteKnights = 0x0000000000000042L;
-        whiteBishops = 0x0000000000000024L;
-        whiteRooks = 0x0000000000000081L;
-        whiteKing = 0x0000000000000008L;
-        whiteQueens = 0x0000000000000010L;
+        whitePawns = A2 | B2 | C2 | D2 | E2 | F2 | G2 | H2;
+        whiteKnights = B1 | G1;
+        whiteBishops = C1 | F1;
+        whiteRooks = A1 | H1;
+        whiteQueens = D1;
+        whiteKing = E1;
 
-        blackPawns = 0x00FF000000000000L;
-        blackKnights = 0x4200000000000000L;
-        blackBishops = 0x2400000000000000L;
-        blackRooks = 0x8100000000000000L;
-        blackKing = 0x0800000000000000L;
-        blackQueens = 0x1000000000000000L;
+        blackPawns = A7 | B7 | C7 | D7 | E7 | F7 | G7 | H7;
+        blackKnights = B8 | G8;
+        blackBishops = C8 | F8;
+        blackRooks = A8 | H8;
+        blackQueens = D8;
+        blackKing = E8;
+
+        printBitBoard(whitePawns);
+        printBitBoard(whiteKnights);
+        printBitBoard(whiteBishops);
+        printBitBoard(whiteRooks);
+        printBitBoard(whiteQueens);
+        printBitBoard(whiteKing);
 
         whitePieces = whitePawns | whiteKnights | whiteBishops | whiteRooks | whiteQueens | whiteKing;
         blackPieces = blackPawns | blackKnights | blackBishops | blackRooks | blackQueens | blackKing;
@@ -431,7 +409,7 @@ public class BitBoard {
                 if (Character.isDigit(c)) {
                     col += Character.getNumericValue(c);
                 } else {
-                    long bitboard = 1L << (63 - (row * 8 + col));
+                    long bitboard = 1L << (row * 8 + col);
                     switch (c) {
                         case 'P': whitePawns |= bitboard; break;
                         case 'N': whiteKnights |= bitboard; break;
@@ -500,6 +478,7 @@ public class BitBoard {
         for (int i = 0; i < 64; i += 8) {
             int empty = 0;
             for (int j = 0; j < 8; j++) {
+                // Invert the index to start from the top left corner
                 long bitboard = 1L << (63 - (i + j));
                 if ((whitePawns & bitboard) != 0) {
                     if (empty > 0) {
@@ -636,7 +615,10 @@ public class BitBoard {
             
             // Parcourir chaque colonne de la rangée
             for (int file = 7; file >= 0; file--) {
-                int squareIndex = rank * 8 + file;
+                // int squareIndex = rank * 8 + file;
+                // mirror the files horizontally
+                int squareIndex = rank * 8 + (7 - file);
+
                 long mask = 1L << squareIndex;
                 
                 if ((bitBoard & mask) != 0) {
@@ -1270,7 +1252,7 @@ public class BitBoard {
     }
 
     public static long getLSB(long bitboard) {
-        return bitboard & -bitboard;
+        return Long.lowestOneBit(bitboard);
     }
 
     public static long getMSB(long bitboard) {
@@ -1324,16 +1306,7 @@ public class BitBoard {
     // }
 
     public static int getSquare(long bitboard) {
-        int lsbPosition = Long.numberOfTrailingZeros(bitboard);
-
-        // Calculer la ligne et la colonne
-        int row = lsbPosition / 8;  // Ligne (de 0 à 7)
-        int col = lsbPosition % 8;  // Colonne (de 0 à 7)
-
-        // Miroir horizontal: inverser la colonne mais garder la ligne
-        int mirroredSquare = (row * 8) + (7 - col);
-        
-        return mirroredSquare;
+        return Long.numberOfTrailingZeros(bitboard);
     }
 
     private int getSquare(String position) {
