@@ -221,36 +221,36 @@ public class BitBoard {
 
 
     // valid
-    public static final long WHITE_KING_SIDE_CASTLE_KING_SQUARE = 0x0000000000000002L;
-    public static final long BLACK_KING_SIDE_CASTLE_KING_SQUARE = 0x0200000000000000L;
+    public static final long WHITE_KING_SIDE_CASTLE_KING_SQUARE = G1;
+    public static final long BLACK_KING_SIDE_CASTLE_KING_SQUARE = G8;
 
     // valid
-    public static final long WHITE_QUEEN_SIDE_CASTLE_KING_SQUARE = 0x0000000000000020L;
-    public static final long BLACK_QUEEN_SIDE_CASTLE_KING_SQUARE = 0x2000000000000000L;
+    public static final long WHITE_QUEEN_SIDE_CASTLE_KING_SQUARE = C1;
+    public static final long BLACK_QUEEN_SIDE_CASTLE_KING_SQUARE = 0x2000000000000000L | C8;
 
     // valid
-    public static final long WHITE_KING_SIDE_ROOK_SQUARE = 0x0000000000000001L;
-    public static final long WHITE_QUEEN_SIDE_ROOK_SQUARE = 0x0000000000000080L;
+    public static final long WHITE_KING_SIDE_ROOK_SQUARE = H1;
+    public static final long WHITE_QUEEN_SIDE_ROOK_SQUARE = A1;
 
     // valid
-    public static final long BLACK_KING_SIDE_ROOK_SQUARE = 0x0100000000000000L;
-    public static final long BLACK_QUEEN_SIDE_ROOK_SQUARE = 0x8000000000000000L;
+    public static final long BLACK_KING_SIDE_ROOK_SQUARE = H8;
+    public static final long BLACK_QUEEN_SIDE_ROOK_SQUARE = A8;
 
     // valid
-    public static final long WHITE_KING_SIDE_CASTLE_EMPTY_SQUARES_MASK = 0b110L;
-    public static final long WHITE_QUEEN_SIDE_CASTLE_EMPTY_SQUARES_MASK = 0b1110000L;
+    public static final long WHITE_KING_SIDE_CASTLE_EMPTY_SQUARES_MASK = F1 | G1;
+    public static final long WHITE_QUEEN_SIDE_CASTLE_EMPTY_SQUARES_MASK = B1 | C1 | D1;
 
     // valid
-    public static final long BLACK_KING_SIDE_CASTLE_EMPTY_SQUARES_MASK = 0x600000000000000L;
-    public static final long BLACK_QUEEN_SIDE_CASTLE_EMPTY_SQUARES_MASK = 0x7000000000000000L;
+    public static final long BLACK_KING_SIDE_CASTLE_EMPTY_SQUARES_MASK = F8 | G8;
+    public static final long BLACK_QUEEN_SIDE_CASTLE_EMPTY_SQUARES_MASK = B8 | C8 | D8;
 
     // valid
-    public static final long WHITE_KING_SIDE_CASTLE_NEED_TO_NOT_BE_ATTACKED_MASK = 0b1110L;
-    public static final long WHITE_QUEEN_SIDE_CASTLE_NEED_TO_NOT_BE_ATTACKED_MASK = 0b111000L;
+    public static final long WHITE_KING_SIDE_CASTLE_NEED_TO_NOT_BE_ATTACKED_MASK = G1 | F1;
+    public static final long WHITE_QUEEN_SIDE_CASTLE_NEED_TO_NOT_BE_ATTACKED_MASK = D1 | C1;
 
     // valid
-    public static final long BLACK_KING_SIDE_CASTLE_NEED_TO_NOT_BE_ATTACKED_MASK = 0xE00000000000000L;
-    public static final long BLACK_QUEEN_SIDE_CASTLE_NEED_TO_NOT_BE_ATTACKED_MASK = 0x3800000000000000L;
+    public static final long BLACK_KING_SIDE_CASTLE_NEED_TO_NOT_BE_ATTACKED_MASK =  G8 | F8;
+    public static final long BLACK_QUEEN_SIDE_CASTLE_NEED_TO_NOT_BE_ATTACKED_MASK = D8 | C8;
 
     public static final int EMPTY = 0;
     public static final int PAWN = 1;
@@ -409,7 +409,7 @@ public class BitBoard {
                 if (Character.isDigit(c)) {
                     col += Character.getNumericValue(c);
                 } else {
-                    long bitboard = 1L << (row * 8 + col);
+                    long bitboard = 1L << 63 - (row * 8 + (7 - col));
                     switch (c) {
                         case 'P': whitePawns |= bitboard; break;
                         case 'N': whiteKnights |= bitboard; break;
@@ -478,8 +478,7 @@ public class BitBoard {
         for (int i = 0; i < 64; i += 8) {
             int empty = 0;
             for (int j = 0; j < 8; j++) {
-                // Invert the index to start from the top left corner
-                long bitboard = 1L << (63 - (i + j));
+                long bitboard = 1L << 63 - (i + (7 - j));
                 if ((whitePawns & bitboard) != 0) {
                     if (empty > 0) {
                         fen.append(empty);
@@ -615,9 +614,7 @@ public class BitBoard {
             
             // Parcourir chaque colonne de la rangée
             for (int file = 7; file >= 0; file--) {
-                // int squareIndex = rank * 8 + file;
-                // mirror the files horizontally
-                int squareIndex = rank * 8 + (7 - file);
+                int squareIndex = rank * 8 + file;
 
                 long mask = 1L << squareIndex;
                 
@@ -651,9 +648,9 @@ public class BitBoard {
     
     
     
-
+    
     public void printChessBoard() {
-        String[] pieces = {"P", "N", "B", "R", "K", "Q", "p", "n", "b", "r", "K", "Q"};
+        String[] pieces = {"P", "N", "B", "R", "Q", "K", "p", "n", "b", "r", "q", "k"};
         String[] board = new String[64];
     
         // Remplir le tableau board avec les pièces ou des points pour les cases vides
@@ -699,7 +696,7 @@ public class BitBoard {
             
             // Parcourir chaque colonne de la rangée
             for (int file = 7; file >= 0; file--) {
-                int squareIndex = rank * 8 + file;
+                int squareIndex = rank * 8 + (7 - file);
                 System.out.print(" " + board[squareIndex] + " ");
                 
                 // Ajouter un séparateur "|"
@@ -824,10 +821,6 @@ public class BitBoard {
         int fromSquare = move.from;
         int toSquare = move.to;
     
-        //! a optimiser
-        fromSquare = 7 - fromSquare % 8 + fromSquare / 8 * 8;
-        toSquare = 7 - toSquare % 8 + toSquare / 8 * 8;
-    
         // Convert squares to bitboards
         long fromBitboard = 1L << fromSquare;
         long toBitboard = 1L << toSquare;
@@ -896,8 +889,8 @@ public class BitBoard {
     
             // Tours blanches
             } else if ((whiteRooks & fromBitboard) != 0) {
-                if (fromSquare == 7) whiteCastleQueenSide = 0L;
-                if (fromSquare == 0) whiteCastleKingSide = 0L;
+                if (fromSquare == 0) whiteCastleQueenSide = 0L;
+                if (fromSquare == 7) whiteCastleKingSide = 0L;
                 whiteRooks &= ~fromBitboard;
                 whiteRooks |= toBitboard;
     
@@ -915,9 +908,9 @@ public class BitBoard {
                     whiteKing |= toBitboard;
                 } else {
                     // Handle castling for white
-                    if (toSquare == 5) {
+                    if (toSquare == 2) {
                         processWhiteCastleQueenSide(fromBitboard);
-                    } else if (toSquare == 1) {
+                    } else if (toSquare == 6) {
                         processWhiteCastleKingSide(fromBitboard);
                     }
                 }
@@ -985,8 +978,8 @@ public class BitBoard {
     
             // Tours noires
             } else if ((blackRooks & fromBitboard) != 0) {
-                if (fromSquare == 63) blackCastleQueenSide = 0L;
-                if (fromSquare == 56) blackCastleKingSide = 0L;
+                if (fromSquare == 56) blackCastleQueenSide = 0L;
+                if (fromSquare == 63) blackCastleKingSide = 0L;
                 blackRooks &= ~fromBitboard;
                 blackRooks |= toBitboard;
     
@@ -1004,9 +997,9 @@ public class BitBoard {
                     blackKing |= toBitboard;
                 } else {
                     // Handle castling for black
-                    if (toSquare == 61) {
+                    if (toSquare == 58) {
                         processBlackCastleQueenSide(fromBitboard);
-                    } else if (toSquare == 57) {
+                    } else if (toSquare == 62) {
                         processBlackCastleKingSide(fromBitboard);
                     }
                 }
@@ -1071,7 +1064,9 @@ public class BitBoard {
 
     public void makeMove(String move) {
         int fromSquare = getSquare(move.substring(0, 2));
+        System.out.println("from square: " + fromSquare);
         int toSquare = getSquare(move.substring(2, 4));
+        System.out.println("to square: " + toSquare);
         int pieceFrom = getPiece(fromSquare);
 
         // piece to if last character is not a digit
@@ -1158,9 +1153,9 @@ public class BitBoard {
     public void processWhiteCastleKingSide(long fromBitboard) {
         // Roque du côté du roi
         whiteKing &= ~fromBitboard;
-        whiteKing |= 1L << 1;
-        whiteRooks &= ~(1L << 0);
-        whiteRooks |= 1L << 2;
+        whiteKing |= 1L << 6;
+        whiteRooks &= ~(1L << 7);
+        whiteRooks |= 1L << 5;
 
         whiteCastleKingSide = 0L;
         whiteCastleQueenSide = 0L;
@@ -1169,20 +1164,20 @@ public class BitBoard {
     public void processWhiteCastleQueenSide(long fromBitboard) {
         // Roque du côté de la reine
         whiteKing &= ~fromBitboard;
-        whiteKing |= 1L << 5;
-        whiteRooks &= ~(1L << 7);
-        whiteRooks |= 1L << 4;
+        whiteKing |= 1L << 2;
+        whiteRooks &= ~(1L << 0);
+        whiteRooks |= 1L << 3;
 
-        whiteCastleQueenSide = 0L;
         whiteCastleKingSide = 0L;
+        whiteCastleQueenSide = 0L;
     }
 
     public void processBlackCastleKingSide(long fromBitboard) {
         // Roque du côté du roi
         blackKing &= ~fromBitboard;
-        blackKing |= 1L << 57;
-        blackRooks &= ~(1L << 56);
-        blackRooks |= 1L << 58;
+        blackKing |= 1L << 62;
+        blackRooks &= ~(1L << 63);
+        blackRooks |= 1L << 61;
 
         blackCastleKingSide = 0L;
         blackCastleQueenSide = 0L;
@@ -1191,12 +1186,12 @@ public class BitBoard {
     public void processBlackCastleQueenSide(long fromBitboard) {
         // Roque du côté de la reine
         blackKing &= ~fromBitboard;
-        blackKing |= 1L << 61;
-        blackRooks &= ~(1L << 63);
-        blackRooks |= 1L << 60;
+        blackKing |= 1L << 58;
+        blackRooks &= ~(1L << 56);
+        blackRooks |= 1L << 59;
 
-        blackCastleQueenSide = 0L;
         blackCastleKingSide = 0L;
+        blackCastleQueenSide = 0L;
     }
 
     private void updateBitBoard() {
@@ -1268,12 +1263,13 @@ public class BitBoard {
         // Convertit une position comme "e2" en un index 0-63
         int file = position.charAt(0) - 'a';  // 'e' -> 4
         int rank = position.charAt(1) - '1';  // '2' -> 1
-        int result = 8 * rank + file;   // 8 * 1 + (7 - 4) = 12
+        int result = 8 * rank + file;
+
         return result;
     }
 
     public static int getSquare(int rank, int file) {
-        return 8 * rank + (7 - file);
+        return 8 * rank + file;
     }
 
     public static String getSquareIndexNotation(int square) {
