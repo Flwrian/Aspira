@@ -10,4 +10,6 @@ public interface ChessAlgorithm {
     public int evaluate(BitBoard board);
 
     public String getName();
+
+    public void setDepth(int depth);
 }

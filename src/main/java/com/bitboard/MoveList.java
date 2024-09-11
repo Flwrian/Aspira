@@ -152,18 +152,18 @@ public class MoveList implements Iterable<Move>, List<Move> {
     private void quicksort(int low, int high) {
         int i = low, j = high;
         // Get the pivot element from the middle of the list
-        long pivot = moves[low + (high-low)/2].getOrderPriority();
+        long pivot = moves[low + (high-low)/2].getSeeScore();
 
         // Divide into two lists
         while (i <= j) {
             // If the current value from the left list is smaller than the pivot
             // element then get the next element from the left list
-            while (moves[i].getOrderPriority() > pivot) {
+            while (moves[i].getSeeScore() > pivot) {
                 i++;
             }
             // If the current value from the right list is larger than the pivot
             // element then get the next element from the right list
-            while (moves[j].getOrderPriority() < pivot) {
+            while (moves[j].getSeeScore() < pivot) {
                 j--;
             }
 
@@ -273,7 +273,7 @@ public class MoveList implements Iterable<Move>, List<Move> {
         StringBuilder builder = new StringBuilder();
         builder.append("MoveList:\n");
         for(int i = 0; i < size(); i++){
-            builder.append("\t"+moves[i]+"\n");
+            builder.append("\t"+moves[i]+" - seeScore: "+moves[i].getSeeScore()+"\n");
         }
 
         // add size

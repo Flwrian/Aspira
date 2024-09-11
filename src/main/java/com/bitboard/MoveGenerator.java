@@ -43,6 +43,14 @@ public class MoveGenerator {
         return count;
     }
 
+    public static int isCaptureMove(long to, BitBoard board) {
+        if ((to & board.bitboard) != 0L) {
+            // we now get the piece on the destination square
+            return board.getPieceAt(to);
+        }
+        return 0;
+    }
+
     public static MoveList generateMoves(BitBoard board) {
         // maximum number of moves is 218
         MoveList moves = new MoveList(218);
@@ -63,18 +71,24 @@ public class MoveGenerator {
 
             // We iterate through the moves and add them to the list
             while (pawnMoves != 0L) {
+
+                int capturedPiece = BitBoard.EMPTY;
+                // We get the least significant bit of the moves (the destination square)
                 long move = BitBoard.getLSB(pawnMoves);
                 pawnMoves &= pawnMoves - 1;
+
                 int to = BitBoard.getSquare(move);
-                // System.out.println(board.enPassantSquare);
 
                 // if double pawn push
                 if (Math.abs(from - to) == 16) {
                     Move doublePawnPush = new Move(from, to, board.getPiece(from), board.getPiece(to));
                     doublePawnPush.setType(Move.DOUBLE_PAWN_PUSH);
                     doublePawnPush.setWhite(board.whiteTurn);
+                    doublePawnPush.setSeeScore(Move.DOUBLE_PAWN_PUSH_SCORE);
+
                     
                     moves.add(doublePawnPush);
+                    continue;
                 }
 
                 else {
@@ -83,34 +97,49 @@ public class MoveGenerator {
                         Move promotionQueen = new Move(from, to, board.getPiece(from), BitBoard.QUEEN);
                         promotionQueen.setType(Move.PROMOTION);
                         promotionQueen.setWhite(board.whiteTurn);
+                        promotionQueen.setSeeScore(Move.PROMOTION_SCORE);
 
                         Move promotionRook = new Move(from, to, board.getPiece(from), BitBoard.ROOK);
                         promotionRook.setType(Move.PROMOTION);
                         promotionRook.setWhite(board.whiteTurn);
+                        promotionRook.setSeeScore(Move.PROMOTION_SCORE);
+
 
                         Move promotionBishop = new Move(from, to, board.getPiece(from), BitBoard.BISHOP);
                         promotionBishop.setType(Move.PROMOTION);
                         promotionBishop.setWhite(board.whiteTurn);
+                        promotionBishop.setSeeScore(Move.PROMOTION_SCORE);
 
                         Move promotionKnight = new Move(from, to, board.getPiece(from), BitBoard.KNIGHT);
                         promotionKnight.setType(Move.PROMOTION);
                         promotionKnight.setWhite(board.whiteTurn);
+                        promotionKnight.setSeeScore(Move.PROMOTION_SCORE);
 
                         moves.add(promotionQueen);
                         moves.add(promotionRook);
                         moves.add(promotionBishop);
                         moves.add(promotionKnight);
+                        continue;
                     }
 
                     else if (to == BitBoard.getSquare(board.enPassantSquare)) {
                         Move enPassent = new Move(from, to, board.getPiece(from), board.getPiece(to));
                         enPassent.setType(Move.EN_PASSENT);
                         enPassent.setWhite(board.whiteTurn);
+                        enPassent.setSeeScore(Move.EN_PASSENT);
                         moves.add(enPassent);
+                        continue;
                     }
                     else {
+                        // Before doing anything, we check if the move is colliding with another piece. Since the movegen only gives us legal moves, we don't need to check if its white or black, we can just use the entire bitboard
+                        if ((move & board.bitboard) != 0L) {
+                            // we now get the piece on the destination square
+                            capturedPiece = board.getPieceAt(move);
+                        }
                         Move normalMove = new Move(from, to, board.getPiece(from), board.getPiece(to));
                         normalMove.setWhite(board.whiteTurn);
+                        // If the move is a capture, we set the captured piece so we can use it in the move ordering
+                        normalMove.setSeeScore(Move.CAPTURE_SCORE + capturedPiece);
                         moves.add(normalMove);
                     }
                 }
@@ -133,10 +162,16 @@ public class MoveGenerator {
                 long move = BitBoard.getLSB(knightMoves);
                 knightMoves &= knightMoves - 1;
 
+                
                 int to = BitBoard.getSquare(move);
-
+                
                 Move normalMove = new Move(from, to, board.getPiece(from), board.getPiece(to));
                 normalMove.setWhite(board.whiteTurn);
+
+                if (isCaptureMove(move, board) > 0) {
+                    normalMove.setSeeScore(Move.CAPTURE_SCORE + isCaptureMove(move, board));
+                }
+
                 moves.add(normalMove);
             }
         }
@@ -160,6 +195,11 @@ public class MoveGenerator {
 
                 Move normalMove = new Move(from, to, board.getPiece(from), board.getPiece(to));
                 normalMove.setWhite(board.whiteTurn);
+
+                if (isCaptureMove(move, board) > 0) {
+                    normalMove.setSeeScore(Move.CAPTURE_SCORE + isCaptureMove(move, board));
+                }
+
                 moves.add(normalMove);
             }
         }
@@ -183,6 +223,11 @@ public class MoveGenerator {
 
                 Move normalMove = new Move(from, to, board.getPiece(from), board.getPiece(to));
                 normalMove.setWhite(board.whiteTurn);
+
+                if (isCaptureMove(move, board) > 0) {
+                    normalMove.setSeeScore(Move.CAPTURE_SCORE + isCaptureMove(move, board));
+                }
+
                 
                 moves.add(normalMove);
             }
@@ -205,10 +250,12 @@ public class MoveGenerator {
 
                 int to = BitBoard.getSquare(move);
 
-                
-
                 Move normalMove = new Move(from, to, board.getPiece(from), board.getPiece(to));
                 normalMove.setWhite(board.whiteTurn);
+
+                if (isCaptureMove(move, board) > 0) {
+                    normalMove.setSeeScore(Move.CAPTURE_SCORE + isCaptureMove(move, board));
+                }
 
                 moves.add(normalMove);
             }
@@ -239,6 +286,10 @@ public class MoveGenerator {
                 Move normalMove = new Move(from, to, board.getPiece(from), board.getPiece(to));
                 normalMove.setWhite(board.whiteTurn);
 
+                if (isCaptureMove(move, board) > 0) {
+                    normalMove.setSeeScore(Move.CAPTURE_SCORE + isCaptureMove(move, board));
+                }
+
                 moves.add(normalMove);
             }
 
@@ -250,7 +301,8 @@ public class MoveGenerator {
 
     public static MoveList generateCaptureMoves(BitBoard board) {
         MoveList captureMoves = new MoveList(218);
-    
+        System.out.println("Generating capture moves");
+        
         // Pawns
         long pawns = board.whiteTurn ? board.getWhitePawns() : board.getBlackPawns();
         while (pawns != 0L) {
@@ -322,6 +374,7 @@ public class MoveGenerator {
         // Bishops
         long bishops = board.whiteTurn ? board.getWhiteBishops() : board.getBlackBishops();
         while (bishops != 0L) {
+            System.out.println("Generating bishop moves");
             long bishop = BitBoard.getLSB(bishops);
             bishops &= bishops - 1;
     

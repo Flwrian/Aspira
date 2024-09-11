@@ -24,6 +24,11 @@ public class RandomAlgorithm implements ChessAlgorithm {
         return "Random";
     }
 
+    @Override
+    public void setDepth(int depth) {
+        return;
+    }
+
     
     
 }

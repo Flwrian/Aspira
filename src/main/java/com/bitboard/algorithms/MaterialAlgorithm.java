@@ -33,8 +33,9 @@ public class MaterialAlgorithm implements ChessAlgorithm {
 
     @Override
     public Move search(BitBoard board) {
-        // Simple search algorithm using a minimax with alpha-beta pruning for depth 3
-        return minimax(board, depth, Integer.MIN_VALUE, Integer.MAX_VALUE, board.whiteTurn).bestMove;
+        MoveValue result = negamax(board, depth, Integer.MIN_VALUE, Integer.MAX_VALUE, board.whiteTurn, 0);
+        // System.out.println("info depth " + depth + " score cp " + result.value + " pv " + result.bestMove);
+        return result.bestMove;
     }
 
     @Override
@@ -54,51 +55,45 @@ public class MaterialAlgorithm implements ChessAlgorithm {
         return "Material";
     }
 
-    // Minimax search algorithm with alpha-beta pruning
-    private MoveValue minimax(BitBoard board, int depth, int alpha, int beta, boolean maximizingPlayer) {
+    // Négamax avec élagage alpha-beta
+    private MoveValue negamax(BitBoard board, int depth, int alpha, int beta, boolean isWhiteTurn, int ply) {
         if (depth == 0) {
-            return new MoveValue(null, evaluate(board));
+            return new MoveValue(null, evaluate(board) * (isWhiteTurn ? 1 : -1));
         }
 
         MoveList moveList = board.getLegalMoves();
-        Move bestMove = null;
-
-        if (maximizingPlayer) {
-            int maxEval = Integer.MIN_VALUE;
-            for (Move move : moveList) {
-                board.makeMove(move);
-                int eval = minimax(board, depth - 1, alpha, beta, false).value;
-                board.undoMove();
-                if (eval > maxEval) {
-                    maxEval = eval;
-                    bestMove = move;
-                }
-                alpha = Math.max(alpha, eval);
-                if (beta <= alpha) {
-                    break; // Beta cut-off
-                }
+        if (moveList.size() == 0) {
+            // Pas de coups légaux, vérifier si c'est un mat ou une pat
+            if (board.isKingInCheck(isWhiteTurn)) {
+                return new MoveValue(null, -49000 + ply); // Mat
+            } else {
+                return new MoveValue(null, 0); // Pat
             }
-            return new MoveValue(bestMove, maxEval);
-        } else {
-            int minEval = Integer.MAX_VALUE;
-            for (Move move : moveList) {
-                board.makeMove(move);
-                int eval = minimax(board, depth - 1, alpha, beta, true).value;
-                board.undoMove();
-                if (eval < minEval) {
-                    minEval = eval;
-                    bestMove = move;
-                }
-                beta = Math.min(beta, eval);
-                if (beta <= alpha) {
-                    break; // Alpha cut-off
-                }
-            }
-            return new MoveValue(bestMove, minEval);
         }
+
+        Move bestMove = null;
+        int maxEval = Integer.MIN_VALUE;
+
+        for (Move move : moveList) {
+            board.makeMove(move);
+            int eval = -negamax(board, depth - 1, -beta, -alpha, !isWhiteTurn, ply + 1).value;
+            board.undoMove();
+
+            if (eval > maxEval) {
+                maxEval = eval;
+                bestMove = move;
+            }
+
+            alpha = Math.max(alpha, eval);
+            if (alpha >= beta) {
+                break; // Coupure beta
+            }
+        }
+
+        return new MoveValue(bestMove, maxEval);
     }
 
-    // Helper class to store a move and its evaluation value
+    // Classe helper pour stocker un coup et sa valeur d'évaluation
     private class MoveValue {
         Move bestMove;
         int value;
@@ -107,5 +102,10 @@ public class MaterialAlgorithm implements ChessAlgorithm {
             this.bestMove = bestMove;
             this.value = value;
         }
+    }
+
+    @Override
+    public void setDepth(int depth) {
+        this.depth = depth;
     }
 }

@@ -48,12 +48,25 @@ public class Engine {
     public void play() {
         Move bestMove = algorithm.search(board);
         if (bestMove == null) {
-            System.out.println("No legal moves found. Making random move.");
-            Move randMove = board.getLegalMoves().get((int) (Math.random() * board.getLegalMoves().size()));
-            board.makeMove(randMove);
-            addMoveToPGN(randMove);
-            lastMove = randMove;
-            return;
+            // System.out.println("No legal moves found. Game over.");
+            if (board.isStaleMate()){
+                // System.out.println("Stalemate!");
+                return;
+            } else if (board.isCheckMate()) {
+                // System.out.println("Checkmate!");
+                return;
+            }
+            // play random move
+            bestMove = board.makeRandomMove();
+            // System.out.println("Random move: " + bestMove);
+            boolean isLegal = board.isLegalMove(bestMove);
+            // System.out.println("Is legal: " + isLegal);
+            if (!isLegal) {
+                // System.out.println("Illegal move: " + bestMove);
+                return;
+            }
+            addMoveToPGN(bestMove);
+            lastMove = bestMove;
         }
         board.makeMove(bestMove);
         addMoveToPGN(bestMove);
@@ -87,5 +100,10 @@ public class Engine {
 
     public void setDepth(int depth) {
         this.depth = depth;
+        algorithm.setDepth(depth);
+    }
+
+    public int getDepth() {
+        return depth;
     }
 }

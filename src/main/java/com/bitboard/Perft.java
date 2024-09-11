@@ -122,11 +122,20 @@ public class Perft {
         // load a position
 
 
-        bitBoard.loadFromFen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1");
-        // // b7b5
-        long time = System.currentTimeMillis();
-        System.out.println(perft(bitBoard, 5));
-        System.out.println("Seconds: " + (System.currentTimeMillis() - time) / 1000.0);
+        // bitBoard.loadFromFen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1");
+        // // // b7b5
+        // long time = System.currentTimeMillis();
+        // System.out.println(perft(bitBoard, 5));
+        // System.out.println("Seconds: " + (System.currentTimeMillis() - time) / 1000.0);
+
+        System.out.println("A1: " + BitBoard.A1);
+        System.out.println("B1: " + BitBoard.B1);
+        System.out.println("C1: " + BitBoard.C1);
+        System.out.println("D1: " + BitBoard.D1);
+        System.out.println("E1: " + BitBoard.E1);
+        System.out.println("F1: " + BitBoard.F1);
+        System.out.println("G1: " + BitBoard.G1);
+        System.out.println("H1: " + BitBoard.H1);
 
 
 

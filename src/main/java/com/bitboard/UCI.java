@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.*;
 
 import com.bitboard.algorithms.AdvancedChessAlgorithm;
+import com.bitboard.algorithms.CustomAlgorithm;
 
 
 /**
@@ -19,34 +20,38 @@ public class UCI {
     
     private static BitBoard board = new BitBoard();
     // private static Engine engine;
+    static Engine engine = new Engine(board);
     
 
     public static void main(String[] args) {
 
-        System.out.println("""
- _______________________________________________________________________________________
+//         System.out.println("""
+//  _______________________________________________________________________________________
 
-  ███████╗██╗      ██████╗ ██╗    ██╗ ██████╗ ██╗███╗   ██╗███████╗██╗   ██╗██████╗ 
-  ██╔════╝██║     ██╔═══██╗██║    ██║██╔════╝ ██║████╗  ██║██╔════╝██║   ██║╚════██╗
-  █████╗  ██║     ██║   ██║██║ █╗ ██║██║  ███╗██║██╔██╗ ██║█████╗  ██║   ██║ █████╔╝
-  ██╔══╝  ██║     ██║   ██║██║███╗██║██║   ██║██║██║╚██╗██║██╔══╝  ╚██╗ ██╔╝██╔═══╝ 
-  ██║     ███████╗╚██████╔╝╚███╔███╔╝╚██████╔╝██║██║ ╚████║███████╗ ╚████╔╝ ███████╗
-  ╚═╝     ╚══════╝ ╚═════╝  ╚══╝╚══╝  ╚═════╝ ╚═╝╚═╝  ╚═══╝╚══════╝  ╚═══╝  ╚══════╝
-_______________________________________________________________________________________
+//   ███████╗██╗      ██████╗ ██╗    ██╗ ██████╗ ██╗███╗   ██╗███████╗██╗   ██╗██████╗ 
+//   ██╔════╝██║     ██╔═══██╗██║    ██║██╔════╝ ██║████╗  ██║██╔════╝██║   ██║╚════██╗
+//   █████╗  ██║     ██║   ██║██║ █╗ ██║██║  ███╗██║██╔██╗ ██║█████╗  ██║   ██║ █████╔╝
+//   ██╔══╝  ██║     ██║   ██║██║███╗██║██║   ██║██║██║╚██╗██║██╔══╝  ╚██╗ ██╔╝██╔═══╝ 
+//   ██║     ███████╗╚██████╔╝╚███╔███╔╝╚██████╔╝██║██║ ╚████║███████╗ ╚████╔╝ ███████╗
+//   ╚═╝     ╚══════╝ ╚═════╝  ╚══╝╚══╝  ╚═════╝ ╚═╝╚═╝  ╚═══╝╚══════╝  ╚═══╝  ╚══════╝
+// _______________________________________________________________________________________
 
-        """);
+//         """);
 
-        // print available commands
-        System.out.println("Available commands:");
-        System.out.println("uci - start the engine");
-        System.out.println("isready - check if the engine is ready");
-        System.out.println("ucinewgame - start a new game");
-        System.out.println("position - set up the position");
-        System.out.println("go - start calculating the best move");
-        System.out.println("quit - stop the engine");
-        System.out.println("stop - stop calculating the best move");
-        System.out.println("option - set engine options");
-        System.out.println();
+//         // print available commands
+//         System.out.println("Available commands:");
+//         System.out.println("uci - start the engine");
+//         System.out.println("isready - check if the engine is ready");
+//         System.out.println("ucinewgame - start a new game");
+//         System.out.println("position - set up the position");
+//         System.out.println("go - start calculating the best move");
+//         System.out.println("quit - stop the engine");
+//         System.out.println("stop - stop calculating the best move");
+//         System.out.println("option - set engine options");
+//         System.out.println();
+
+        CustomAlgorithm advancedChessAlgorithm = new CustomAlgorithm(6);
+        engine.setAlgorithm(advancedChessAlgorithm);
         
         Scanner scanner = new Scanner(System.in);
         // Handle the UCI commands
@@ -90,6 +95,9 @@ ________________________________________________________________________________
                 case "option":
                     option(inputArray);
                     break;
+                case "d":
+                    d();
+                    break;
                 default:
                     System.out.println("Unknown command: " + command);
                     break;
@@ -116,6 +124,10 @@ ________________________________________________________________________________
         }
     }
 
+    public static void d(){
+        board.printChessBoard();
+    }
+
     private static void stop() {
         
     }
@@ -135,6 +147,19 @@ ________________________________________________________________________________
             System.out.println(perft);
             System.out.println("Time: " + time + "ms");
         }
+        if (inputArray[1].equals("ponder")) {
+            // infinite search
+            engine.setDepth(20);
+            engine.getAlgorithm().search(board);
+        }
+        if (inputArray[1].equals("capture")) {
+            MoveList moveList = MoveGenerator.generateCaptureMoves(board);
+            System.out.println("Capture moves: " + moveList);
+        }
+        if (inputArray[1].equals("legal")) {
+            MoveList moveList = board.getLegalMoves();
+            System.out.println("Legal moves: " + moveList);
+        }
         else{
             
             int depth = 0;
@@ -151,16 +176,13 @@ ________________________________________________________________________________
                 }
             }
     
-            if(depth == 0){
-                depth = 5;
+            if(depth != 0){
+                engine.setDepth(depth);
+                Move bestMove = engine.getAlgorithm().search(board);
+                System.out.println("bestmove " + bestMove.toString());
             }
     
-            // TODO: code to generate the best move
-            Engine engine = new Engine(board);
-            AdvancedChessAlgorithm advancedChessAlgorithm = new AdvancedChessAlgorithm(depth);
-            engine.setAlgorithm(advancedChessAlgorithm);
-            Move bestMove = engine.getAlgorithm().search(board);
-            System.out.println("bestmove " + bestMove.toString());
+            
         }
 
 
@@ -176,12 +198,18 @@ ________________________________________________________________________________
         if(inputArray[1].equals("startpos")){
             // Load the starting position
             board = new BitBoard();
+
+            // Make the moves
+            for(int i = 3; i < inputArray.length; i++){
+                board.makeMove(inputArray[i]);
+            }
+
         } else if(inputArray[1].equals("fen")){
             // Load the position from the FEN string
             String fen = "";
             for(int i = 2; i < inputArray.length; i++){
                 if(inputArray[i].equals("moves")){
-                    break;
+                    
                 }
                 fen += inputArray[i] + " ";
             }

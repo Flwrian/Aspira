@@ -13,9 +13,15 @@ public final class Move {
     public static final byte PROMOTION = 4;
     public static final byte CASTLING = 5;
 
+    // scores for ordering moves later
+    public static final int PROMOTION_SCORE = 350;
+    public static final int CAPTURE_SCORE = 100;
+    public static final int CASTLING_SCORE = 150;
+    public static final int DOUBLE_PAWN_PUSH_SCORE = 220;
 
-    int from;
-    int to;
+
+    public int from;
+    public int to;
 
     int pieceFrom;
     int pieceTo;
@@ -227,7 +233,7 @@ public final class Move {
                         break;
                 }
             }
-            
+
             return BitBoard.getSquareIndexNotation(from) + BitBoard.getSquareIndexNotation(to) + promotionPiece;
         }
 

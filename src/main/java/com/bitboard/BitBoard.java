@@ -2,6 +2,7 @@ package com.bitboard;
 
 import java.io.PrintWriter;
 import java.util.ArrayDeque;
+import java.util.Collections;
 import java.util.Stack;
 
 public class BitBoard {
@@ -288,7 +289,9 @@ public class BitBoard {
     public static final int QUEEN = 5;
     public static final int KING = 6;
 
-    private ArrayDeque<BoardHistory> history;
+    private Stack<BoardHistory> history;
+
+    private ArrayDeque<long[]> bbHistory;
 
     
 
@@ -326,7 +329,8 @@ public class BitBoard {
 
         enPassantSquare = 0L;
 
-        history = new ArrayDeque<>();
+        history = new Stack<>();
+        // bbHistory = new ArrayDeque<>();
 
 
     }
@@ -336,10 +340,15 @@ public class BitBoard {
         history.push(boardHistory);
     }
 
+    // private void saveBoardHistoryLONG() {
+    //     bbHistory.push(new long[]{whitePawns, whiteKnights, whiteBishops, whiteRooks, whiteQueens, whiteKing, blackPawns, blackKnights, blackBishops, blackRooks, blackQueens, blackKing, whiteCastleQueenSide, whiteCastleKingSide, blackCastleQueenSide, blackCastleKingSide, enPassantSquare, (whiteTurn ? 1L : 0L)});
+    // }
+
     public void undoMove() {
         if (!history.isEmpty()) {
             BoardHistory boardHistory = history.pop();
             restoreBoardHistory(boardHistory);
+            // restoreBoardHistoryLONG(bbHistory.pop());
         }
     }
 
@@ -363,6 +372,27 @@ public class BitBoard {
         blackCastleKingSide = boardHistory.blackCastleKingSide;
         enPassantSquare = boardHistory.enPassantSquare;
         whiteTurn = boardHistory.whiteTurn;
+    }
+
+    public void restoreBoardHistoryLONG(long[] boardHistory) {
+        whitePawns = boardHistory[0];
+        whiteKnights = boardHistory[1];
+        whiteBishops = boardHistory[2];
+        whiteRooks = boardHistory[3];
+        whiteQueens = boardHistory[4];
+        whiteKing = boardHistory[5];
+        blackPawns = boardHistory[6];
+        blackKnights = boardHistory[7];
+        blackBishops = boardHistory[8];
+        blackRooks = boardHistory[9];
+        blackQueens = boardHistory[10];
+        blackKing = boardHistory[11];
+        whiteCastleQueenSide = boardHistory[12];
+        whiteCastleKingSide = boardHistory[13];
+        blackCastleQueenSide = boardHistory[14];
+        blackCastleKingSide = boardHistory[15];
+        enPassantSquare = boardHistory[16];
+        whiteTurn = boardHistory[17] == 1L;
     }
 
     public void loadFromFen(String fen) {
@@ -839,10 +869,19 @@ public class BitBoard {
         return blackKing;
     }
 
+    public void makeNullMove() {
+        whiteTurn = !whiteTurn;
+    }
+
+    public void undoNullMove() {
+        whiteTurn = !whiteTurn;
+    }
+
     public void makeMove(Move move) {
 
         // Save the current board state
         saveBoardHistory(move);
+        // saveBoardHistoryLONG();
     
         // Get the source and destination squares
         int fromSquare = move.from;
@@ -1084,8 +1123,13 @@ public class BitBoard {
         MoveList moveList = getLegalMoves();
         int randomIndex = (int) (Math.random() * moveList.size());
         Move move = moveList.get(randomIndex);
-        makeMove(move);
         return move;
+    }
+
+    public boolean isLegalMove(Move move) {
+        MoveList moveList = getLegalMoves();
+        // System.out.println("legal moves: " + moveList);
+        return moveList.contains(move);
     }
 
     public void makeMove(String move) {
@@ -1136,6 +1180,7 @@ public class BitBoard {
     // legal moves
     public MoveList getLegalMoves(){
         MoveList moveList = MoveGenerator.generateMoves(this);
+
         // Pour chaque coup, vérifier si le roi est en échec après le coup
         // Si le roi est en échec, le coup n'est pas légal
         // Sinon, le coup est légal
@@ -1152,16 +1197,17 @@ public class BitBoard {
         return moveList;
     }
 
+    
+    
+    public boolean isStaleMate() {
+        MoveList moveList = getLegalMoves();
+        return moveList.size() == 0 && !isKingInCheck(whiteTurn);
+    }
+
     // pseudo legal
     public boolean isCheckMate() {
         MoveList moveList = getLegalMoves();
         return moveList.size() == 0 && isKingInCheck(whiteTurn);
-    }
-
-    // pseudo legal
-    public boolean isStaleMate() {
-        MoveList moveList = getPseudoLegalMoves();
-        return moveList.size() == 0 && !isKingInCheck(whiteTurn);
     }
 
     public boolean isKingInCheck(boolean whiteTurn) {
@@ -1259,7 +1305,7 @@ public class BitBoard {
         } else if ((blackKing & bitboard) != 0) {
             return 12;
         } else {
-            return 0;
+            return BitBoard.EMPTY;
         }
     }
 
@@ -1358,7 +1404,7 @@ public class BitBoard {
         return captureMoves;
     }
 
-    private boolean isCaptureMove(Move move) {
+    public boolean isCaptureMove(Move move) {
         int toSquare = move.to;
         long toBitboard = 1L << toSquare;
         if (whiteTurn) {
@@ -1395,6 +1441,71 @@ public class BitBoard {
 
     public boolean isWhite(long piece) {
         return (whitePieces & piece) != 0;
+    }
+
+    public boolean isBlack(long piece) {
+        return (blackPieces & piece) != 0;
+    }
+
+    public int getPieceAt(int to) {
+        long toBitboard = 1L << to;
+        if ((whitePawns & toBitboard) != 0) {
+            return PAWN;
+        } else if ((whiteKnights & toBitboard) != 0) {
+            return KNIGHT;
+        } else if ((whiteBishops & toBitboard) != 0) {
+            return BISHOP;
+        } else if ((whiteRooks & toBitboard) != 0) {
+            return ROOK;
+        } else if ((whiteQueens & toBitboard) != 0) {
+            return QUEEN;
+        } else if ((whiteKing & toBitboard) != 0) {
+            return KING;
+        } else if ((blackPawns & toBitboard) != 0) {
+            return PAWN;
+        } else if ((blackKnights & toBitboard) != 0) {
+            return KNIGHT;
+        } else if ((blackBishops & toBitboard) != 0) {
+            return BISHOP;
+        } else if ((blackRooks & toBitboard) != 0) {
+            return ROOK;
+        } else if ((blackQueens & toBitboard) != 0) {
+            return QUEEN;
+        } else if ((blackKing & toBitboard) != 0) {
+            return KING;
+        } else {
+            return 0;
+        }
+    }
+
+    public int getPieceAt(long to){
+        if ((whitePawns & to) != 0) {
+            return PAWN;
+        } else if ((whiteKnights & to) != 0) {
+            return KNIGHT;
+        } else if ((whiteBishops & to) != 0) {
+            return BISHOP;
+        } else if ((whiteRooks & to) != 0) {
+            return ROOK;
+        } else if ((whiteQueens & to) != 0) {
+            return QUEEN;
+        } else if ((whiteKing & to) != 0) {
+            return KING;
+        } else if ((blackPawns & to) != 0) {
+            return PAWN;
+        } else if ((blackKnights & to) != 0) {
+            return KNIGHT;
+        } else if ((blackBishops & to) != 0) {
+            return BISHOP;
+        } else if ((blackRooks & to) != 0) {
+            return ROOK;
+        } else if ((blackQueens & to) != 0) {
+            return QUEEN;
+        } else if ((blackKing & to) != 0) {
+            return KING;
+        } else {
+            return 0;
+        }
     }
 
     

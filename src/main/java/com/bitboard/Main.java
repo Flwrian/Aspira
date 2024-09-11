@@ -1,6 +1,7 @@
 package com.bitboard;
 
 import com.bitboard.algorithms.AdvancedChessAlgorithm;
+import com.bitboard.algorithms.CustomAlgorithm;
 import com.bitboard.algorithms.MaterialAlgorithm;
 import com.bitboard.algorithms.RandomAlgorithm;
 
@@ -8,7 +9,7 @@ public class Main {
     
     public static void main(String[] args) {
         BitBoard bitBoard = new BitBoard();
-        String fen = "4k3/p4pp1/8/8/8/8/P4K1P/8 w - - 0 1";
+        String fen = BitBoard.INITIAL_STARTING_POSITION;
         bitBoard.loadFromFen(fen);
         System.out.println("""
  _______________________________________________________________________________________
@@ -23,23 +24,27 @@ ________________________________________________________________________________
 
         """);
 
+        AdvancedChessAlgorithm advancedChessAlgorithm = new AdvancedChessAlgorithm(4);
+        MaterialAlgorithm materialAlgorithm = new MaterialAlgorithm(5);
+        CustomAlgorithm customAlgorithm = new CustomAlgorithm(6);
+
         Engine engine2 = new Engine(bitBoard);
-        AdvancedChessAlgorithm advancedChessAlgorithm = new AdvancedChessAlgorithm(6);
         engine2.setAlgorithm(advancedChessAlgorithm);
 
         Engine engine1 = new Engine(bitBoard);
-        MaterialAlgorithm materialAlgorithm = new MaterialAlgorithm(5);
-        engine1.setAlgorithm(materialAlgorithm);
+        engine1.setAlgorithm(customAlgorithm);
+        
         // play 100 random moves 
-        for (int i = 0; i < 100; i++) {
+        for (int i = 0; i < 80; i++) {
             if (bitBoard.isCheckMate()) {
-                System.out.println("Checkmate!");
+                System.out.println("Board is Checkmate!");
                 break;
             }
             if (bitBoard.isStaleMate()) {
                 System.out.println("Stalemate!");
                 break;
             }
+
             if(bitBoard.whiteTurn) {
                 engine1.play();
                 engine2.addMoveToPGN(engine1.getLastMove());
