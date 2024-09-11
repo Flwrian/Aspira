@@ -1106,12 +1106,12 @@ public class BitBoard {
 
     // pseudo legal
     public MoveList getPseudoLegalMoves() {
-        return MoveGenerator.generateMoves(this);
+        return MoveGenerator.generatePseudoLegalMoves(this);
     }
 
     // legal moves
     public MoveList getLegalMoves(){
-        MoveList moveList = MoveGenerator.generateMoves(this);
+        MoveList moveList = MoveGenerator.generatePseudoLegalMoves(this);
 
         // Pour chaque coup, vérifier si le roi est en échec après le coup
         // Si le roi est en échec, le coup n'est pas légal

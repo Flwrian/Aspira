@@ -93,6 +93,52 @@ public class Perft {
         return result;
     }
 
+    private static long perftPseudoLegal(BitBoard bitBoard, int depth) {
+        if (depth == 0) {
+            return 1;
+        }
+        
+        MoveList moveList = bitBoard.getPseudoLegalMoves();
+        long nodes = 0;
+    
+        for (int i = 0; i < moveList.size(); i++) {
+            bitBoard.makeMove(moveList.get(i));
+            nodes += perftPseudoLegal(bitBoard, depth - 1);
+            bitBoard.undoMove();
+        }
+
+        
+        return nodes;
+    }
+
+    public static String perftDivideStringPseudoLegal(BitBoard bitBoard, int depth) {
+        String result = "";
+        result += "[PerftDivide]\n";
+        result += "[Depth: " + depth + "]\n";
+        result += "[ === ]\n";
+
+        MoveList moveList = bitBoard.getPseudoLegalMoves();
+        long totalNodes = 0;
+    
+        // Itère sur chaque coup possible au premier niveau
+        for (int i = 0; i < moveList.size(); i++) {
+            Move move = moveList.get(i);
+            bitBoard.makeMove(move);
+    
+            long moveNodes = perftPseudoLegal(bitBoard, depth - 1);
+            bitBoard.undoMove();
+    
+            // Affiche le coup et le nombre de nœuds associés
+            result += move.toString() + ": " + moveNodes + "\n";
+    
+            totalNodes += moveNodes;
+        }
+    
+        // Affiche le nombre total de nœuds
+        result += "\nNodes searched: " + totalNodes + "\n";
+        return result;
+    }
+
     // Version pour afficher les nœuds à partir d'une position donnée
     public static void perftStart(BitBoard bitBoard, int depth) {
         long nodes = perft(bitBoard, depth);

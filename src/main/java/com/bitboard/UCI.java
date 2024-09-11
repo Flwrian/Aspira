@@ -142,7 +142,14 @@ public class UCI {
         if(inputArray[1].equals("perft")){
             int depth = Integer.parseInt(inputArray[2]);
             long time = System.currentTimeMillis();
-            String perft = Perft.perftDivideString(board, depth);
+            String perft;
+            if (inputArray[3].equals("legal")){
+                perft = Perft.perftDivideString(board, depth);
+            }
+            else{
+                System.out.println("Pseudo legal");
+                perft = Perft.perftDivideStringPseudoLegal(board, depth);
+            }
             time = System.currentTimeMillis() - time;
             System.out.println(perft);
             System.out.println("Time: " + time + "ms");

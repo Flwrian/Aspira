@@ -51,7 +51,7 @@ public class MoveGenerator {
         return 0;
     }
 
-    public static MoveList generateMoves(BitBoard board) {
+    public static MoveList generatePseudoLegalMoves(BitBoard board) {
         // maximum number of moves is 218
         MoveList moves = new MoveList(218);
         // We will iterate through the board and generate the moves for each piece
@@ -460,12 +460,6 @@ public class MoveGenerator {
         }
     
         return captureMoves;
-    }
-    
-
-    public static void countMoves(BitBoard board) {
-        MoveList moves = generateMoves(board);
-        System.out.println("Number of moves: " + moves.size());
     }
 
     private static long generateWhiteMask(BitBoard board) {
