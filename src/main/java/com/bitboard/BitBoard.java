@@ -288,12 +288,12 @@ public class BitBoard {
         blackQueens = D8;
         blackKing = E8;
 
-        printBitBoard(whitePawns);
-        printBitBoard(whiteKnights);
-        printBitBoard(whiteBishops);
-        printBitBoard(whiteRooks);
-        printBitBoard(whiteQueens);
-        printBitBoard(whiteKing);
+        // printBitBoard(whitePawns);
+        // printBitBoard(whiteKnights);
+        // printBitBoard(whiteBishops);
+        // printBitBoard(whiteRooks);
+        // printBitBoard(whiteQueens);
+        // printBitBoard(whiteKing);
 
         whitePieces = whitePawns | whiteKnights | whiteBishops | whiteRooks | whiteQueens | whiteKing;
         blackPieces = blackPawns | blackKnights | blackBishops | blackRooks | blackQueens | blackKing;
@@ -648,57 +648,12 @@ public class BitBoard {
         
         writer.flush();
     }
-
-    public static void printBitBoards(long bitBoard) {
-        PrintWriter writer = new PrintWriter(System.out);
-        
-        // Bordure supérieure
-        writer.println("   +-------------------------------+");
-        writer.println("   | a   b   c   d   e   f   g   h |");
-        writer.println("   +-------------------------------+");
-    
-        // Parcourir les rangées de haut en bas
-        for (int rank = 7; rank >= 0; rank--) {
-            writer.print((rank + 1) + "  |"); // Numéro de rangée sur le côté gauche
-            
-            // Parcourir chaque colonne de la rangée
-            for (int file = 7; file >= 0; file--) {
-                int squareIndex = rank * 8 + file;
-                long mask = 1L << squareIndex;
-                
-                if ((bitBoard & mask) != 0) {
-                    writer.print(" 1 ");
-                } else {
-                    writer.print("   ");
-                }
-    
-                // Ajouter un séparateur "|"
-                if (file != 0) {
-                    writer.print("|");
-                }
-            }
-            
-            writer.println("| " + (rank + 1)); // Numéro de rangée sur le côté droit
-    
-            // Ajouter des séparateurs entre les rangées sauf pour la dernière
-            if (rank > 0) {
-                writer.println("   |---|---|---|---|---|---|---|---|");
-            }
-        }
-    
-        // Bordure inférieure
-        writer.println("   +-------------------------------+");
-        writer.println("   | a   b   c   d   e   f   g   h |");
-        writer.println("   +-------------------------------+");
-        
-        writer.flush();
-    }
     
     
     
 
     public void printChessBoard() {
-        String[] pieces = {"P", "N", "B", "R", "Q", "K", "p", "n", "b", "r", "q", "k"};
+        String[] pieces = {"P", "N", "B", "R", "K", "Q", "p", "n", "b", "r", "K", "Q"};
         String[] board = new String[64];
     
         // Remplir le tableau board avec les pièces ou des points pour les cases vides

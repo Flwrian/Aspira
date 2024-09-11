@@ -130,6 +130,10 @@ public class Perft {
 
         
         System.out.println(bitBoard.getFen());
+        bitBoard.makeMove("e2e4");
+        bitBoard.makeMove("e7e5");
+        // Qd1f3
+        bitBoard.makeMove("d1f3");
         bitBoard.printChessBoard();
 
 
