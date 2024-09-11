@@ -1,55 +1,67 @@
 package com.bitboard;
 
+import com.bitboard.algorithms.AdvancedChessAlgorithm;
+import com.bitboard.algorithms.CustomAlgorithm;
+import com.bitboard.algorithms.MaterialAlgorithm;
+import com.bitboard.algorithms.RandomAlgorithm;
+
 public class Main {
     
     public static void main(String[] args) {
         BitBoard bitBoard = new BitBoard();
+        String fen = BitBoard.INITIAL_STARTING_POSITION;
+        bitBoard.loadFromFen(fen);
+        System.out.println("""
+ _______________________________________________________________________________________
+
+  ███████╗██╗      ██████╗ ██╗    ██╗ ██████╗ ██╗███╗   ██╗███████╗██╗   ██╗██████╗ 
+  ██╔════╝██║     ██╔═══██╗██║    ██║██╔════╝ ██║████╗  ██║██╔════╝██║   ██║╚════██╗
+  █████╗  ██║     ██║   ██║██║ █╗ ██║██║  ███╗██║██╔██╗ ██║█████╗  ██║   ██║ █████╔╝
+  ██╔══╝  ██║     ██║   ██║██║███╗██║██║   ██║██║██║╚██╗██║██╔══╝  ╚██╗ ██╔╝██╔═══╝ 
+  ██║     ███████╗╚██████╔╝╚███╔███╔╝╚██████╔╝██║██║ ╚████║███████╗ ╚████╔╝ ███████╗
+  ╚═╝     ╚══════╝ ╚═════╝  ╚══╝╚══╝  ╚═════╝ ╚═╝╚═╝  ╚═══╝╚══════╝  ╚═══╝  ╚══════╝
+_______________________________________________________________________________________
+
+        """);
+
+        AdvancedChessAlgorithm advancedChessAlgorithm = new AdvancedChessAlgorithm(4);
+        MaterialAlgorithm materialAlgorithm = new MaterialAlgorithm(5);
+        CustomAlgorithm customAlgorithm = new CustomAlgorithm(6);
+
+        Engine engine2 = new Engine(bitBoard);
+        engine2.setAlgorithm(advancedChessAlgorithm);
+
+        Engine engine1 = new Engine(bitBoard);
+        engine1.setAlgorithm(customAlgorithm);
         
-        // System.out.println("White pieces");
-        // bitBoard.printBitBoard(bitBoard.getWhitePieces());
+        // play 100 random moves 
+        for (int i = 0; i < 80; i++) {
+            if (bitBoard.isCheckMate()) {
+                System.out.println("Board is Checkmate!");
+                break;
+            }
+            if (bitBoard.isStaleMate()) {
+                System.out.println("Stalemate!");
+                break;
+            }
 
-        // System.out.println("Black pieces");
-        // bitBoard.printBitBoard(bitBoard.getBlackPieces());
+            if(bitBoard.whiteTurn) {
+                engine1.play();
+                engine2.addMoveToPGN(engine1.getLastMove());
+            } else {
+                engine2.play();
+                engine1.addMoveToPGN(engine2.getLastMove());
+            }
 
-        // System.out.println("White pawns");
-        // bitBoard.printBitBoard(bitBoard.getWhitePawns());
-
-        // System.out.println("White knights");
-        // bitBoard.printBitBoard(bitBoard.getWhiteKnights());
-
-        // System.out.println("White bishops");
-        // bitBoard.printBitBoard(bitBoard.getWhiteBishops());
-
-        // System.out.println("White rooks");
-        // bitBoard.printBitBoard(bitBoard.getWhiteRooks());
-
-        // System.out.println("White queens");
-        // bitBoard.printBitBoard(bitBoard.getWhiteQueens());
-
-        // System.out.println("White king");
-        // bitBoard.printBitBoard(bitBoard.getWhiteKing());
-
-        // System.out.println("Black pawns");
-        // bitBoard.printBitBoard(bitBoard.getBlackPawns());
-
-        // System.out.println("Black knights");
-        // bitBoard.printBitBoard(bitBoard.getBlackKnights());
-
-        // System.out.println("Black bishops");
-        // bitBoard.printBitBoard(bitBoard.getBlackBishops());
-
-        // System.out.println("Black rooks");
-        // bitBoard.printBitBoard(bitBoard.getBlackRooks());
-
-        // System.out.println("Black queens");
-        // bitBoard.printBitBoard(bitBoard.getBlackQueens());
-
-        // System.out.println("Black king");
-        // bitBoard.printBitBoard(bitBoard.getBlackKing());
-        
-        bitBoard.makeMove("e2e7");
+            // System.out.println(engine1.getPGN());
+        }
         bitBoard.printChessBoard();
 
+        System.out.println("[FEN " + fen + "]");
+        System.out.println(engine1.getPGN());
+
+        
+        
 
     }
 }
