@@ -245,12 +245,12 @@ public class BitBoard {
     public static final long BLACK_QUEEN_SIDE_CASTLE_EMPTY_SQUARES_MASK = B8 | C8 | D8;
 
     // valid
-    public static final long WHITE_KING_SIDE_CASTLE_NEED_TO_NOT_BE_ATTACKED_MASK = G1 | F1;
-    public static final long WHITE_QUEEN_SIDE_CASTLE_NEED_TO_NOT_BE_ATTACKED_MASK = D1 | C1;
+    public static final long WHITE_KING_SIDE_CASTLE_NEED_TO_NOT_BE_ATTACKED_MASK = G1 | F1 | E1;
+    public static final long WHITE_QUEEN_SIDE_CASTLE_NEED_TO_NOT_BE_ATTACKED_MASK = D1 | C1 | E1;
 
     // valid
-    public static final long BLACK_KING_SIDE_CASTLE_NEED_TO_NOT_BE_ATTACKED_MASK =  G8 | F8;
-    public static final long BLACK_QUEEN_SIDE_CASTLE_NEED_TO_NOT_BE_ATTACKED_MASK = D8 | C8;
+    public static final long BLACK_KING_SIDE_CASTLE_NEED_TO_NOT_BE_ATTACKED_MASK =  G8 | F8 | E8;
+    public static final long BLACK_QUEEN_SIDE_CASTLE_NEED_TO_NOT_BE_ATTACKED_MASK = D8 | C8 | E8;
 
     public static final int EMPTY = 0;
     public static final int PAWN = 1;
