@@ -28,27 +28,27 @@ public class UCI {
 //         System.out.println("""
 //  _______________________________________________________________________________________
 
-//   ███████╗██╗      ██████╗ ██╗    ██╗ ██████╗ ██╗███╗   ██╗███████╗██╗   ██╗██████╗ 
-//   ██╔════╝██║     ██╔═══██╗██║    ██║██╔════╝ ██║████╗  ██║██╔════╝██║   ██║╚════██╗
-//   █████╗  ██║     ██║   ██║██║ █╗ ██║██║  ███╗██║██╔██╗ ██║█████╗  ██║   ██║ █████╔╝
-//   ██╔══╝  ██║     ██║   ██║██║███╗██║██║   ██║██║██║╚██╗██║██╔══╝  ╚██╗ ██╔╝██╔═══╝ 
-//   ██║     ███████╗╚██████╔╝╚███╔███╔╝╚██████╔╝██║██║ ╚████║███████╗ ╚████╔╝ ███████╗
-//   ╚═╝     ╚══════╝ ╚═════╝  ╚══╝╚══╝  ╚═════╝ ╚═╝╚═╝  ╚═══╝╚══════╝  ╚═══╝  ╚══════╝
+// |  ███████╗██╗      ██████╗ ██╗    ██╗ ██████╗ ██╗███╗   ██╗███████╗██╗   ██╗██████╗   |
+// |  ██╔════╝██║     ██╔═══██╗██║    ██║██╔════╝ ██║████╗  ██║██╔════╝██║   ██║╚════██╗  |
+// |  █████╗  ██║     ██║   ██║██║ █╗ ██║██║  ███╗██║██╔██╗ ██║█████╗  ██║   ██║ █████╔╝  |
+// |  ██╔══╝  ██║     ██║   ██║██║███╗██║██║   ██║██║██║╚██╗██║██╔══╝  ╚██╗ ██╔╝██╔═══╝   |
+// |  ██║     ███████╗╚██████╔╝╚███╔███╔╝╚██████╔╝██║██║ ╚████║███████╗ ╚████╔╝ ███████╗  |
+// |  ╚═╝     ╚══════╝ ╚═════╝  ╚══╝╚══╝  ╚═════╝ ╚═╝╚═╝  ╚═══╝╚══════╝  ╚═══╝  ╚══════╝  |
 // _______________________________________________________________________________________
 
 //         """);
 
-//         // print available commands
-//         System.out.println("Available commands:");
-//         System.out.println("uci - start the engine");
-//         System.out.println("isready - check if the engine is ready");
-//         System.out.println("ucinewgame - start a new game");
-//         System.out.println("position - set up the position");
-//         System.out.println("go - start calculating the best move");
-//         System.out.println("quit - stop the engine");
-//         System.out.println("stop - stop calculating the best move");
-//         System.out.println("option - set engine options");
-//         System.out.println();
+        // // print available commands
+        // System.out.println("Available commands:");
+        // System.out.println("uci - start the engine");
+        // System.out.println("isready - check if the engine is ready");
+        // System.out.println("ucinewgame - start a new game");
+        // System.out.println("position - set up the position");
+        // System.out.println("go - start calculating the best move");
+        // System.out.println("quit - stop the engine");
+        // System.out.println("stop - stop calculating the best move");
+        // System.out.println("option - set engine options");
+        // System.out.println();
 
         CustomAlgorithm advancedChessAlgorithm = new CustomAlgorithm(6);
         engine.setAlgorithm(advancedChessAlgorithm);
@@ -95,6 +95,15 @@ public class UCI {
                 case "option":
                     option(inputArray);
                     break;
+                case "setdepth":
+                    setDepth(Integer.parseInt(inputArray[1]));
+                    break;
+                case "setrazordepth":
+                    setRazorDepth(Integer.parseInt(inputArray[1]));
+                    break;
+                case "setnpm":
+                    setNPM(Integer.parseInt(inputArray[1]));
+                    break;
                 case "d":
                     d();
                     break;
@@ -137,57 +146,70 @@ public class UCI {
     }
 
     private static void go(String[] inputArray) {
-
         // perft test
         if(inputArray[1].equals("perft")){
             int depth = Integer.parseInt(inputArray[2]);
             long time = System.currentTimeMillis();
             String perft;
-            if (inputArray[3].equals("legal")){
+            if(inputArray.length > 3 && inputArray[3].equals("legal")){
                 perft = Perft.perftDivideString(board, depth);
             }
             else{
-                System.out.println("Pseudo legal");
                 perft = Perft.perftDivideStringPseudoLegal(board, depth);
             }
             time = System.currentTimeMillis() - time;
             System.out.println(perft);
             System.out.println("Time: " + time + "ms");
+            return;
         }
         if (inputArray[1].equals("ponder")) {
             // infinite search
             engine.setDepth(20);
-            engine.getAlgorithm().search(board);
-        }
-        if (inputArray[1].equals("capture")) {
-            MoveList moveList = MoveGenerator.generateCaptureMoves(board);
-            System.out.println("Capture moves: " + moveList);
-        }
-        if (inputArray[1].equals("legal")) {
-            MoveList moveList = board.getLegalMoves();
-            System.out.println("Legal moves: " + moveList);
+            engine.getAlgorithm().search(board, 0, 0, 0, 0, 0, 20);
+            return;
         }
         else{
             
-            int depth = 0;
+            // go wtime <> btime <> winc <> binc <> movestogo <>
+            int depth = 1;
             int time = 0;
+            int wtime = 0;
+            int btime = 0;
+            int winc = 0;
+            int binc = 0;
+            int movestogo = 0;
+
             for(int i = 1; i < inputArray.length; i++){
                 if(inputArray[i].equals("depth")){
                     depth = Integer.parseInt(inputArray[i + 1]);
                 }
                 else if(inputArray[i].equals("wtime")){
-                    time = Integer.parseInt(inputArray[i + 1]);
+                    wtime = Integer.parseInt(inputArray[i + 1]);
                 }
                 else if(inputArray[i].equals("btime")){
-                    time = Integer.parseInt(inputArray[i + 1]);
+                    btime = Integer.parseInt(inputArray[i + 1]);
+                }
+                else if(inputArray[i].equals("winc")){
+                    winc = Integer.parseInt(inputArray[i + 1]);
+                }
+                else if(inputArray[i].equals("binc")){
+                    binc = Integer.parseInt(inputArray[i + 1]);
+                }
+                else if(inputArray[i].equals("movestogo")){
+                    movestogo = Integer.parseInt(inputArray[i + 1]);
                 }
             }
-    
-            if(depth != 0){
-                engine.setDepth(depth);
-                Move bestMove = engine.getAlgorithm().search(board);
-                System.out.println("bestmove " + bestMove.toString());
+
+            if(depth == 0){
+                depth = 6;
             }
+
+            // Start the search
+            engine.setDepth(depth);
+            Move move = engine.getAlgorithm().search(board, wtime, btime, winc, binc, movestogo, depth);
+            System.out.println("bestmove " + move.toString());
+
+            
     
             
         }
@@ -195,6 +217,21 @@ public class UCI {
 
 
         
+    }
+
+    private static void setDepth(int depth) {
+        engine.setDepth(depth);
+        System.out.println("Depth set to " + depth);
+    }
+
+    private static void setRazorDepth(int depth) {
+        engine.setRazorDepth(depth);
+        System.out.println("Razoring-Depth set to " + depth);
+    }
+
+    private static void setNPM(int npm) {
+        engine.setNPM(npm);
+        System.out.println("NullPruningMove set to " + npm);
     }
 
     private static void position(String[] inputArray) {
@@ -231,6 +268,19 @@ public class UCI {
                     }
                 }
             }
+        } else if (inputArray[1].equals("startpos")) {
+            // Load the starting position
+            board = new BitBoard();
+
+            // Make the moves
+            for(int i = 0; i < inputArray.length; i++){
+                if(inputArray[i].equals("moves")){
+                    for(int j = i + 1; j < inputArray.length; j++){
+                        Move move = new Move(inputArray[j]);
+                        board.makeMove(move);
+                    }
+                }
+            }
         }
 
     }
@@ -251,7 +301,8 @@ public class UCI {
         System.out.println("option name Threads type spin default 1 min 1 max 1024");
         System.out.println("option name Ponder type check default false");
         System.out.println("option name Debug Log File type string default debug.log");
-        System.out.println();
+        System.out.println("option razoring" + engine.getRazorDepth());
+        System.out.println("option npm" + engine.getNPM());
         System.out.println("uciok");
     }
 

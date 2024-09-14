@@ -350,6 +350,9 @@ public class BitBoard {
         blackCastleKingSide = boardHistory.blackCastleKingSide;
         enPassantSquare = boardHistory.enPassantSquare;
         whiteTurn = boardHistory.whiteTurn;
+        
+        whitePieces = whitePawns | whiteKnights | whiteBishops | whiteRooks | whiteQueens | whiteKing;
+        blackPieces = blackPawns | blackKnights | blackBishops | blackRooks | blackQueens | blackKing;
     }
 
     public void restoreBoardHistoryLONG(long[] boardHistory) {
@@ -734,7 +737,6 @@ public class BitBoard {
 
     // Get the white pieces bitboard
     public long getWhitePieces() {
-        updateBitBoard();
         return whitePieces;
     }
 
@@ -812,18 +814,13 @@ public class BitBoard {
     }
 
     public void makeMove(Move move) {
-
         // Save the current board state
         saveBoardHistory(move);
         // saveBoardHistoryLONG();
     
-        // Get the source and destination squares
-        int fromSquare = move.from;
-        int toSquare = move.to;
-    
         // Convert squares to bitboards
-        long fromBitboard = 1L << fromSquare;
-        long toBitboard = 1L << toSquare;
+        long fromBitboard = 1L << move.from;
+        long toBitboard = 1L << move.to;
     
         
         // Separate logic for white and black moves
@@ -889,8 +886,7 @@ public class BitBoard {
     
             // Tours blanches
             } else if ((whiteRooks & fromBitboard) != 0) {
-                if (fromSquare == 0) whiteCastleQueenSide = 0L;
-                if (fromSquare == 7) whiteCastleKingSide = 0L;
+                if ((A1 & fromBitboard) != 0) whiteCastleQueenSide = 0L;
                 whiteRooks &= ~fromBitboard;
                 whiteRooks |= toBitboard;
     
@@ -901,18 +897,20 @@ public class BitBoard {
     
             // Roi blanc
             } else if ((whiteKing & fromBitboard) != 0) {
-                if (Math.abs(fromSquare - toSquare) != 2) {
-                    whiteCastleQueenSide = 0L;
-                    whiteCastleKingSide = 0L;
-                    whiteKing &= ~fromBitboard;
-                    whiteKing |= toBitboard;
-                } else {
+                if (((C1 & fromBitboard) != 0) || ((G1 & fromBitboard) != 0)) {
                     // Handle castling for white
-                    if (toSquare == 2) {
+                    if (toBitboard == 1L << 58) {
                         processWhiteCastleQueenSide(fromBitboard);
-                    } else if (toSquare == 6) {
+                    } else if (toBitboard == 1L << 62) {
                         processWhiteCastleKingSide(fromBitboard);
                     }
+                } else {
+                    whiteKing &= ~fromBitboard;
+                    whiteKing |= toBitboard;
+
+                    // Reset castling rights
+                    whiteCastleQueenSide = 0L;
+                    whiteCastleKingSide = 0L;
                 }
             }
         } else {
@@ -978,8 +976,8 @@ public class BitBoard {
     
             // Tours noires
             } else if ((blackRooks & fromBitboard) != 0) {
-                if (fromSquare == 56) blackCastleQueenSide = 0L;
-                if (fromSquare == 63) blackCastleKingSide = 0L;
+                if ((A8 & fromBitboard) != 0) blackCastleQueenSide = 0L;
+                if ((H8 & fromBitboard) != 0) blackCastleKingSide = 0L;
                 blackRooks &= ~fromBitboard;
                 blackRooks |= toBitboard;
     
@@ -990,18 +988,20 @@ public class BitBoard {
     
             // Roi noir
             } else if ((blackKing & fromBitboard) != 0) {
-                if (Math.abs(fromSquare - toSquare) != 2) {
-                    blackCastleQueenSide = 0L;
-                    blackCastleKingSide = 0L;
-                    blackKing &= ~fromBitboard;
-                    blackKing |= toBitboard;
-                } else {
+                if (((C8 & fromBitboard) != 0) || ((G8 & fromBitboard) != 0)) {
                     // Handle castling for black
-                    if (toSquare == 58) {
+                    if (toBitboard == 1L << 2) {
                         processBlackCastleQueenSide(fromBitboard);
-                    } else if (toSquare == 62) {
+                    } else if (toBitboard == 1L << 6) {
                         processBlackCastleKingSide(fromBitboard);
                     }
+                } else {
+                    blackKing &= ~fromBitboard;
+                    blackKing |= toBitboard;
+
+                    // Reset castling rights
+                    blackCastleQueenSide = 0L;
+                    blackCastleKingSide = 0L;
                 }
             }
         }
@@ -1064,9 +1064,7 @@ public class BitBoard {
 
     public void makeMove(String move) {
         int fromSquare = getSquare(move.substring(0, 2));
-        System.out.println("from square: " + fromSquare);
         int toSquare = getSquare(move.substring(2, 4));
-        System.out.println("to square: " + toSquare);
         int pieceFrom = getPiece(fromSquare);
 
         // piece to if last character is not a digit
@@ -1124,8 +1122,14 @@ public class BitBoard {
                 i--;
             }
             undoMove();
+            
         }
 
+        return moveList;
+    }
+
+    public MoveList getCaptureMoves() {
+        MoveList moveList = MoveGenerator.generateCaptureMoves(this);
         return moveList;
     }
 
@@ -1241,6 +1245,24 @@ public class BitBoard {
         }
     }
 
+    public static int getPieceType(int piece) {
+        if (piece == 1 || piece == 7) {
+            return PAWN;
+        } else if (piece == 2 || piece == 8) {
+            return KNIGHT;
+        } else if (piece == 3 || piece == 9) {
+            return BISHOP;
+        } else if (piece == 4 || piece == 10) {
+            return ROOK;
+        } else if (piece == 5 || piece == 11) {
+            return QUEEN;
+        } else if (piece == 6 || piece == 12) {
+            return KING;
+        } else {
+            return EMPTY;
+        }
+    }
+
     public void printBitBoardRaw(){
         System.out.println(Long.toBinaryString(bitboard));
     }
@@ -1316,17 +1338,7 @@ public class BitBoard {
                 '}';
     }
 
-    public MoveList getCaptureMoves() {
-        MoveList moveList = getLegalMoves();
-        MoveList captureMoves = new MoveList(218);
-        for (Move move : moveList) {
-            if (isCaptureMove(move)) {
-                captureMoves.add(move);
-            }
-        }
-        System.out.println("Capture moves: " + captureMoves);
-        return captureMoves;
-    }
+    
 
     public boolean isCaptureMove(Move move) {
         int toSquare = move.to;

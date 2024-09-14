@@ -12,12 +12,14 @@ public final class Move {
     public static final byte EN_PASSENT = 3;
     public static final byte PROMOTION = 4;
     public static final byte CASTLING = 5;
+    public static final byte CAPTURE = 6;
 
     // scores for ordering moves later
-    public static final int PROMOTION_SCORE = 350;
+    public static final int PROMOTION_SCORE = 150;
     public static final int CAPTURE_SCORE = 100;
     public static final int CASTLING_SCORE = 150;
     public static final int DOUBLE_PAWN_PUSH_SCORE = 220;
+    public static final int IS_CHECK_SCORE = 150;
 
 
     public int from;
@@ -47,6 +49,15 @@ public final class Move {
         this.to = to;
         this.pieceFrom = board.getPiece(from);
         this.pieceTo = board.getPiece(to);
+    }
+
+    public Move(int from, int to, int pieceFrom, int pieceTo, byte type, int seeScore) {
+        this.from = from;
+        this.to = to;
+        this.pieceFrom = pieceFrom;
+        this.pieceTo = pieceTo;
+        this.type = type;
+        this.seeScore = seeScore;
     }
 
     public Move (String move) {

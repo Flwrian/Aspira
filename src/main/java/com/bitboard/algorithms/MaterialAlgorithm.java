@@ -31,7 +31,6 @@ public class MaterialAlgorithm implements ChessAlgorithm {
         this.depth = depth;
     }
 
-    @Override
     public Move search(BitBoard board) {
         MoveValue result = negamax(board, depth, Integer.MIN_VALUE, Integer.MAX_VALUE, board.whiteTurn, 0);
         // System.out.println("info depth " + depth + " score cp " + result.value + " pv " + result.bestMove);
@@ -107,5 +106,35 @@ public class MaterialAlgorithm implements ChessAlgorithm {
     @Override
     public void setDepth(int depth) {
         this.depth = depth;
+    }
+
+    @Override
+    public void setRazorDepth(int depth) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'setRazorDepth'");
+    }
+
+    @Override
+    public void setNPM(int npm) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'setNPM'");
+    }
+
+    @Override
+    public int getRazorDepth() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'getRazorDepth'");
+    }
+
+    @Override
+    public int getNPM() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'getNPM'");
+    }
+
+    @Override
+    public Move search(BitBoard board, int wtime, int btime, int winc, int binc, int movestogo, int depth) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'search'");
     }
 }

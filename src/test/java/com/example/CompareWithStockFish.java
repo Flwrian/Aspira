@@ -304,7 +304,7 @@ public class CompareWithStockFish {
 
         BitBoard bitBoard = new BitBoard();
         
-        // bitBoard.loadFromFen("4k3/8/8/8/8/8/8/R3K2R w K - 0 1");
+        bitBoard.loadFromFen("7k/5K1p/6P1/8/8/4P3/8/8 w - - 0 1");
 
         // bitBoard.makeMove("c2c3");
         // bitBoard.makeMove("a1a2");

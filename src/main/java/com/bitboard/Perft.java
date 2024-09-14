@@ -175,10 +175,33 @@ public class Perft {
         // System.out.println("Seconds: " + (System.currentTimeMillis() - time) / 1000.0);
 
         
-        bitBoard.loadFromFen("4k3/8/8/8/8/8/8/R3K2R w - - 0 1");
-        bitBoard.makeMove("e1g1");
+        bitBoard.loadFromFen("r1bqk2r/pppp1p1p/1bn2np1/4p3/2B1P3/3PBQ2/PPP2PPP/RN2K1NR w KQkq - 3 7");
         bitBoard.printChessBoard();
 
+        // Count all captures
+        System.out.println("Captures: " + perftOnCaptures(bitBoard, 10));
+        
+    }
 
+    public static int perftOnCaptures(BitBoard bitBoard, int depth) {
+        if (depth == 0) {
+            return 1;
+        }
+        
+        MoveList moveList = bitBoard.getCaptureMoves();
+        if (moveList.size() == 0) {
+            return 0;
+        }
+        int nodes = 0;
+    
+        for (int i = 0; i < moveList.size(); i++) { 
+            Move move = moveList.get(i);
+            bitBoard.makeMove(move);
+            nodes += perftOnCaptures(bitBoard, depth - 1);
+            bitBoard.undoMove();
+        }
+
+        
+        return nodes;
     }
 }

@@ -44,9 +44,13 @@ public class Engine {
         return algorithm;
     }
 
+    public BitBoard getBoard() {
+        return board;
+    }
+
     // play
     public void play() {
-        Move bestMove = algorithm.search(board);
+        Move bestMove = algorithm.search(board, 0, 0, 0, 0, 0, depth);
         if (bestMove == null) {
             // System.out.println("No legal moves found. Game over.");
             if (board.isStaleMate()){
@@ -105,5 +109,21 @@ public class Engine {
 
     public int getDepth() {
         return depth;
+    }
+
+    public void setRazorDepth(int depth2) {
+        algorithm.setRazorDepth(depth2);
+    }
+
+    public void setNPM(int npm) {
+        algorithm.setNPM(npm);
+    }
+
+    public int getRazorDepth() {
+        return algorithm.getRazorDepth();
+    }
+
+    public int getNPM() {
+        return algorithm.getNPM();
     }
 }

@@ -1,0 +1,47 @@
+FEN: 7k/5K1p/6P1/8/8/4P3/8/8 w - - 0 1
+=== Flowgine Perft Results ===
+[ 12 ms ]
+[PerftDivide]
+[Depth: 3]
+[ === ]
+e3e4: 21
+g6g7: 0
+g6h7: 6
+f7e6: 46
+f7f6: 30
+f7e7: 45
+f7f8: 14
+f7e8: 31
+
+Nodes searched: 193
+
+=== StockFish Perft Results ===
+Stockfish 16.1 by the Stockfish developers (see AUTHORS file)
+info string NNUE evaluation using nn-baff1ede1f90.nnue
+info string NNUE evaluation using nn-b1a57edbea57.nnue
+e3e4: 21
+g6g7: 0
+g6h7: 6
+f7e6: 46
+f7f6: 30
+f7e7: 45
+f7f8: 14
+f7e8: 31
+
+Nodes searched: 193
+
+
+
+=== Comparison of Individual Move Nodes ===
+[ - Depth: 3 - ]
+[v] Flowgine: e3e4 - 21 | StockFish: e3e4 - 21
+[v] Flowgine: f7e6 - 46 | StockFish: f7e6 - 46
+[v] Flowgine: f7e7 - 45 | StockFish: f7e7 - 45
+[v] Flowgine: f7e8 - 31 | StockFish: f7e8 - 31
+[v] Flowgine: f7f6 - 30 | StockFish: f7f6 - 30
+[v] Flowgine: f7f8 - 14 | StockFish: f7f8 - 14
+[v] Flowgine: g6g7 - 0 | StockFish: g6g7 - 0
+[v] Flowgine: g6h7 - 6 | StockFish: g6h7 - 6
+
+=== Total Nodes Comparison ===
+[*V*] Valid total nodes: 193

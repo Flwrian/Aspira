@@ -90,6 +90,9 @@ public class UCI {
         }
     }
 
+    private static void setDepth(int depth) {
+        engine.setAlgorithm(new AlphaBetaPruningAlgorithm(depth));
+    }
     private static void stop() {
         
     }
