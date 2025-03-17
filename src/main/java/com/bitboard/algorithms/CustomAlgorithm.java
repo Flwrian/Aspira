@@ -16,28 +16,29 @@ public class CustomAlgorithm implements ChessAlgorithm {
 
     int nodes = 0;
     int depth = 0;
-    int razorDepth = 2;
-    int npm = 3;
-    private int MAX_QUIESCENCE_DEPTH = 5;
+    int razorDepth = 7;
+    int npm = 5;
+    private int MAX_QUIESCENCE_DEPTH = 6;
+    private int MAX_DEPTH = 11;
 
     public void setRazorDepth(int razorDepth) {
         this.razorDepth = razorDepth;
     }
 
-    @Override
-    public void setNPM(int npm) {
-        this.npm = npm;
-    }
+    // @Override
+    // public void setNPM(int npm) {
+    //     this.npm = npm;
+    // }
 
-    @Override
-    public int getNPM() {
-        return npm;
-    }
+    // @Override
+    // public int getNPM() {
+    //     return npm;
+    // }
 
-    @Override
-    public int getRazorDepth() {
-        return razorDepth;
-    }
+    // @Override
+    // public int getRazorDepth() {
+    //     return razorDepth;
+    // }
 
     // transposition table
     private TranspositionTable transpositionTable = new TranspositionTable();
@@ -194,25 +195,39 @@ public class CustomAlgorithm implements ChessAlgorithm {
         Move bestMove = null;
         long time = System.currentTimeMillis();
 
-        if(board.whiteTurn && wtime < 1000) {
-            depth = -1;
-        } else if(!board.whiteTurn && btime < 1000) {
+        // Réduire la profondeur si le temps est limité
+        if (board.whiteTurn && wtime < 1000 || !board.whiteTurn && btime < 1000) {
             depth = -1;
         }
 
-        // if endgame increase depth
-        // if (getMaterialValue(board, true) + getMaterialValue(board, false) < 43200) {
-        //     depth += 2;
-        // }
+        // Fenêtre d'aspiration initiale
+        int window = 100;
 
-        // Iterative Deepening: Itère sur plusieurs profondeurs, sauvegarde le meilleur coup trouvé à chaque étape.
         for (int currentDepth = 1; currentDepth <= depth; currentDepth++) {
+
+            if (getMaterialValue(board, true) + getMaterialValue(board, false) < 43200) {
+                System.out.println("Endgame");
+                MAX_QUIESCENCE_DEPTH = 10;
+                depth = MAX_DEPTH;
+            }
+
             long time2 = System.currentTimeMillis();
-            MoveValue result = minimax(board, currentDepth, Integer.MIN_VALUE, Integer.MAX_VALUE, board.whiteTurn);
+
+            // Recherche avec fenêtre d'aspiration
+            int searchAlpha = Integer.MIN_VALUE + window;
+            int searchBeta = Integer.MAX_VALUE - window;
+            MoveValue result = minimax(board, currentDepth, searchAlpha, searchBeta, board.whiteTurn);
+
+            // Si la recherche échoue, on refait avec des bornes complètes
+            if (result.value <= searchAlpha || result.value >= searchBeta) {
+                window *= 2;  // Augmente la fenêtre si échec
+                result = minimax(board, currentDepth, Integer.MIN_VALUE, Integer.MAX_VALUE, board.whiteTurn);
+            }
+
             time2 = System.currentTimeMillis() - time2;
             bestMove = result.bestMove;
 
-            // Affiche la variation principale
+            // Affichage de la variation principale
             StringBuilder pvString = new StringBuilder();
             for (Move move : result.principalVariation) {
                 pvString.append(move).append(" ");
@@ -220,10 +235,11 @@ public class CustomAlgorithm implements ChessAlgorithm {
 
             System.out.println("info depth " + currentDepth + " score cp " + result.value + " pv " + pvString + " nodes " + nodes + " time " + time2);
 
-            // if the best move is a checkmate, stop the search
-            if (result.value >= 48000 || result.value <= -48000) {
-                System.out.println("Mate found -> " + pvString);
-            }
+            // Si le meilleur coup est un mat, arrêter la recherche
+            // if (result.value >= 48000 || result.value <= -48000) {
+            //     System.out.println("Mate found -> " + pvString);
+            //     break;
+            // }
         }
 
         time = System.currentTimeMillis() - time;
@@ -231,15 +247,14 @@ public class CustomAlgorithm implements ChessAlgorithm {
         return bestMove;
     }
 
-
-    // Minimax avec coupure alpha-beta et recherche de quiescence
+    // Minimax avec coupure alpha-beta, quiescence et autres optimisations
     public MoveValue minimax(BitBoard board, int depth, int alpha, int beta, boolean maximizingPlayer) {
         nodes++;
 
         long zobristHash = Zobrist.computeHash(board);
         TranspositionTableEntry entry = transpositionTable.probe(zobristHash);
-        
-        // Si l'entrée existe et la profondeur correspond, retourne le résultat stocké
+
+        // Vérifie si une entrée est trouvée dans la table de transposition
         if (entry != null && entry.depth >= depth) {
             if (entry.nodeType == 0) {
                 return new MoveValue(entry.bestMove, entry.score);
@@ -248,226 +263,148 @@ public class CustomAlgorithm implements ChessAlgorithm {
             } else if (entry.nodeType == 2 && entry.score >= beta) {
                 return new MoveValue(entry.bestMove, entry.score);
             }
-
             alpha = Math.max(alpha, entry.score);
             beta = Math.min(beta, entry.score);
-
             if (alpha >= beta) {
                 return new MoveValue(entry.bestMove, entry.score);
             }
         }
-        
+
+        // Null Move Pruning
+        if (depth >= 2 && !board.isKingInCheck(maximizingPlayer) && board.getLegalMoves().size() > 0) {
+            board.makeNullMove();
+            MoveValue result = minimax(board, depth - 2, -beta, -beta + 1, !maximizingPlayer);
+            board.undoNullMove();
+            if (result.value >= beta) {
+                return new MoveValue(null, beta);
+            }
+        }
+
+        // if (!board.isKingInCheck(maximizingPlayer)) {
+        //     // Applique le Razoring pour les faibles profondeurs
+        //     if (depth <= razorDepth) {
+        //         int eval = evaluate(board);
+        //         if (eval + razoringMargin(depth) <= alpha) {
+        //             return new MoveValue(null, eval);
+        //         }
+        //     }
+        // }
+
+
         if (depth <= 0) {
-            // Quiescence search
-            return quiescenceSearch(board, alpha, beta, maximizingPlayer, MAX_QUIESCENCE_DEPTH);
+            // Recherche de quiescence
+            return quiescenceSearch(board, alpha, beta, maximizingPlayer);
         }
 
-        // Vérifier si le roi est en échec, car le razoring ne doit pas être appliqué dans ce cas
-        if (!board.isKingInCheck(maximizingPlayer)) {
-            // Razoring - seulement pour des profondeurs faibles (1 à 4)
-            if (depth <= razorDepth) {
-                int eval = evaluate(board);
-                if (eval + razoringMargin(depth) <= alpha) {
-                    return new MoveValue(null, eval);  // Retourne l'évaluation immédiate si elle est inférieure à alpha
-                }
-            }
-        }
-        
-        if (npm != 0) {
-            if (depth >= npm && !board.isKingInCheck(maximizingPlayer) && board.getLegalMoves().size() > 0) {
-                board.makeNullMove();
-                MoveValue result = minimax(board, depth - 3, -beta, -beta + 1, !maximizingPlayer);
-                board.undoNullMove();
-                if (result.value >= beta) {
-                    return new MoveValue(null, beta);
-                }
-            }
-        }
-
-
-    
-
-    
         MoveList moves = board.getLegalMoves();
         moves.sort((m1, m2) -> m2.getSeeScore() - m1.getSeeScore());
-    
-        // Si le joueur est en échec et qu'il n'y a pas de coups légaux : échec et mat ou pat
-        if (moves.size() == 0 && board.isKingInCheck(board.whiteTurn)) {
-            MoveValue result = new MoveValue(null, board.whiteTurn ? -49000 + depth : 49000 - depth);  // Echec et mat
-            return result;
-        }
-        if (board.isStaleMate()) {
-            MoveValue result = new MoveValue(null, 0);  // Pat
-            return result;
-        }
-    
+
         Move bestMove = null;
         List<Move> bestVariation = new ArrayList<>();
-    
+
         if (maximizingPlayer) {
             int maxEval = Integer.MIN_VALUE;
-            for (Move move : moves) {
+            for (int i = 0; i < moves.size(); i++) {
+                Move move = moves.get(i);
                 board.makeMove(move);
-                MoveValue result = minimax(board, depth - 1, alpha, beta, false);  // Le prochain joueur minimise
+
+                // Late Move Reduction (LMR) pour réduire la profondeur des coups tardifs
+                int reduction = (i >= 4 && depth > 2) ? 2 : 0;
+                MoveValue result = minimax(board, depth - 1 - reduction, alpha, beta, false);
+
                 board.undoMove();
-    
-                int eval = result.value;
-                if (eval > maxEval) {
-                    maxEval = eval;
+
+                if (result.value > maxEval) {
+                    maxEval = result.value;
                     bestMove = move;
-                    bestVariation = new ArrayList<>(result.principalVariation);  // Copie la variation principale
-                    bestVariation.add(0, move);  // Ajoute le meilleur coup au début
+                    bestVariation = new ArrayList<>(result.principalVariation);
+                    bestVariation.add(0, move);
                 }
-    
-                alpha = Math.max(alpha, eval);
-                if (beta <= alpha) {
+
+                alpha = Math.max(alpha, result.value);
+                if (alpha >= beta) {
                     break;  // Coupure beta
                 }
             }
 
-            // Stocke le résultat dans la table de transposition
             byte nodeType = (maxEval <= alpha) ? (byte) 1 : (maxEval >= beta) ? (byte) 2 : (byte) 0;
             transpositionTable.store(zobristHash, depth, maxEval, nodeType, bestMove);
 
-            return new MoveValue(bestMove, maxEval, bestVariation);  // Retourne la meilleure valeur pour le joueur maximisant
+            return new MoveValue(bestMove, maxEval, bestVariation);
         } else {
             int minEval = Integer.MAX_VALUE;
-            for (Move move : moves) {
+            for (int i = 0; i < moves.size(); i++) {
+                Move move = moves.get(i);
                 board.makeMove(move);
-                MoveValue result = minimax(board, depth - 1, alpha, beta, true);  // Le prochain joueur maximise
+
+                int reduction = (i >= 4 && depth > 2) ? 2 : 0;
+                MoveValue result = minimax(board, depth - 1 - reduction, alpha, beta, true);
+
                 board.undoMove();
-    
-                int eval = result.value;
-                if (eval < minEval) {
-                    minEval = eval;
+
+                if (result.value < minEval) {
+                    minEval = result.value;
                     bestMove = move;
-                    bestVariation = new ArrayList<>(result.principalVariation);  // Copie la variation principale
-                    bestVariation.add(0, move);  // Ajoute le meilleur coup au début
+                    bestVariation = new ArrayList<>(result.principalVariation);
+                    bestVariation.add(0, move);
                 }
-    
-                beta = Math.min(beta, eval);
+
+                beta = Math.min(beta, result.value);
                 if (beta <= alpha) {
                     break;  // Coupure alpha
                 }
             }
 
-            // Stocke le résultat dans la table de transposition
             byte nodeType = (minEval <= alpha) ? (byte) 1 : (minEval >= beta) ? (byte) 2 : (byte) 0;
             transpositionTable.store(zobristHash, depth, minEval, nodeType, bestMove);
 
-            return new MoveValue(bestMove, minEval, bestVariation);  // Retourne la meilleure valeur pour le joueur minimisant
+            return new MoveValue(bestMove, minEval, bestVariation);
         }
     }
-    
 
-    // Recherche de quiescence pour limiter l'effet d'horizon
-    public MoveValue quiescenceSearch(BitBoard board, int alpha, int beta, boolean maximizingPlayer, int MAX_QUIESCENCE_DEPTH) {
-        nodes++;
-    
+    // Recherche de quiescence optimisée
+    public MoveValue quiescenceSearch(BitBoard board, int alpha, int beta, boolean maximizingPlayer) {
         int eval = evaluate(board);
-        
-        // fail hard if the evaluation is outside the window
+
         if (eval >= beta) {
-            return new MoveValue(null, beta);
+            return new MoveValue(null, beta);  // Coupure beta
         }
 
-        // alpha increases if the evaluation is within the window
         if (eval > alpha) {
             alpha = eval;
         }
 
-        
-        // Generate only captures
-        // Tant qu'il y a des captures, on continue la recherche
         MoveList moves = board.getCaptureMoves();
-        if (moves.size() == 0) {
-            return new MoveValue(null, eval);  // Return the evaluation if there are no captures
-        }
         moves.sort((m1, m2) -> m2.getSeeScore() - m1.getSeeScore());
 
-        // If the player is in check and there are no legal moves: checkmate or stalemate
-        if (moves.size() == 0) {
-            if (board.isKingInCheck(maximizingPlayer)) {
-                return new MoveValue(null, 49000 - depth);  // Checkmate
-            }
-            return new MoveValue(null, 0);  // Stalemate
-        }
+        for (Move move : moves) {
+            board.makeMove(move);
+            MoveValue result = quiescenceSearch(board, alpha, beta, !maximizingPlayer);
+            board.undoMove();
 
-        // Maximization or minimization according to the player
-        Move bestMove = null;
-        if (maximizingPlayer) {
-            int maxEval = Integer.MIN_VALUE;
-            for (Move move : moves) {
-                board.makeMove(move);
-                MoveValue result = quiescenceSearch(board, alpha, beta, false, depth - 1);  // Next player minimizes
-                board.undoMove();
-                
-                eval = result.value;
-                if (eval > maxEval) {
-                    maxEval = eval;
-                    bestMove = move;
-                }
-                
-                alpha = Math.max(alpha, eval);  // Update alpha for alpha-beta pruning
-                if (beta <= alpha) {
-                    break;  // Beta cutoff
-                }
+            if (result.value > alpha) {
+                alpha = result.value;
             }
 
-            return new MoveValue(bestMove, maxEval);  // Return the best value for the maximizing player
-        } else {
-            int minEval = Integer.MAX_VALUE;
-            for (Move move : moves) {
-                board.makeMove(move);
-                MoveValue result = quiescenceSearch(board, alpha, beta, true, depth - 1);  // Next player maximizes
-                board.undoMove();
-                
-                eval = result.value;
-                if (eval < minEval) {
-                    minEval = eval;
-                    bestMove = move;
-                }
-                
-                beta = Math.min(beta, eval);  // Update beta for alpha-beta pruning
-                if (beta <= alpha) {
-                    break;  // Alpha cutoff
-                }
+            if (alpha >= beta) {
+                break;  // Coupure beta
             }
-            return new MoveValue(bestMove, minEval);  // Return the best value for the minimizing player
         }
-        
+
+        return new MoveValue(null, alpha);
     }
-    
-    
 
+    // Évaluation de la position
     @Override
     public int evaluate(BitBoard board) {
-        // if (board.isCheckMate()) {
-        //     System.out.println("Checkmate!");
-        //     return board.whiteTurn ? Integer.MIN_VALUE : Integer.MAX_VALUE;
-        // }
-        // if (board.isStaleMate()) {
-        //     // System.out.println("Stalemate!");
-        //     // si on a l'avantage, on veut éviter le pat
-        //     return board.whiteTurn ? Integer.MAX_VALUE : Integer.MIN_VALUE;
-        // }
-        // evaluate position based on material and piece-square tables
-        int materialValue = getBoardValue(board);
-        return materialValue;
+        return getBoardValue(board);
+    }
 
-        
-    }
-    
-    // Fonction pour définir la marge de razoring en fonction de la profondeur
+    // Fonction de calcul du razoring margin
     private int razoringMargin(int depth) {
-        switch (depth) {
-            case 1: return 100;  // Par exemple, 100 centipions pour depth = 1
-            case 2: return 150;  // 150 centipions pour depth = 2
-            case 3: return 200;  // 200 centipions pour depth = 3
-            case 4: return 300;  // 300 centipions pour depth = 4
-            default: return 0;   // Pas de marge de razoring pour les profondeurs plus grandes
-        }
+        return depth * 100;
     }
+
     
 
     public int getPSTValuePawn(int square, boolean isEndGame){

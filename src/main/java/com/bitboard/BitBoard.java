@@ -260,11 +260,8 @@ public class BitBoard {
     public static final int QUEEN = 5;
     public static final int KING = 6;
 
-    private Stack<BoardHistory> history;
+    private ArrayDeque<BoardHistory> history;
 
-    private ArrayDeque<long[]> bbHistory;
-
-    
 
     public static final String INITIAL_STARTING_POSITION = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
@@ -307,7 +304,7 @@ public class BitBoard {
 
         enPassantSquare = 0L;
 
-        history = new Stack<>();
+        history = new ArrayDeque<>();
         // bbHistory = new ArrayDeque<>();
 
 
@@ -887,6 +884,7 @@ public class BitBoard {
             // Tours blanches
             } else if ((whiteRooks & fromBitboard) != 0) {
                 if ((A1 & fromBitboard) != 0) whiteCastleQueenSide = 0L;
+                if ((H1 & fromBitboard) != 0) whiteCastleKingSide = 0L;
                 whiteRooks &= ~fromBitboard;
                 whiteRooks |= toBitboard;
     
@@ -897,7 +895,7 @@ public class BitBoard {
     
             // Roi blanc
             } else if ((whiteKing & fromBitboard) != 0) {
-                if (((C1 & fromBitboard) != 0) || ((G1 & fromBitboard) != 0)) {
+                if (((whiteCastleQueenSide != 0) && (C1 & fromBitboard) != 0) || ((whiteCastleKingSide != 0) && (G1 & fromBitboard) != 0)) {
                     // Handle castling for white
                     if (toBitboard == 1L << 58) {
                         processWhiteCastleQueenSide(fromBitboard);
@@ -1014,6 +1012,8 @@ public class BitBoard {
     
         // Update the bitboard representation
         updateBitBoard();
+
+
     }
     
 
@@ -1130,6 +1130,22 @@ public class BitBoard {
 
     public MoveList getCaptureMoves() {
         MoveList moveList = MoveGenerator.generateCaptureMoves(this);
+
+        
+        // Pour chaque coup, vérifier si le roi est en échec après le coup
+        // Si le roi est en échec, le coup n'est pas légal
+        // Sinon, le coup est légal
+        for (int i = 0; i < moveList.size(); i++) {
+            Move move = moveList.get(i);
+            makeMove(move);
+            if (isKingInCheck(!whiteTurn)) {
+                moveList.remove(i);
+                i--;
+            }
+            undoMove();
+            
+        }
+        
         return moveList;
     }
 

@@ -165,10 +165,10 @@ public class AlphaBeta implements ChessAlgorithm {
         return "AlphaBeta";
     }
 
-    @Override
-    public void setDepth(int depth) {
-        this.depth = depth;
-    }
+    // @Override
+    // public void setDepth(int depth) {
+    //     this.depth = depth;
+    // }
 
     public int getPSTValuePawn(int square, boolean isEndGame){
         return (isEndGame ? PAWN_ENDGAME_TABLE[square] : PAWN_TABLE[square]);
@@ -468,28 +468,28 @@ public class AlphaBeta implements ChessAlgorithm {
         -43, -24, -14,  -28, -11, -21, -34, -53
     };
 
-    @Override
-    public void setRazorDepth(int depth) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'setRazorDepth'");
-    }
+    // @Override
+    // public void setRazorDepth(int depth) {
+    //     // TODO Auto-generated method stub
+    //     throw new UnsupportedOperationException("Unimplemented method 'setRazorDepth'");
+    // }
 
-    @Override
-    public void setNPM(int npm) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'setNPM'");
-    }
+    // @Override
+    // public void setNPM(int npm) {
+    //     // TODO Auto-generated method stub
+    //     throw new UnsupportedOperationException("Unimplemented method 'setNPM'");
+    // }
 
-    @Override
-    public int getRazorDepth() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getRazorDepth'");
-    }
+    // @Override
+    // public int getRazorDepth() {
+    //     // TODO Auto-generated method stub
+    //     throw new UnsupportedOperationException("Unimplemented method 'getRazorDepth'");
+    // }
 
-    @Override
-    public int getNPM() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getNPM'");
-    }
+    // @Override
+    // public int getNPM() {
+    //     // TODO Auto-generated method stub
+    //     throw new UnsupportedOperationException("Unimplemented method 'getNPM'");
+    // }
     
 }

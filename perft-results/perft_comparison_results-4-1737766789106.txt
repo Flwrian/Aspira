@@ -1,0 +1,62 @@
+FEN: 3k2B1/3pn3/5K2/8/8/8/8/8 b - - 0 1
+=== Flowgine Perft Results ===
+[ 28 ms ]
+[PerftDivide]
+[Depth: 4]
+[ === ]
+d7d5: 853
+d7d6: 1267
+e7d5: 878
+e7f5: 1847
+e7c6: 1914
+e7g6: 1564
+e7c8: 1398
+e7g8: 292
+d8c7: 1975
+d8c8: 1423
+d8e8: 986
+
+Nodes searched: 14397
+
+=== StockFish Perft Results ===
+Stockfish 16.1 by the Stockfish developers (see AUTHORS file)
+info string NNUE evaluation using nn-baff1ede1f90.nnue
+info string NNUE evaluation using nn-b1a57edbea57.nnue
+d7d6: 1267
+d7d5: 853
+e7d5: 878
+e7f5: 1847
+e7c6: 1914
+e7g6: 1564
+e7c8: 1398
+e7g8: 292
+d8c7: 1975
+d8c8: 1386
+d8e8: 986
+
+Nodes searched: 14360
+
+
+
+=== Comparison of Individual Move Nodes ===
+[ - Depth: 4 - ]
+[v] Flowgine: d7d5 - 853 | StockFish: d7d5 - 853
+[v] Flowgine: d7d6 - 1267 | StockFish: d7d6 - 1267
+[v] Flowgine: d8c7 - 1975 | StockFish: d8c7 - 1975
+--------------------
+[x] Invalid number of nodes: 
+Flowgine: d8c8 - 1423
+StockFish: d8c8 - 1386
+--------------------
+[v] Flowgine: d8e8 - 986 | StockFish: d8e8 - 986
+[v] Flowgine: e7c6 - 1914 | StockFish: e7c6 - 1914
+[v] Flowgine: e7c8 - 1398 | StockFish: e7c8 - 1398
+[v] Flowgine: e7d5 - 878 | StockFish: e7d5 - 878
+[v] Flowgine: e7f5 - 1847 | StockFish: e7f5 - 1847
+[v] Flowgine: e7g6 - 1564 | StockFish: e7g6 - 1564
+[v] Flowgine: e7g8 - 292 | StockFish: e7g8 - 292
+
+=== Total Nodes Comparison ===
+[**X**] Invalid total nodes:
+Flowgine: 14397
+StockFish: 14360

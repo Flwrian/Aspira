@@ -69,7 +69,6 @@ public class Engine {
                 // System.out.println("Illegal move: " + bestMove);
                 return;
             }
-            addMoveToPGN(bestMove);
             lastMove = bestMove;
         }
         board.makeMove(bestMove);
@@ -104,26 +103,26 @@ public class Engine {
 
     public void setDepth(int depth) {
         this.depth = depth;
-        algorithm.setDepth(depth);
+        // algorithm.setDepth(depth);
     }
 
     public int getDepth() {
         return depth;
     }
 
-    public void setRazorDepth(int depth2) {
-        algorithm.setRazorDepth(depth2);
-    }
+    // public void setRazorDepth(int depth2) {
+    //     algorithm.setRazorDepth(depth2);
+    // }
 
-    public void setNPM(int npm) {
-        algorithm.setNPM(npm);
-    }
+    // public void setNPM(int npm) {
+    //     algorithm.setNPM(npm);
+    // }
 
-    public int getRazorDepth() {
-        return algorithm.getRazorDepth();
-    }
+    // public int getRazorDepth() {
+    //     return algorithm.getRazorDepth();
+    // }
 
-    public int getNPM() {
-        return algorithm.getNPM();
-    }
+    // public int getNPM() {
+    //     return algorithm.getNPM();
+    // }
 }

@@ -1,0 +1,101 @@
+FEN: 2k3B1/3pn3/5K2/8/8/8/8/8 w - - 0 1
+=== Flowgine Perft Results ===
+[ 14 ms ]
+[PerftDivide]
+[Depth: 3]
+[ === ]
+g8a2: 120
+g8b3: 138
+g8c4: 156
+g8d5: 155
+g8e6: 123
+g8f7: 126
+g8h7: 113
+f6e5: 102
+f6g7: 123
+f6g5: 132
+f6f7: 64
+f6e7: 71
+
+Nodes searched: 1423
+
+=== StockFish Perft Results ===
+Stockfish 16.1 by the Stockfish developers (see AUTHORS file)
+info string NNUE evaluation using nn-baff1ede1f90.nnue
+info string NNUE evaluation using nn-b1a57edbea57.nnue
+g8a2: 119
+g8b3: 137
+g8c4: 155
+g8d5: 136
+g8e6: 122
+g8f7: 125
+g8h7: 112
+f6e5: 101
+f6g7: 123
+f6g5: 132
+f6f7: 62
+f6e7: 62
+
+Nodes searched: 1386
+
+
+
+=== Comparison of Individual Move Nodes ===
+[ - Depth: 3 - ]
+--------------------
+[x] Invalid number of nodes: 
+Flowgine: f6e5 - 102
+StockFish: f6e5 - 101
+--------------------
+--------------------
+[x] Invalid number of nodes: 
+Flowgine: f6e7 - 71
+StockFish: f6e7 - 62
+--------------------
+--------------------
+[x] Invalid number of nodes: 
+Flowgine: f6f7 - 64
+StockFish: f6f7 - 62
+--------------------
+[v] Flowgine: f6g5 - 132 | StockFish: f6g5 - 132
+[v] Flowgine: f6g7 - 123 | StockFish: f6g7 - 123
+--------------------
+[x] Invalid number of nodes: 
+Flowgine: g8a2 - 120
+StockFish: g8a2 - 119
+--------------------
+--------------------
+[x] Invalid number of nodes: 
+Flowgine: g8b3 - 138
+StockFish: g8b3 - 137
+--------------------
+--------------------
+[x] Invalid number of nodes: 
+Flowgine: g8c4 - 156
+StockFish: g8c4 - 155
+--------------------
+--------------------
+[x] Invalid number of nodes: 
+Flowgine: g8d5 - 155
+StockFish: g8d5 - 136
+--------------------
+--------------------
+[x] Invalid number of nodes: 
+Flowgine: g8e6 - 123
+StockFish: g8e6 - 122
+--------------------
+--------------------
+[x] Invalid number of nodes: 
+Flowgine: g8f7 - 126
+StockFish: g8f7 - 125
+--------------------
+--------------------
+[x] Invalid number of nodes: 
+Flowgine: g8h7 - 113
+StockFish: g8h7 - 112
+--------------------
+
+=== Total Nodes Comparison ===
+[**X**] Invalid total nodes:
+Flowgine: 1423
+StockFish: 1386

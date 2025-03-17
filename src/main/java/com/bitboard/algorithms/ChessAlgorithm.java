@@ -11,13 +11,13 @@ public interface ChessAlgorithm {
 
     public String getName();
 
-    public void setDepth(int depth);
+    // public void setDepth(int depth);
 
-    public void setRazorDepth(int depth);
+    // public void setRazorDepth(int depth);
 
-    public void setNPM(int npm);
+    // public void setNPM(int npm);
 
-    public int getRazorDepth();
+    // public int getRazorDepth();
 
-    public int getNPM();
+    // public int getNPM();
 }

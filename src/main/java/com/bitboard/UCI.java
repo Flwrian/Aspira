@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.*;
 
 import com.bitboard.algorithms.AdvancedChessAlgorithm;
+import com.bitboard.algorithms.AlphaBeta;
 import com.bitboard.algorithms.CustomAlgorithm;
 
 
@@ -99,13 +100,19 @@ public class UCI {
                     setDepth(Integer.parseInt(inputArray[1]));
                     break;
                 case "setrazordepth":
-                    setRazorDepth(Integer.parseInt(inputArray[1]));
+                    // setRazorDepth(Integer.parseInt(inputArray[1]));
                     break;
                 case "setnpm":
-                    setNPM(Integer.parseInt(inputArray[1]));
+                    // setNPM(Integer.parseInt(inputArray[1]));
                     break;
                 case "d":
                     d();
+                    break;
+                case "calculateNPS":
+                    System.out.println(calculateNPS(Integer.parseInt(inputArray[1])));
+                    break;
+                case "help":
+                    help();
                     break;
                 default:
                     System.out.println("Unknown command: " + command);
@@ -133,6 +140,57 @@ public class UCI {
         }
     }
 
+    private static void help() {
+        System.out.println("""
+         _______________________________________________________________________________________
+    
+        |  ███████╗██╗      ██████╗ ██╗    ██╗ ██████╗ ██╗███╗   ██╗███████╗██╗   ██╗██████╗   |
+        |  ██╔════╝██║     ██╔═══██╗██║    ██║██╔════╝ ██║████╗  ██║██╔════╝██║   ██║╚════██╗  |
+        |  █████╗  ██║     ██║   ██║██║ █╗ ██║██║  ███╗██║██╔██╗ ██║█████╗  ██║   ██║ █████╔╝  |
+        |  ██╔══╝  ██║     ██║   ██║██║███╗██║██║   ██║██║██║╚██╗██║██╔══╝  ╚██╗ ██╔╝██╔═══╝   |
+        |  ██║     ███████╗╚██████╔╝╚███╔███╔╝╚██████╔╝██║██║ ╚████║███████╗ ╚████╔╝ ███████╗  |
+        |  ╚═╝     ╚══════╝ ╚═════╝  ╚══╝╚══╝  ╚═════╝ ╚═╝╚═╝  ╚═══╝╚══════╝  ╚═══╝  ╚══════╝  |
+         _______________________________________________________________________________________
+    
+        Available commands:
+        -----------------------------------------------------------------------------------------
+        | uci                  | Start the engine and display information about the engine.      |
+        -----------------------------------------------------------------------------------------
+        | isready              | Check if the engine is ready to receive commands.               |
+        -----------------------------------------------------------------------------------------
+        | ucinewgame           | Start a new game and reset the board.                           |
+        -----------------------------------------------------------------------------------------
+        | position [args]      | Set up the position. Examples:                                  |
+        |                      | - position startpos                                            |
+        |                      | - position fen <fen-string> moves <move1> <move2> ...          |
+        -----------------------------------------------------------------------------------------
+        | go [args]            | Start calculating the best move. Optional arguments:            |
+        |                      | - perft <depth>                                                |
+        |                      | - depth <depth>                                                |
+        |                      | - wtime <ms> btime <ms> winc <ms> binc <ms>                    |
+        -----------------------------------------------------------------------------------------
+        | stop                 | Stop calculating the best move.                                |
+        -----------------------------------------------------------------------------------------
+        | quit                 | Quit the engine and terminate the process.                     |
+        -----------------------------------------------------------------------------------------
+        | option [args]        | Set engine options. Examples:                                   |
+        |                      | - option name Hash type spin default 16 min 1 max 1024         |
+        |                      | - option name Threads type spin default 1 min 1 max 1024       |
+        -----------------------------------------------------------------------------------------
+        | setdepth <int>       | Set the search depth to the given integer value.               |
+        -----------------------------------------------------------------------------------------
+        | setrazordepth <int>  | Set the razoring depth for shallow pruning.                    |
+        -----------------------------------------------------------------------------------------
+        | setnpm <int>         | Set the Null-Pruning Move threshold.                           |
+        -----------------------------------------------------------------------------------------
+        | d                    | Display the current chess board.                               |
+        -----------------------------------------------------------------------------------------
+        | calculateNPS <int>   | Calculate the Nodes Per Second over the given milliseconds.    |
+        -----------------------------------------------------------------------------------------
+        """);
+    }
+    
+
     public static void d(){
         board.printChessBoard();
     }
@@ -143,6 +201,10 @@ public class UCI {
 
     private static void quit() {
         System.exit(0);
+    }
+
+    private static String calculateNPS(int timeMS) {
+        return Perft.calculateNPS(board, timeMS);
     }
 
     private static void go(String[] inputArray) {
@@ -171,10 +233,10 @@ public class UCI {
         else{
             
             // go wtime <> btime <> winc <> binc <> movestogo <>
-            int depth = 1;
+            int depth = 11;
             int time = 0;
-            int wtime = 0;
-            int btime = 0;
+            int wtime = 10000;
+            int btime = 10000;
             int winc = 0;
             int binc = 0;
             int movestogo = 0;
@@ -200,9 +262,6 @@ public class UCI {
                 }
             }
 
-            if(depth == 0){
-                depth = 6;
-            }
 
             // Start the search
             engine.setDepth(depth);
@@ -224,15 +283,15 @@ public class UCI {
         System.out.println("Depth set to " + depth);
     }
 
-    private static void setRazorDepth(int depth) {
-        engine.setRazorDepth(depth);
-        System.out.println("Razoring-Depth set to " + depth);
-    }
+    // private static void setRazorDepth(int depth) {
+    //     engine.setRazorDepth(depth);
+    //     System.out.println("Razoring-Depth set to " + depth);
+    // }
 
-    private static void setNPM(int npm) {
-        engine.setNPM(npm);
-        System.out.println("NullPruningMove set to " + npm);
-    }
+    // private static void setNPM(int npm) {
+    //     engine.setNPM(npm);
+    //     System.out.println("NullPruningMove set to " + npm);
+    // }
 
     private static void position(String[] inputArray) {
         // Example: position startpos moves e2e4 e7e5
@@ -301,8 +360,9 @@ public class UCI {
         System.out.println("option name Threads type spin default 1 min 1 max 1024");
         System.out.println("option name Ponder type check default false");
         System.out.println("option name Debug Log File type string default debug.log");
-        System.out.println("option razoring" + engine.getRazorDepth());
-        System.out.println("option npm" + engine.getNPM());
+        // System.out.println("option razoring" + engine.getRazorDepth());
+        // System.out.println("option npm" + engine.getNPM());
+        System.out.println();
         System.out.println("uciok");
     }
 

@@ -93,6 +93,23 @@ public class Perft {
         return result;
     }
 
+    public static String calculateNPS(BitBoard bitBoard, long time) {
+        // Search new nodes until time is up
+        long nodes = 0;
+        long startTime = System.currentTimeMillis();
+        long endTime = startTime + time;
+        long currentTime = startTime;
+        while (currentTime < endTime) {
+            nodes += perft(bitBoard, 5);
+            currentTime = System.currentTimeMillis();
+        }
+        long elapsedTime = currentTime - startTime;
+        long nps = (nodes * 1000) / elapsedTime;
+        // Parse NPS as Millions of nodes per second
+        nps = nps / 1000000;
+        return "Nodes: " + nodes + " Time: " + elapsedTime + " NPS: " + nps + "M";
+    }
+
     private static long perftPseudoLegal(BitBoard bitBoard, int depth) {
         if (depth == 0) {
             return 1;
@@ -178,8 +195,9 @@ public class Perft {
         bitBoard.loadFromFen("r1bqk2r/pppp1p1p/1bn2np1/4p3/2B1P3/3PBQ2/PPP2PPP/RN2K1NR w KQkq - 3 7");
         bitBoard.printChessBoard();
 
-        // Count all captures
-        System.out.println("Captures: " + perftOnCaptures(bitBoard, 10));
+        MoveList moves = bitBoard.getLegalMoves();
+        moves.sort((m1, m2) -> m2.getSeeScore() - m1.getSeeScore());
+        System.out.println(moves);
         
     }
 
