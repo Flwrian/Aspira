@@ -6,6 +6,7 @@ import java.util.*;
 import com.bitboard.algorithms.AdvancedChessAlgorithm;
 import com.bitboard.algorithms.AlphaBeta;
 import com.bitboard.algorithms.CustomAlgorithm;
+import com.bitboard.algorithms.NewChessAlgorithm;
 
 
 /**
@@ -51,7 +52,7 @@ public class UCI {
         // System.out.println("option - set engine options");
         // System.out.println();
 
-        CustomAlgorithm advancedChessAlgorithm = new CustomAlgorithm(6);
+        NewChessAlgorithm advancedChessAlgorithm = new NewChessAlgorithm(4);
         engine.setAlgorithm(advancedChessAlgorithm);
         
         Scanner scanner = new Scanner(System.in);
@@ -86,6 +87,9 @@ public class UCI {
                     break;
                 case "go":
                     go(inputArray);
+                    break;
+                case "perft-test":
+                    Perft.perftSuiteTest("./perft-suite/standard.epd");
                     break;
                 case "quit":
                     quit();
@@ -213,12 +217,8 @@ public class UCI {
             int depth = Integer.parseInt(inputArray[2]);
             long time = System.currentTimeMillis();
             String perft;
-            if(inputArray.length > 3 && inputArray[3].equals("legal")){
-                perft = Perft.perftDivideString(board, depth);
-            }
-            else{
-                perft = Perft.perftDivideStringPseudoLegal(board, depth);
-            }
+            perft = Perft.perftDivideString(board, depth);
+
             time = System.currentTimeMillis() - time;
             System.out.println(perft);
             System.out.println("Time: " + time + "ms");
@@ -265,7 +265,13 @@ public class UCI {
 
             // Start the search
             engine.setDepth(depth);
+            // Start time 
+            long startTime = System.currentTimeMillis();
             Move move = engine.getAlgorithm().search(board, wtime, btime, winc, binc, movestogo, depth);
+            long endTime = System.currentTimeMillis();
+            long ftime = endTime - startTime;
+            // Print the time taken
+            System.out.println("Time taken: " + ftime + "ms");
             System.out.println("bestmove " + move.toString());
 
             
@@ -322,7 +328,8 @@ public class UCI {
             for(int i = 0; i < inputArray.length; i++){
                 if(inputArray[i].equals("moves")){
                     for(int j = i + 1; j < inputArray.length; j++){
-                        Move move = new Move(inputArray[j]);
+                        Move move = new Move(inputArray[j], board);
+                        System.out.println("Move: from " + move.from + " to " + move.to + " type " + move.type);
                         board.makeMove(move);
                     }
                 }

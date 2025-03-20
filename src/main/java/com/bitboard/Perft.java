@@ -1,5 +1,9 @@
 package com.bitboard;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+
 public class Perft {
     
     public static long perft(BitBoard bitBoard, int depth) {
@@ -20,8 +24,91 @@ public class Perft {
 
         
         return nodes;
-    }
-    
+        }
+
+        public static void perftSuiteTest(String fileName) {
+        // Open the file
+        String line;
+
+        int numberOfTests = 0;
+        // Read each line of the file
+        try (BufferedReader br = new BufferedReader(new FileReader(fileName))) {
+            // Count the number of lines in the file
+            while ((line = br.readLine()) != null) {
+                numberOfTests++;
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        try (BufferedReader br = new BufferedReader(new FileReader(fileName))) {
+            int passedTests = 0;
+            int failedTests = 0;
+            long totalExpectedNodes = 0;
+            long totalActualNodes = 0;
+            long totalTime = 0;
+            int testsDone = 0;
+
+            while ((line = br.readLine()) != null) {
+            
+            // Split the line into FEN and depth results
+            String[] parts = line.split(";");
+            String fen = parts[0].trim();
+            BitBoard bitBoard = new BitBoard();
+            bitBoard.loadFromFen(fen);
+
+
+            System.out.println("Testing FEN: " + fen);
+
+            for (int i = 1; i < parts.length; i++) {
+                String[] depthResult = parts[i].trim().split(" ");
+                int depth = Integer.parseInt(depthResult[0].substring(1));
+                long expectedNodes = Long.parseLong(depthResult[1]);
+
+                long startTime = System.currentTimeMillis();
+                long actualNodes = perft(bitBoard, depth);
+                long endTime = System.currentTimeMillis();
+                double duration = (endTime - startTime) / 1000.0;
+
+                System.out.println("| Depth: " + depth + "   | Expected: " + expectedNodes + " | Actual: " + actualNodes + " | Time: " + duration + "s");
+                
+                
+                totalExpectedNodes += expectedNodes;
+                totalActualNodes += actualNodes;
+                totalTime += (endTime - startTime);
+                
+                if (actualNodes == expectedNodes) {
+                    passedTests++;
+                } else {
+                    failedTests++;
+                    System.out.println("Test failed for FEN: " + fen + " at depth " + depth);
+                    System.out.println("Mismatch at depth " + depth + ": expected " + expectedNodes + " but got " + actualNodes);
+                }
+            }
+            testsDone++;
+            // overall progress
+            System.out.println("[--------------------------------------------]");
+            System.out.println(" | Overall Progress: " + ((testsDone * 100) / numberOfTests) + "%");
+            System.out.println(" | Total Tests: " + numberOfTests);
+            System.out.println(" | Passed Tests: " + passedTests);
+            System.out.println(" | Failed Tests: " + failedTests);
+            System.out.println(" | Total Expected Nodes: " + totalExpectedNodes);
+            System.out.println(" | Total Actual Nodes: " + totalActualNodes);
+            System.out.println(" | Total Time: " + (totalTime / 1000.0) + "s");
+            System.out.println("[--------------------------------------------]");
+            }
+
+            System.out.println("\nPerft Suite Test Summary:");
+            System.out.println("Total Tests: " + numberOfTests);
+            System.out.println("Passed Tests: " + passedTests);
+            System.out.println("Total Expected Nodes: " + totalExpectedNodes);
+            System.out.println("Total Actual Nodes: " + totalActualNodes);
+            System.out.println("Total Time: " + (totalTime / 1000.0) + "s");
+            System.out.println("Overall Progress: " + ((passedTests * 100) / numberOfTests) + "%");
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        }
     // Version pour afficher les nœuds de chaque coup de départ
     public static void perftDivide(BitBoard bitBoard, int depth) {
         MoveList moveList = bitBoard.getLegalMoves();
@@ -72,8 +159,9 @@ public class Perft {
         result += "[ === ]\n";
 
         MoveList moveList = bitBoard.getLegalMoves();
+
         long totalNodes = 0;
-    
+        
         // Itère sur chaque coup possible au premier niveau
         for (int i = 0; i < moveList.size(); i++) {
             Move move = moveList.get(i);
@@ -192,12 +280,8 @@ public class Perft {
         // System.out.println("Seconds: " + (System.currentTimeMillis() - time) / 1000.0);
 
         
-        bitBoard.loadFromFen("r1bqk2r/pppp1p1p/1bn2np1/4p3/2B1P3/3PBQ2/PPP2PPP/RN2K1NR w KQkq - 3 7");
-        bitBoard.printChessBoard();
-
-        MoveList moves = bitBoard.getLegalMoves();
-        moves.sort((m1, m2) -> m2.getSeeScore() - m1.getSeeScore());
-        System.out.println(moves);
+        bitBoard.loadFromFen("n1n5/1Pk5/8/8/8/8/5Kp1/5N1N b - - 0 1");
+        perftDivide(bitBoard, 4);
         
     }
 

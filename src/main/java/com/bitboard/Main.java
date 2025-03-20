@@ -29,35 +29,43 @@ ________________________________________________________________________________
         bitBoard.printChessBoard();
 
         // System.out.println(bitBoard.getLegalMoves());
+
+        System.out.println("Testing Magic Bitboards for Rook and Bishop Moves");
         
-        Engine engine1 = new Engine(bitBoard, 4, new AdvancedChessAlgorithm(4));
-        Engine engine2 = new Engine(bitBoard, 4, new AdvancedChessAlgorithm(4));
+        MoveGenerator.initialize();
+        // bitBoard.printBitBoard(MoveGenerator.rookAttacks[27][4]);
+        // bitBoard.printBitBoard(MoveGenerator.getRookAttacks(27, BitBoard.A1));
+
+        bitBoard.printBitBoard(MoveGenerator.generateRookAttackBoard(BitBoard.getLSB(bitBoard.whiteRooks), bitBoard));
         
-        int maxMoves = 25; // Nombre maximal de coups
-        int moveCount = 0;
+        // Engine engine1 = new Engine(bitBoard, 4, new AdvancedChessAlgorithm(4));
+        // Engine engine2 = new Engine(bitBoard, 4, new AdvancedChessAlgorithm(4));
         
-        while (!bitBoard.isCheckMate() && !bitBoard.isStaleMate() && moveCount < maxMoves) {
-            System.out.println("Engine 1 playing...");
-            System.out.println(engine1.getBoard().whiteCastleKingSide);
-            engine1.play();
-            // engine2.addMoveToPGN(engine1.getLastMove());
-            bitBoard.printChessBoard();
-            moveCount++;
-            if (bitBoard.isCheckMate() || bitBoard.isStaleMate()) break;
+        // int maxMoves = 25; // Nombre maximal de coups
+        // int moveCount = 0;
+        
+        // while (!bitBoard.isCheckMate() && !bitBoard.isStaleMate() && moveCount < maxMoves) {
+        //     System.out.println("Engine 1 playing...");
+        //     System.out.println(engine1.getBoard().whiteCastleKingSide);
+        //     engine1.play();
+        //     // engine2.addMoveToPGN(engine1.getLastMove());
+        //     bitBoard.printChessBoard();
+        //     moveCount++;
+        //     if (bitBoard.isCheckMate() || bitBoard.isStaleMate()) break;
             
-            if (moveCount >= maxMoves) break;
+        //     if (moveCount >= maxMoves) break;
             
-            System.out.println("Engine 2 playing...");
-            engine2.play();
-            engine1.addMoveToPGN(engine2.getLastMove());
-            bitBoard.printChessBoard();
-            moveCount++;
-        }
+        //     System.out.println("Engine 2 playing...");
+        //     engine2.play();
+        //     engine1.addMoveToPGN(engine2.getLastMove());
+        //     bitBoard.printChessBoard();
+        //     moveCount++;
+        // }
         
-        System.out.println("Game Over.");
+        // System.out.println("Game Over.");
         
-        System.out.println("PGN:");
-        System.out.println(engine1.getPGN());
+        // System.out.println("PGN:");
+        // System.out.println(engine1.getPGN());
 
     }
 }

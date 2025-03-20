@@ -304,13 +304,13 @@ public class CompareWithStockFish {
 
         BitBoard bitBoard = new BitBoard();
         
-        bitBoard.loadFromFen("3k4/3pn1P1/5K2/8/8/8/8/8 w - - 0 1");
+        // bitBoard.loadFromFen("n1n5/1Pk5/8/8/8/8/5Kp1/5N1N b - - 0 1");
 
-        // bitBoard.makeMove("c2c3");
-        bitBoard.makeMove("g7g8B");
-        bitBoard.makeMove("d8c8");
-        bitBoard.makeMove("f6e7");
-        bitBoard.makeMove("c8b8");
+        // // bitBoard.makeMove("c2c3");
+        // bitBoard.makeMove("g7g8B");
+        // bitBoard.makeMove("d8c8");
+        // bitBoard.makeMove("f6e7");
+        // bitBoard.makeMove("c8b8");
         
         bitBoard.printChessBoard();
         System.out.println(bitBoard.getFen());

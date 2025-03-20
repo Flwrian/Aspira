@@ -727,7 +727,7 @@ public class MoveGenerator {
         long rookMoves = 0L;
 
         while (rooks != 0L) {
-            long rook = BitBoard.getLSB(rooks);
+            long rook = Long.lowestOneBit(rooks);
             rooks &= rooks - 1;
 
             long up = rook;
@@ -1049,4 +1049,142 @@ public class MoveGenerator {
 
         return queenMoves;
     }
+
+
+    // Magics numbers
+
+    // We use the magic numbers to generate the attack mask for the pieces
+    // The key formula is: index = ((occupancy & mask) * magic_number) >>> shift;
+
+    public static final long[][] rookAttacks = new long[64][4096];
+    public static final long[][] bishopAttacks = new long[64][512];
+
+    public static void initialize() {
+        for (int square = 0; square < 64; square++) {
+            generateAttackTables(square);
+        }
+    }
+
+    private static void generateAttackTables(int square) {
+        long rookMask = generateRookMask(square);
+        long bishopMask = generateBishopMask(square);
+        
+        for (int i = 0; i < (1 << Long.bitCount(rookMask)); i++) {
+            long occupancy = generateOccupancy(i, rookMask);
+            rookAttacks[square][i] = generateRookAttack(square, occupancy);
+        }
+
+        for (int i = 0; i < (1 << Long.bitCount(bishopMask)); i++) {
+            long occupancy = generateOccupancy(i, bishopMask);
+            bishopAttacks[square][i] = generateBishopAttack(square, occupancy);
+        }
+    }
+
+    private static long generateRookMask(int square) {
+        long mask = 0L;
+        int rank = square / 8, file = square % 8;
+        for (int f = file + 1; f < 7; f++) mask |= (1L << (rank * 8 + f));
+        for (int f = file - 1; f > 0; f--) mask |= (1L << (rank * 8 + f));
+        for (int r = rank + 1; r < 7; r++) mask |= (1L << (r * 8 + file));
+        for (int r = rank - 1; r > 0; r--) mask |= (1L << (r * 8 + file));
+        return mask;
+    }
+
+    private static long generateBishopMask(int square) {
+        long mask = 0L;
+        int rank = square / 8, file = square % 8;
+        for (int r = rank + 1, f = file + 1; r < 7 && f < 7; r++, f++) mask |= (1L << (r * 8 + f));
+        for (int r = rank - 1, f = file - 1; r > 0 && f > 0; r--, f--) mask |= (1L << (r * 8 + f));
+        for (int r = rank + 1, f = file - 1; r < 7 && f > 0; r++, f--) mask |= (1L << (r * 8 + f));
+        for (int r = rank - 1, f = file + 1; r > 0 && f < 7; r--, f++) mask |= (1L << (r * 8 + f));
+        return mask;
+    }
+
+    private static long generateRookAttack(int square, long blockers) {
+        long attack = 0L;
+        int rank = square / 8, file = square % 8;
+        for (int f = file + 1; f < 8; f++) {
+            attack |= (1L << (rank * 8 + f));
+            if ((blockers & (1L << (rank * 8 + f))) != 0) break;
+        }
+        for (int f = file - 1; f >= 0; f--) {
+            attack |= (1L << (rank * 8 + f));
+            if ((blockers & (1L << (rank * 8 + f))) != 0) break;
+        }
+        for (int r = rank - 1; r >= 0; r--) {
+            attack |= (1L << (r * 8 + file));
+            if ((blockers & (1L << (r * 8 + file))) != 0) break;
+        }
+        for (int r = rank + 1; r < 8; r++) {
+            attack |= (1L << (r * 8 + file));
+            if ((blockers & (1L << (r * 8 + file))) != 0) break;
+        }
+        return attack;
+    }
+
+    private static long generateBishopAttack(int square, long blockers) {
+        long attack = 0L;
+        int rank = square / 8, file = square % 8;
+        for (int r = rank + 1, f = file + 1; r < 8 && f < 8; r++, f++) {
+            attack |= (1L << (r * 8 + f));
+            if ((blockers & (1L << (r * 8 + f))) != 0) break;
+        }
+        for (int r = rank - 1, f = file - 1; r >= 0 && f >= 0; r--, f--) {
+            attack |= (1L << (r * 8 + f));
+            if ((blockers & (1L << (r * 8 + f))) != 0) break;
+        }
+        for (int r = rank + 1, f = file - 1; r < 8 && f >= 0; r++, f--) {
+            attack |= (1L << (r * 8 + f));
+            if ((blockers & (1L << (r * 8 + f))) != 0) break;
+        }
+        for (int r = rank - 1, f = file + 1; r >= 0 && f < 8; r--, f++) {
+            attack |= (1L << (r * 8 + f));
+            if ((blockers & (1L << (r * 8 + f))) != 0) break;
+        }
+        return attack;
+    }
+
+    public static long generateOccupancy(int index, long mask) {
+        long occupancy = 0L;
+        int bits = Long.bitCount(mask);
+        for (int i = 0; i < bits; i++) {
+            int square = Long.numberOfTrailingZeros(mask);
+            mask &= mask - 1;
+            if ((index & (1 << i)) != 0) {
+                occupancy |= (1L << square);
+            }
+        }
+        return occupancy;
+    }
+
+    public static long getRookAttacks(int square, long blockers) {
+        int index = (int) blockers;
+        return rookAttacks[square][index];
+    }
+
+    public static long getBishopAttacks(int square, long blockers) {
+        int index = (int) blockers;
+        return bishopAttacks[square][index];
+    }
+
+    public static long generateRookAttackBoard(long rookBitboard, BitBoard board){
+        long blockers = board.getBoard();
+        int square = BitBoard.getSquare(rookBitboard);
+        long rookMoves = 0L;
+        long rookMask = generateRookMask(square);
+        board.printBitBoard(rookMask);
+        board.printBitBoard(generateRookMask(rookBitboard, board));
+        long rookAttack = rookMask & blockers;
+        int index = Long.bitCount(rookAttack);
+        long occupancy = generateOccupancy(index, rookMask);
+        rookMoves = getRookAttacks(square, occupancy);
+        rookMoves &= ~rookBitboard; // remove the rook itself from the attack
+        rookMoves &= ~board.getWhitePieces(); // remove the pieces of the same color
+        rookMoves &= ~board.getBlackPieces(); // remove the pieces of the same color
+        return rookMoves;
+    }
+    
+    
+        
+    
 }
