@@ -52,3 +52,7 @@ Now, the engine is fully working with every rules.
 I made testing better using Perft test.
 
 Testing is very important to know if there are no bugs or if performances increase.
+
+## 20/03/2025
+
+passing ethereal perft suite

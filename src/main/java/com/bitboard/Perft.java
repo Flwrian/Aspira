@@ -89,8 +89,8 @@ public class Perft {
             System.out.println("[--------------------------------------------]");
             System.out.println(" | Overall Progress: " + ((testsDone * 100) / numberOfTests) + "%");
             System.out.println(" | Total Tests: " + numberOfTests);
-            System.out.println(" | Passed Tests: " + passedTests);
             System.out.println(" | Failed Tests: " + failedTests);
+            System.out.println(" | Passed Tests (each depth): " + passedTests);
             System.out.println(" | Total Expected Nodes: " + totalExpectedNodes);
             System.out.println(" | Total Actual Nodes: " + totalActualNodes);
             System.out.println(" | Total Time: " + (totalTime / 1000.0) + "s");
@@ -100,10 +100,11 @@ public class Perft {
             System.out.println("\nPerft Suite Test Summary:");
             System.out.println("Total Tests: " + numberOfTests);
             System.out.println("Passed Tests: " + passedTests);
+            System.out.println("Failed Tests: " + failedTests);
             System.out.println("Total Expected Nodes: " + totalExpectedNodes);
             System.out.println("Total Actual Nodes: " + totalActualNodes);
             System.out.println("Total Time: " + (totalTime / 1000.0) + "s");
-            System.out.println("Overall Progress: " + ((passedTests * 100) / numberOfTests) + "%");
+            System.out.println("Overall Progress: " + ((testsDone * 100) / numberOfTests) + "%");
 
         } catch (IOException e) {
             e.printStackTrace();
