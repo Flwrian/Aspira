@@ -55,4 +55,8 @@ Testing is very important to know if there are no bugs or if performances increa
 
 ## 20/03/2025
 
-passing ethereal perft suite
+passing ethereal perft suite.
+
+I can now focus on the engine itself and not on the rules.
+
+I'm planning to rewrite the entire search algorithm and experiment with different things.
