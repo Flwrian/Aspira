@@ -2,49 +2,20 @@ package com.bitboard.algorithms;
 
 import com.bitboard.BitBoard;
 import com.bitboard.Move;
-import com.bitboard.MoveGenerator;
 import com.bitboard.MoveList;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Custom algorithm for the chess engine.
- * 
+ * New optimized chess algorithm.
  */
-public class CustomAlgorithm implements ChessAlgorithm {
+public class NewChessAlgorithm implements ChessAlgorithm {
 
-    int nodes = 0;
-    int depth = 0;
-    int razorDepth = 7;
-    int npm = 5;
-    private int MAX_QUIESCENCE_DEPTH = 6;
-    private int MAX_DEPTH = 11;
-
-    public void setRazorDepth(int razorDepth) {
-        this.razorDepth = razorDepth;
-    }
-
-    // @Override
-    // public void setNPM(int npm) {
-    //     this.npm = npm;
-    // }
-
-    // @Override
-    // public int getNPM() {
-    //     return npm;
-    // }
-
-    // @Override
-    // public int getRazorDepth() {
-    //     return razorDepth;
-    // }
-
-    // transposition table
+    private int depth;
     private TranspositionTable transpositionTable = new TranspositionTable();
+    private int nodes;
 
-
-    // Piece-square tables for evaluation (higher values for better squares)
     private static final int[] PAWN_TABLE = {
         0,   0,   0,   0,   0,   0,   0,   0,
      -11,  34, 126,  68,  95,  61, 134,  98,
@@ -178,234 +149,91 @@ public class CustomAlgorithm implements ChessAlgorithm {
         -43, -24, -14,  -28, -11, -21, -34, -53
     };
 
-
-    public void setDepth(int depth) {
+    public NewChessAlgorithm(int depth) {
         this.depth = depth;
     }
-
-    public CustomAlgorithm(int depth) {
-        this.depth = depth;
-    }
-
-    
 
     @Override
-    public Move search(BitBoard board, int wtime, int btime, int winc, int binc, int movestogo, int a) {
+    public Move search(BitBoard board, int wtime, int btime, int winc, int binc, int movestogo, int depth) {
         nodes = 0;
         Move bestMove = null;
-        long time = System.currentTimeMillis();
-
-        // Réduire la profondeur si le temps est limité
-        if (board.whiteTurn && wtime < 1000 || !board.whiteTurn && btime < 1000) {
-            depth = -1;
-        }
-
-        // Fenêtre d'aspiration initiale
-        int window = 100;
 
         for (int currentDepth = 1; currentDepth <= depth; currentDepth++) {
-
-            if (getMaterialValue(board, true) + getMaterialValue(board, false) < 43200) {
-                System.out.println("Endgame");
-                MAX_QUIESCENCE_DEPTH = 10;
-                depth = MAX_DEPTH;
-            }
-
-            long time2 = System.currentTimeMillis();
-
-            // Recherche avec fenêtre d'aspiration
-            int searchAlpha = Integer.MIN_VALUE + window;
-            int searchBeta = Integer.MAX_VALUE - window;
-            MoveValue result = minimax(board, currentDepth, searchAlpha, searchBeta, board.whiteTurn);
-
-            // Si la recherche échoue, on refait avec des bornes complètes
-            if (result.value <= searchAlpha || result.value >= searchBeta) {
-                window *= 2;  // Augmente la fenêtre si échec
-                result = minimax(board, currentDepth, Integer.MIN_VALUE, Integer.MAX_VALUE, board.whiteTurn);
-            }
-
-            time2 = System.currentTimeMillis() - time2;
+            MoveValue result = alphaBeta(board, currentDepth, Integer.MIN_VALUE, Integer.MAX_VALUE, board.whiteTurn);
             bestMove = result.bestMove;
 
-            // Affichage de la variation principale
-            StringBuilder pvString = new StringBuilder();
-            for (Move move : result.principalVariation) {
-                pvString.append(move).append(" ");
-            }
-
-            System.out.println("info depth " + currentDepth + " score cp " + result.value + " pv " + pvString + " nodes " + nodes + " time " + time2);
-
-            // Si le meilleur coup est un mat, arrêter la recherche
-            // if (result.value >= 48000 || result.value <= -48000) {
-            //     System.out.println("Mate found -> " + pvString);
-            //     break;
-            // }
+            System.out.println("info depth " + currentDepth + " score cp " + result.value + " nodes " + nodes);
         }
-
-        time = System.currentTimeMillis() - time;
-        System.out.println("info nodes " + nodes + " time " + time);
         return bestMove;
     }
 
-    // Minimax avec coupure alpha-beta, quiescence et autres optimisations
-    public MoveValue minimax(BitBoard board, int depth, int alpha, int beta, boolean maximizingPlayer) {
+    public MoveValue alphaBeta(BitBoard board, int depth, int alpha, int beta, boolean maximizingPlayer) {
         nodes++;
 
-        long zobristHash = Zobrist.computeHash(board);
-        TranspositionTableEntry entry = transpositionTable.probe(zobristHash);
-
-        // Vérifie si une entrée est trouvée dans la table de transposition
-        if (entry != null && entry.depth >= depth) {
-            if (entry.nodeType == 0) {
-                return new MoveValue(entry.bestMove, entry.score);
-            } else if (entry.nodeType == 1 && entry.score <= alpha) {
-                return new MoveValue(entry.bestMove, entry.score);
-            } else if (entry.nodeType == 2 && entry.score >= beta) {
-                return new MoveValue(entry.bestMove, entry.score);
-            }
-            alpha = Math.max(alpha, entry.score);
-            beta = Math.min(beta, entry.score);
-            if (alpha >= beta) {
-                return new MoveValue(entry.bestMove, entry.score);
-            }
-        }
-
-        // Null Move Pruning
-        if (depth >= 2 && !board.isKingInCheck(maximizingPlayer) && board.getLegalMoves().size() > 0) {
-            board.makeNullMove();
-            MoveValue result = minimax(board, depth - 2, -beta, -beta + 1, !maximizingPlayer);
-            board.undoNullMove();
-            if (result.value >= beta) {
-                return new MoveValue(null, beta);
-            }
-        }
-
-        // if (!board.isKingInCheck(maximizingPlayer)) {
-        //     // Applique le Razoring pour les faibles profondeurs
-        //     if (depth <= razorDepth) {
-        //         int eval = evaluate(board);
-        //         if (eval + razoringMargin(depth) <= alpha) {
-        //             return new MoveValue(null, eval);
-        //         }
-        //     }
-        // }
-
-
-        if (depth <= 0) {
-            // Recherche de quiescence
-            return quiescenceSearch(board, alpha, beta, maximizingPlayer);
+        if (depth == 0) {
+            return new MoveValue(null, evaluate(board));
         }
 
         MoveList moves = board.getLegalMoves();
-        moves.sort((m1, m2) -> m2.getSeeScore() - m1.getSeeScore());
+        // moves.sort((m1, m2) -> m2.getSeeScore() - m1.getSeeScore());
 
         Move bestMove = null;
-        List<Move> bestVariation = new ArrayList<>();
-
-        if (maximizingPlayer) {
-            int maxEval = Integer.MIN_VALUE;
-            for (int i = 0; i < moves.size(); i++) {
-                Move move = moves.get(i);
-                board.makeMove(move);
-
-                // Late Move Reduction (LMR) pour réduire la profondeur des coups tardifs
-                int reduction = (i >= 4 && depth > 2) ? 2 : 0;
-                MoveValue result = minimax(board, depth - 1 - reduction, alpha, beta, false);
-
-                board.undoMove();
-
-                if (result.value > maxEval) {
-                    maxEval = result.value;
-                    bestMove = move;
-                    bestVariation = new ArrayList<>(result.principalVariation);
-                    bestVariation.add(0, move);
-                }
-
-                alpha = Math.max(alpha, result.value);
-                if (alpha >= beta) {
-                    break;  // Coupure beta
-                }
-            }
-
-            byte nodeType = (maxEval <= alpha) ? (byte) 1 : (maxEval >= beta) ? (byte) 2 : (byte) 0;
-            transpositionTable.store(zobristHash, depth, maxEval, nodeType, bestMove);
-
-            return new MoveValue(bestMove, maxEval, bestVariation);
-        } else {
-            int minEval = Integer.MAX_VALUE;
-            for (int i = 0; i < moves.size(); i++) {
-                Move move = moves.get(i);
-                board.makeMove(move);
-
-                int reduction = (i >= 4 && depth > 2) ? 2 : 0;
-                MoveValue result = minimax(board, depth - 1 - reduction, alpha, beta, true);
-
-                board.undoMove();
-
-                if (result.value < minEval) {
-                    minEval = result.value;
-                    bestMove = move;
-                    bestVariation = new ArrayList<>(result.principalVariation);
-                    bestVariation.add(0, move);
-                }
-
-                beta = Math.min(beta, result.value);
-                if (beta <= alpha) {
-                    break;  // Coupure alpha
-                }
-            }
-
-            byte nodeType = (minEval <= alpha) ? (byte) 1 : (minEval >= beta) ? (byte) 2 : (byte) 0;
-            transpositionTable.store(zobristHash, depth, minEval, nodeType, bestMove);
-
-            return new MoveValue(bestMove, minEval, bestVariation);
-        }
-    }
-
-    // Recherche de quiescence optimisée
-    public MoveValue quiescenceSearch(BitBoard board, int alpha, int beta, boolean maximizingPlayer) {
-        int eval = evaluate(board);
-
-        if (eval >= beta) {
-            return new MoveValue(null, beta);  // Coupure beta
-        }
-
-        if (eval > alpha) {
-            alpha = eval;
-        }
-
-        MoveList moves = board.getCaptureMoves();
-        moves.sort((m1, m2) -> m2.getSeeScore() - m1.getSeeScore());
+        int bestValue = maximizingPlayer ? Integer.MIN_VALUE : Integer.MAX_VALUE;
 
         for (Move move : moves) {
             board.makeMove(move);
-            MoveValue result = quiescenceSearch(board, alpha, beta, !maximizingPlayer);
+            int value = alphaBeta(board, depth - 1, alpha, beta, !maximizingPlayer).value;
             board.undoMove();
 
-            if (result.value > alpha) {
-                alpha = result.value;
+            if (maximizingPlayer) {
+                if (value > bestValue) {
+                    bestValue = value;
+                    bestMove = move;
+                }
+                alpha = Math.max(alpha, value);
+            } else {
+                if (value < bestValue) {
+                    bestValue = value;
+                    bestMove = move;
+                }
+                beta = Math.min(beta, value);
             }
 
             if (alpha >= beta) {
-                break;  // Coupure beta
+                break;
             }
         }
 
-        return new MoveValue(null, alpha);
+        return new MoveValue(bestMove, bestValue);
     }
 
-    // Évaluation de la position
     @Override
     public int evaluate(BitBoard board) {
-        return getBoardValue(board);
+        int eval = 0;
+
+        // material + positional value
+        eval += getBoardValue(board);
+        
+        // mobility bonus
+        eval += mobility(board);
+
+        return eval;
     }
 
-    // Fonction de calcul du razoring margin
-    private int razoringMargin(int depth) {
-        return depth * 100;
+    public int mobility(BitBoard board) {
+        int mobility = 0;
+        MoveList moves = board.getPseudoLegalMoves();
+        for (int i = 0; i < moves.size(); i++) {
+            Move move = moves.get(i);
+            if (move.isCapture()) {
+                mobility += 2;
+            } else {
+                mobility += 1;
+            }
+        }
+        return mobility;
     }
 
-    
 
     public int getPSTValuePawn(int square, boolean isEndGame){
         return (isEndGame ? PAWN_ENDGAME_TABLE[square] : PAWN_TABLE[square]);
@@ -571,116 +399,18 @@ public class CustomAlgorithm implements ChessAlgorithm {
 
     }
 
-    private int getBoardValue2(BitBoard board) {
-        int value = 0;
-        long pawns = board.getWhitePawns();
-        long knights = board.getWhiteKnights();
-        long bishops = board.getWhiteBishops();
-        long rooks = board.getWhiteRooks();
-        long queens = board.getWhiteQueens();
-        long kings = board.getWhiteKing();
-
-        while (pawns != 0) {
-            pawns &= pawns - 1;
-            value += 100;
-        }
-
-        while (knights != 0) {
-            knights &= knights - 1;
-            value += 320;
-        }
-
-        while (bishops != 0) {
-            bishops &= bishops - 1;
-            value += 330;
-        }
-
-        while (rooks != 0) {
-            rooks &= rooks - 1;
-            value += 500;
-        }
-
-        while (queens != 0) {
-            queens &= queens - 1;
-            value += 900;
-        }
-
-        while (kings != 0) {
-            kings &= kings - 1;
-            value += 20000;
-        }
-
-        long blackPawns = board.getBlackPawns();
-        long blackKnights = board.getBlackKnights();
-        long blackBishops = board.getBlackBishops();
-        long blackRooks = board.getBlackRooks();
-        long blackQueens = board.getBlackQueens();
-        long blackKings = board.getBlackKing();
-
-        while (blackPawns != 0) {
-            blackPawns &= blackPawns - 1;
-            value -= 100;
-        }
-
-        while (blackKnights != 0) {
-            blackKnights &= blackKnights - 1;
-            value -= 320;
-        }
-
-        while (blackBishops != 0) {
-            blackBishops &= blackBishops - 1;
-            value -= 330;
-        }
-
-        while (blackRooks != 0) {
-            blackRooks &= blackRooks - 1;
-            value -= 500;
-        }
-
-        while (blackQueens != 0) {
-            blackQueens &= blackQueens - 1;
-            value -= 900;
-        }
-
-        while (blackKings != 0) {
-            blackKings &= blackKings - 1;
-            value -= 20000;
-        }
-
-        return value;
-    }
-
     @Override
     public String getName() {
-        return "Custom";
+        return "NewChessAlgorithm";
     }
 
-    // Classe helper pour stocker un coup et sa valeur d'évaluation
-    public class MoveValue {
-        public Move bestMove;
-        public int value;
-        public List<Move> principalVariation;  // Ajout de la variation principale
-    
+    private class MoveValue {
+        Move bestMove;
+        int value;
+
         public MoveValue(Move bestMove, int value) {
             this.bestMove = bestMove;
             this.value = value;
-            this.principalVariation = new ArrayList<>();
-        }
-    
-        public MoveValue(Move bestMove, int value, List<Move> pv) {
-            this.bestMove = bestMove;
-            this.value = value;
-            this.principalVariation = new ArrayList<>(pv);  // Copie la variation principale
-        }
-
-        @Override
-        public String toString() {
-            return "MoveValue{" +
-                    "bestMove=" + bestMove +
-                    ", value=" + value +
-                    '}';
         }
     }
-    
-    
 }

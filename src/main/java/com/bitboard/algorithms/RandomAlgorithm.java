@@ -6,9 +6,12 @@ import com.bitboard.MoveList;
 
 public class RandomAlgorithm implements ChessAlgorithm {
 
-    @Override
-    public Move search(BitBoard board) {
+    public Move search(BitBoard board, int wtime, int btime, int winc, int binc, int movestogo, int depth) {
         MoveList moveList = board.getLegalMoves();
+        board.printChessBoard();
+        if (moveList.size() == 0) {
+            return null;
+        }
         int randomIndex = (int) (Math.random() * moveList.size());
         Move randomMove = moveList.get(randomIndex);
         return randomMove;
@@ -22,11 +25,6 @@ public class RandomAlgorithm implements ChessAlgorithm {
     @Override
     public String getName() {
         return "Random";
-    }
-
-    @Override
-    public void setDepth(int depth) {
-        return;
     }
 
     

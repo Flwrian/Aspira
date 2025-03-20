@@ -152,14 +152,15 @@ public class BitBoard {
 
     // knight pre-encoded moves
     public static final long[] KNIGHT_MOVES = {
-        ( B3 | C2), 
-        ( C3 | D2 | A3),
-        ( D3 | E2 | A2 | B3),
-        ( E3 | F2 | B2 | C3),
-        ( F3 | G2 | C2 | D3),
-        ( G3 | H2 | D2 | E3),
-        ( H3 | E2 | F3),
-        ( F2 | G3),
+        ( B3 | C2), // A1
+        ( C3 | D2 | A3), // B1 
+        ( D3 | E2 | A2 | B3), // C1
+        ( E3 | F2 | B2 | C3), // D1
+        ( F3 | G2 | C2 | D3), // E1
+        ( G3 | H2 | D2 | E3), // F1
+        ( H3 | E2 | F3), // G1
+        ( F2 | G3), // H1
+
         ( B4 | C3 | C1),
         ( C4 | D3 | D1 | A4),
         ( D4 | E3 | E1 | A1 | A3 | B4),
@@ -168,6 +169,7 @@ public class BitBoard {
         ( G4 | H3 | H1 | D1 | D3 | E4),
         ( H4 | E1 | E3 | F4),
         ( F1 | F3 | G4),
+
         ( B5 | C4 | C2 | B1),
         ( C5 | D4 | D2 | C1 | A1 | A5),
         ( D5 | E4 | E2 | D1 | B1 | A2 | A4 | B5),
@@ -176,6 +178,7 @@ public class BitBoard {
         ( G5 | H4 | H2 | G1 | E1 | D2 | D4 | E5),
         ( H5 | H1 | F1 | E2 | E4 | F5),
         ( G1 | F2 | F4 | G5),
+
         ( B6 | C5 | C3 | B2),
         ( C6 | D5 | D3 | C2 | A2 | A6),
         ( D6 | E5 | E3 | D2 | B2 | A3 | A5 | B6),
@@ -184,6 +187,7 @@ public class BitBoard {
         ( G6 | H5 | H3 | G2 | E2 | D3 | D5 | E6),
         ( H6 | H2 | F2 | E3 | E5 | F6),
         ( G2 | F3 | F5 | G6),
+
         ( B7 | C6 | C4 | B3),
         ( C7 | D6 | D4 | C3 | A3 | A7),
         ( D7 | E6 | E4 | D3 | B3 | A4 | A6 | B7),
@@ -192,6 +196,7 @@ public class BitBoard {
         ( G7 | H6 | H4 | G3 | E3 | D4 | D6 | E7),
         ( H7 | H3 | F3 | E4 | E6 | F7),
         ( G3 | F4 | F6 | G7),
+
         ( B8 | C7 | C5 | B4),
         ( C8 | D7 | D5 | C4 | A4 | A8),
         ( D8 | E7 | E5 | D4 | B4 | A5 | A7 | B8),
@@ -200,6 +205,7 @@ public class BitBoard {
         ( G8 | H7 | H5 | G4 | E4 | D5 | D7 | E8),
         ( H8 | H4 | F4 | E5 | E7 | F8),
         ( G4 | F5 | F7 | G8),
+
         ( C8 | C6 | B5),
         ( D8 | D6 | C5 | A5),
         ( E8 | E6 | D5 | B5 | A6 | A8),
@@ -208,6 +214,7 @@ public class BitBoard {
         ( H8 | H6 | G5 | E5 | D6 | D8),
         ( H5 | F5 | E6 | E8), 
         ( G5 | F6 | F8),
+
         ( C7 | B6),
         ( D7 | C6 | A6),
         ( E7 | D6 | B6 | A7),
@@ -226,7 +233,7 @@ public class BitBoard {
 
     // valid
     public static final long WHITE_QUEEN_SIDE_CASTLE_KING_SQUARE = C1;
-    public static final long BLACK_QUEEN_SIDE_CASTLE_KING_SQUARE = 0x2000000000000000L | C8;
+    public static final long BLACK_QUEEN_SIDE_CASTLE_KING_SQUARE = C8;
 
     // valid
     public static final long WHITE_KING_SIDE_ROOK_SQUARE = H1;
@@ -260,11 +267,8 @@ public class BitBoard {
     public static final int QUEEN = 5;
     public static final int KING = 6;
 
-    private Stack<BoardHistory> history;
+    private ArrayDeque<BoardHistory> history;
 
-    private ArrayDeque<long[]> bbHistory;
-
-    
 
     public static final String INITIAL_STARTING_POSITION = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
@@ -307,7 +311,7 @@ public class BitBoard {
 
         enPassantSquare = 0L;
 
-        history = new Stack<>();
+        history = new ArrayDeque<>();
         // bbHistory = new ArrayDeque<>();
 
 
@@ -350,6 +354,9 @@ public class BitBoard {
         blackCastleKingSide = boardHistory.blackCastleKingSide;
         enPassantSquare = boardHistory.enPassantSquare;
         whiteTurn = boardHistory.whiteTurn;
+        
+        whitePieces = whitePawns | whiteKnights | whiteBishops | whiteRooks | whiteQueens | whiteKing;
+        blackPieces = blackPawns | blackKnights | blackBishops | blackRooks | blackQueens | blackKing;
     }
 
     public void restoreBoardHistoryLONG(long[] boardHistory) {
@@ -436,25 +443,45 @@ public class BitBoard {
 
         // castling rights
         if (fenParts[2].contains("K")) {
-            whiteCastleKingSide = 1L;
+            // verify that the king has not moved and the rook is on H1
+            if ((whiteKing & E1) != 0 && (whiteRooks & H1) != 0) {
+                whiteCastleKingSide = 1L;
+            } else {
+                whiteCastleKingSide = 0L;
+            }
         } else {
             whiteCastleKingSide = 0L;
         }
 
         if (fenParts[2].contains("Q")) {
-            whiteCastleQueenSide = 1L;
+            // verify that the king has not moved and the rook is on A1
+            if ((whiteKing & E1) != 0 && (whiteRooks & A1) != 0) {
+                whiteCastleQueenSide = 1L;
+            } else {
+                whiteCastleQueenSide = 0L;
+            }
         } else {
             whiteCastleQueenSide = 0L;
         }
 
         if (fenParts[2].contains("k")) {
-            blackCastleKingSide = 1L;
+            // verify that the king has not moved and the rook is on H8
+            if ((blackKing & E8) != 0 && (blackRooks & H8) != 0) {
+                blackCastleKingSide = 1L;
+            } else {
+                blackCastleKingSide = 0L;
+            }
         } else {
             blackCastleKingSide = 0L;
         }
 
         if (fenParts[2].contains("q")) {
-            blackCastleQueenSide = 1L;
+            // verify that the king has not moved and the rook is on A8
+            if ((blackKing & E8) != 0 && (blackRooks & A8) != 0) {
+                blackCastleQueenSide = 1L;
+            } else {
+                blackCastleQueenSide = 0L;
+            }
         } else {
             blackCastleQueenSide = 0L;
         }
@@ -471,6 +498,7 @@ public class BitBoard {
         
 
         updateBitBoard();
+
     }
 
     public String getFen() {
@@ -718,6 +746,10 @@ public class BitBoard {
         System.out.println("   +-------------------------------+");
         System.out.println("   | a   b   c   d   e   f   g   h |");
         System.out.println("   +-------------------------------+");
+
+        System.out.println();
+        System.out.println("     " + (whiteTurn ? "White" : "Black") + "'s turn");
+        System.out.println("     " + getFen());
     }
     
 
@@ -734,7 +766,6 @@ public class BitBoard {
 
     // Get the white pieces bitboard
     public long getWhitePieces() {
-        updateBitBoard();
         return whitePieces;
     }
 
@@ -812,18 +843,13 @@ public class BitBoard {
     }
 
     public void makeMove(Move move) {
-
         // Save the current board state
         saveBoardHistory(move);
         // saveBoardHistoryLONG();
     
-        // Get the source and destination squares
-        int fromSquare = move.from;
-        int toSquare = move.to;
-    
         // Convert squares to bitboards
-        long fromBitboard = 1L << fromSquare;
-        long toBitboard = 1L << toSquare;
+        long fromBitboard = 1L << move.from;
+        long toBitboard = 1L << move.to;
     
         
         // Separate logic for white and black moves
@@ -889,8 +915,8 @@ public class BitBoard {
     
             // Tours blanches
             } else if ((whiteRooks & fromBitboard) != 0) {
-                if (fromSquare == 0) whiteCastleQueenSide = 0L;
-                if (fromSquare == 7) whiteCastleKingSide = 0L;
+                if ((A1 & fromBitboard) != 0) whiteCastleQueenSide = 0L;
+                if ((H1 & fromBitboard) != 0) whiteCastleKingSide = 0L;
                 whiteRooks &= ~fromBitboard;
                 whiteRooks |= toBitboard;
     
@@ -901,18 +927,20 @@ public class BitBoard {
     
             // Roi blanc
             } else if ((whiteKing & fromBitboard) != 0) {
-                if (Math.abs(fromSquare - toSquare) != 2) {
-                    whiteCastleQueenSide = 0L;
-                    whiteCastleKingSide = 0L;
-                    whiteKing &= ~fromBitboard;
-                    whiteKing |= toBitboard;
-                } else {
+                if (((whiteCastleQueenSide != 0) && (C1 & toBitboard) != 0) || ((whiteCastleKingSide != 0) && (G1 & toBitboard) != 0)) {
                     // Handle castling for white
-                    if (toSquare == 2) {
+                    if (toBitboard == 1L << 2) {
                         processWhiteCastleQueenSide(fromBitboard);
-                    } else if (toSquare == 6) {
+                    } else if (toBitboard == 1L << 6) {
                         processWhiteCastleKingSide(fromBitboard);
                     }
+                } else {
+                    whiteKing &= ~fromBitboard;
+                    whiteKing |= toBitboard;
+
+                    // Reset castling rights
+                    whiteCastleQueenSide = 0L;
+                    whiteCastleKingSide = 0L;
                 }
             }
         } else {
@@ -978,8 +1006,8 @@ public class BitBoard {
     
             // Tours noires
             } else if ((blackRooks & fromBitboard) != 0) {
-                if (fromSquare == 56) blackCastleQueenSide = 0L;
-                if (fromSquare == 63) blackCastleKingSide = 0L;
+                if ((A8 & fromBitboard) != 0) blackCastleQueenSide = 0L;
+                if ((H8 & fromBitboard) != 0) blackCastleKingSide = 0L;
                 blackRooks &= ~fromBitboard;
                 blackRooks |= toBitboard;
     
@@ -990,18 +1018,20 @@ public class BitBoard {
     
             // Roi noir
             } else if ((blackKing & fromBitboard) != 0) {
-                if (Math.abs(fromSquare - toSquare) != 2) {
-                    blackCastleQueenSide = 0L;
-                    blackCastleKingSide = 0L;
-                    blackKing &= ~fromBitboard;
-                    blackKing |= toBitboard;
-                } else {
+                if (((blackCastleQueenSide != 0) && (C8 & toBitboard) != 0) || ((blackCastleKingSide != 0) && (G8 & toBitboard) != 0)) {
                     // Handle castling for black
-                    if (toSquare == 58) {
+                    if (toBitboard == 1L << 58) {
                         processBlackCastleQueenSide(fromBitboard);
-                    } else if (toSquare == 62) {
+                    } else if (toBitboard == 1L << 62) {
                         processBlackCastleKingSide(fromBitboard);
                     }
+                } else {
+                    blackKing &= ~fromBitboard;
+                    blackKing |= toBitboard;
+
+                    // Reset castling rights
+                    blackCastleQueenSide = 0L;
+                    blackCastleKingSide = 0L;
                 }
             }
         }
@@ -1014,6 +1044,8 @@ public class BitBoard {
     
         // Update the bitboard representation
         updateBitBoard();
+
+
     }
     
 
@@ -1064,9 +1096,7 @@ public class BitBoard {
 
     public void makeMove(String move) {
         int fromSquare = getSquare(move.substring(0, 2));
-        System.out.println("from square: " + fromSquare);
         int toSquare = getSquare(move.substring(2, 4));
-        System.out.println("to square: " + toSquare);
         int pieceFrom = getPiece(fromSquare);
 
         // piece to if last character is not a digit
@@ -1106,13 +1136,59 @@ public class BitBoard {
 
     // pseudo legal
     public MoveList getPseudoLegalMoves() {
-        return MoveGenerator.generateMoves(this);
+        return MoveGenerator.generatePseudoLegalMoves(this);
     }
 
     // legal moves
     public MoveList getLegalMoves(){
-        MoveList moveList = MoveGenerator.generateMoves(this);
+        MoveList moveList = MoveGenerator.generatePseudoLegalMoves(this);
+        // System.out.println("Pseudo legal moves: " + moveList);
 
+        // Pour chaque coup, vérifier si le roi est en échec après le coup
+        // Si le roi est en échec, le coup n'est pas légal
+        // Sinon, le coup est légal
+        for (int i = 0; i < moveList.size(); i++) {
+            Move move = moveList.get(i);
+            // System.out.println("chess board before making move:" + move);
+            // System.out.println("move from: " + move.from);
+            // System.out.println("move to: " + move.to);
+            // System.out.println("piece from: " + move.pieceFrom);
+            // System.out.println("piece to: " + move.pieceTo);
+            // System.out.println("white turn: " + whiteTurn);
+            // printChessBoard();
+            makeMove(move);
+            // System.out.println("chess board after making move: " + move);
+            // System.out.println("move from: " + move.from);
+            // System.out.println("move to: " + move.to);
+            // System.out.println("piece from: " + move.pieceFrom);
+            // System.out.println("piece to: " + move.pieceTo);
+            // System.out.println("white turn: " + whiteTurn);
+            // printChessBoard();
+            if (isKingInCheck(!whiteTurn)) {
+                moveList.remove(i);
+                i--;
+            }
+            undoMove();
+            
+        }
+
+        // System.out.println("Legal moves: " + moveList);
+
+        return moveList;
+    }
+
+    public boolean isKingInCheck(boolean whiteTurn) {
+        // Generate opponent mask attack
+        long opponentAttacks = MoveGenerator.generateMask(this, !whiteTurn);
+        long king = whiteTurn ? whiteKing : blackKing;
+        return (opponentAttacks & king) != 0;
+
+    }
+
+    public MoveList getCaptureMoves() {
+        MoveList moveList = MoveGenerator.generateCaptureMoves(this);
+
+        
         // Pour chaque coup, vérifier si le roi est en échec après le coup
         // Si le roi est en échec, le coup n'est pas légal
         // Sinon, le coup est légal
@@ -1124,8 +1200,9 @@ public class BitBoard {
                 i--;
             }
             undoMove();
+            
         }
-
+        
         return moveList;
     }
 
@@ -1142,13 +1219,6 @@ public class BitBoard {
         return moveList.size() == 0 && isKingInCheck(whiteTurn);
     }
 
-    public boolean isKingInCheck(boolean whiteTurn) {
-        // Generate opponent mask attack
-        long opponentAttacks = MoveGenerator.generateMask(this, !whiteTurn);
-        long king = whiteTurn ? whiteKing : blackKing;
-        return (opponentAttacks & king) != 0;
-
-    }
 
     public void processWhiteCastleKingSide(long fromBitboard) {
         // Roque du côté du roi
@@ -1241,6 +1311,24 @@ public class BitBoard {
         }
     }
 
+    public static int getPieceType(int piece) {
+        if (piece == 1 || piece == 7) {
+            return PAWN;
+        } else if (piece == 2 || piece == 8) {
+            return KNIGHT;
+        } else if (piece == 3 || piece == 9) {
+            return BISHOP;
+        } else if (piece == 4 || piece == 10) {
+            return ROOK;
+        } else if (piece == 5 || piece == 11) {
+            return QUEEN;
+        } else if (piece == 6 || piece == 12) {
+            return KING;
+        } else {
+            return EMPTY;
+        }
+    }
+
     public void printBitBoardRaw(){
         System.out.println(Long.toBinaryString(bitboard));
     }
@@ -1316,17 +1404,7 @@ public class BitBoard {
                 '}';
     }
 
-    public MoveList getCaptureMoves() {
-        MoveList moveList = getLegalMoves();
-        MoveList captureMoves = new MoveList(218);
-        for (Move move : moveList) {
-            if (isCaptureMove(move)) {
-                captureMoves.add(move);
-            }
-        }
-        System.out.println("Capture moves: " + captureMoves);
-        return captureMoves;
-    }
+    
 
     public boolean isCaptureMove(Move move) {
         int toSquare = move.to;

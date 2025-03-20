@@ -4,7 +4,9 @@ import java.io.IOException;
 import java.util.*;
 
 import com.bitboard.algorithms.AdvancedChessAlgorithm;
+import com.bitboard.algorithms.AlphaBeta;
 import com.bitboard.algorithms.CustomAlgorithm;
+import com.bitboard.algorithms.NewChessAlgorithm;
 
 
 /**
@@ -28,29 +30,29 @@ public class UCI {
 //         System.out.println("""
 //  _______________________________________________________________________________________
 
-//   ███████╗██╗      ██████╗ ██╗    ██╗ ██████╗ ██╗███╗   ██╗███████╗██╗   ██╗██████╗ 
-//   ██╔════╝██║     ██╔═══██╗██║    ██║██╔════╝ ██║████╗  ██║██╔════╝██║   ██║╚════██╗
-//   █████╗  ██║     ██║   ██║██║ █╗ ██║██║  ███╗██║██╔██╗ ██║█████╗  ██║   ██║ █████╔╝
-//   ██╔══╝  ██║     ██║   ██║██║███╗██║██║   ██║██║██║╚██╗██║██╔══╝  ╚██╗ ██╔╝██╔═══╝ 
-//   ██║     ███████╗╚██████╔╝╚███╔███╔╝╚██████╔╝██║██║ ╚████║███████╗ ╚████╔╝ ███████╗
-//   ╚═╝     ╚══════╝ ╚═════╝  ╚══╝╚══╝  ╚═════╝ ╚═╝╚═╝  ╚═══╝╚══════╝  ╚═══╝  ╚══════╝
+// |  ███████╗██╗      ██████╗ ██╗    ██╗ ██████╗ ██╗███╗   ██╗███████╗██╗   ██╗██████╗   |
+// |  ██╔════╝██║     ██╔═══██╗██║    ██║██╔════╝ ██║████╗  ██║██╔════╝██║   ██║╚════██╗  |
+// |  █████╗  ██║     ██║   ██║██║ █╗ ██║██║  ███╗██║██╔██╗ ██║█████╗  ██║   ██║ █████╔╝  |
+// |  ██╔══╝  ██║     ██║   ██║██║███╗██║██║   ██║██║██║╚██╗██║██╔══╝  ╚██╗ ██╔╝██╔═══╝   |
+// |  ██║     ███████╗╚██████╔╝╚███╔███╔╝╚██████╔╝██║██║ ╚████║███████╗ ╚████╔╝ ███████╗  |
+// |  ╚═╝     ╚══════╝ ╚═════╝  ╚══╝╚══╝  ╚═════╝ ╚═╝╚═╝  ╚═══╝╚══════╝  ╚═══╝  ╚══════╝  |
 // _______________________________________________________________________________________
 
 //         """);
 
-//         // print available commands
-//         System.out.println("Available commands:");
-//         System.out.println("uci - start the engine");
-//         System.out.println("isready - check if the engine is ready");
-//         System.out.println("ucinewgame - start a new game");
-//         System.out.println("position - set up the position");
-//         System.out.println("go - start calculating the best move");
-//         System.out.println("quit - stop the engine");
-//         System.out.println("stop - stop calculating the best move");
-//         System.out.println("option - set engine options");
-//         System.out.println();
+        // // print available commands
+        // System.out.println("Available commands:");
+        // System.out.println("uci - start the engine");
+        // System.out.println("isready - check if the engine is ready");
+        // System.out.println("ucinewgame - start a new game");
+        // System.out.println("position - set up the position");
+        // System.out.println("go - start calculating the best move");
+        // System.out.println("quit - stop the engine");
+        // System.out.println("stop - stop calculating the best move");
+        // System.out.println("option - set engine options");
+        // System.out.println();
 
-        CustomAlgorithm advancedChessAlgorithm = new CustomAlgorithm(6);
+        NewChessAlgorithm advancedChessAlgorithm = new NewChessAlgorithm(4);
         engine.setAlgorithm(advancedChessAlgorithm);
         
         Scanner scanner = new Scanner(System.in);
@@ -86,6 +88,9 @@ public class UCI {
                 case "go":
                     go(inputArray);
                     break;
+                case "perft-test":
+                    Perft.perftSuiteTest("./perft-suite/standard.epd");
+                    break;
                 case "quit":
                     quit();
                     break;
@@ -95,8 +100,23 @@ public class UCI {
                 case "option":
                     option(inputArray);
                     break;
+                case "setdepth":
+                    setDepth(Integer.parseInt(inputArray[1]));
+                    break;
+                case "setrazordepth":
+                    // setRazorDepth(Integer.parseInt(inputArray[1]));
+                    break;
+                case "setnpm":
+                    // setNPM(Integer.parseInt(inputArray[1]));
+                    break;
                 case "d":
                     d();
+                    break;
+                case "calculateNPS":
+                    System.out.println(calculateNPS(Integer.parseInt(inputArray[1])));
+                    break;
+                case "help":
+                    help();
                     break;
                 default:
                     System.out.println("Unknown command: " + command);
@@ -124,6 +144,57 @@ public class UCI {
         }
     }
 
+    private static void help() {
+        System.out.println("""
+         _______________________________________________________________________________________
+    
+        |  ███████╗██╗      ██████╗ ██╗    ██╗ ██████╗ ██╗███╗   ██╗███████╗██╗   ██╗██████╗   |
+        |  ██╔════╝██║     ██╔═══██╗██║    ██║██╔════╝ ██║████╗  ██║██╔════╝██║   ██║╚════██╗  |
+        |  █████╗  ██║     ██║   ██║██║ █╗ ██║██║  ███╗██║██╔██╗ ██║█████╗  ██║   ██║ █████╔╝  |
+        |  ██╔══╝  ██║     ██║   ██║██║███╗██║██║   ██║██║██║╚██╗██║██╔══╝  ╚██╗ ██╔╝██╔═══╝   |
+        |  ██║     ███████╗╚██████╔╝╚███╔███╔╝╚██████╔╝██║██║ ╚████║███████╗ ╚████╔╝ ███████╗  |
+        |  ╚═╝     ╚══════╝ ╚═════╝  ╚══╝╚══╝  ╚═════╝ ╚═╝╚═╝  ╚═══╝╚══════╝  ╚═══╝  ╚══════╝  |
+         _______________________________________________________________________________________
+    
+        Available commands:
+        -----------------------------------------------------------------------------------------
+        | uci                  | Start the engine and display information about the engine.      |
+        -----------------------------------------------------------------------------------------
+        | isready              | Check if the engine is ready to receive commands.               |
+        -----------------------------------------------------------------------------------------
+        | ucinewgame           | Start a new game and reset the board.                           |
+        -----------------------------------------------------------------------------------------
+        | position [args]      | Set up the position. Examples:                                  |
+        |                      | - position startpos                                            |
+        |                      | - position fen <fen-string> moves <move1> <move2> ...          |
+        -----------------------------------------------------------------------------------------
+        | go [args]            | Start calculating the best move. Optional arguments:            |
+        |                      | - perft <depth>                                                |
+        |                      | - depth <depth>                                                |
+        |                      | - wtime <ms> btime <ms> winc <ms> binc <ms>                    |
+        -----------------------------------------------------------------------------------------
+        | stop                 | Stop calculating the best move.                                |
+        -----------------------------------------------------------------------------------------
+        | quit                 | Quit the engine and terminate the process.                     |
+        -----------------------------------------------------------------------------------------
+        | option [args]        | Set engine options. Examples:                                   |
+        |                      | - option name Hash type spin default 16 min 1 max 1024         |
+        |                      | - option name Threads type spin default 1 min 1 max 1024       |
+        -----------------------------------------------------------------------------------------
+        | setdepth <int>       | Set the search depth to the given integer value.               |
+        -----------------------------------------------------------------------------------------
+        | setrazordepth <int>  | Set the razoring depth for shallow pruning.                    |
+        -----------------------------------------------------------------------------------------
+        | setnpm <int>         | Set the Null-Pruning Move threshold.                           |
+        -----------------------------------------------------------------------------------------
+        | d                    | Display the current chess board.                               |
+        -----------------------------------------------------------------------------------------
+        | calculateNPS <int>   | Calculate the Nodes Per Second over the given milliseconds.    |
+        -----------------------------------------------------------------------------------------
+        """);
+    }
+    
+
     public static void d(){
         board.printChessBoard();
     }
@@ -136,51 +207,74 @@ public class UCI {
         System.exit(0);
     }
 
-    private static void go(String[] inputArray) {
+    private static String calculateNPS(int timeMS) {
+        return Perft.calculateNPS(board, timeMS);
+    }
 
+    private static void go(String[] inputArray) {
         // perft test
         if(inputArray[1].equals("perft")){
             int depth = Integer.parseInt(inputArray[2]);
             long time = System.currentTimeMillis();
-            String perft = Perft.perftDivideString(board, depth);
+            String perft;
+            perft = Perft.perftDivideString(board, depth);
+
             time = System.currentTimeMillis() - time;
             System.out.println(perft);
             System.out.println("Time: " + time + "ms");
+            return;
         }
         if (inputArray[1].equals("ponder")) {
             // infinite search
             engine.setDepth(20);
-            engine.getAlgorithm().search(board);
-        }
-        if (inputArray[1].equals("capture")) {
-            MoveList moveList = MoveGenerator.generateCaptureMoves(board);
-            System.out.println("Capture moves: " + moveList);
-        }
-        if (inputArray[1].equals("legal")) {
-            MoveList moveList = board.getLegalMoves();
-            System.out.println("Legal moves: " + moveList);
+            engine.getAlgorithm().search(board, 0, 0, 0, 0, 0, 20);
+            return;
         }
         else{
             
-            int depth = 0;
+            // go wtime <> btime <> winc <> binc <> movestogo <>
+            int depth = 11;
             int time = 0;
+            int wtime = 10000;
+            int btime = 10000;
+            int winc = 0;
+            int binc = 0;
+            int movestogo = 0;
+
             for(int i = 1; i < inputArray.length; i++){
                 if(inputArray[i].equals("depth")){
                     depth = Integer.parseInt(inputArray[i + 1]);
                 }
                 else if(inputArray[i].equals("wtime")){
-                    time = Integer.parseInt(inputArray[i + 1]);
+                    wtime = Integer.parseInt(inputArray[i + 1]);
                 }
                 else if(inputArray[i].equals("btime")){
-                    time = Integer.parseInt(inputArray[i + 1]);
+                    btime = Integer.parseInt(inputArray[i + 1]);
+                }
+                else if(inputArray[i].equals("winc")){
+                    winc = Integer.parseInt(inputArray[i + 1]);
+                }
+                else if(inputArray[i].equals("binc")){
+                    binc = Integer.parseInt(inputArray[i + 1]);
+                }
+                else if(inputArray[i].equals("movestogo")){
+                    movestogo = Integer.parseInt(inputArray[i + 1]);
                 }
             }
-    
-            if(depth != 0){
-                engine.setDepth(depth);
-                Move bestMove = engine.getAlgorithm().search(board);
-                System.out.println("bestmove " + bestMove.toString());
-            }
+
+
+            // Start the search
+            engine.setDepth(depth);
+            // Start time 
+            long startTime = System.currentTimeMillis();
+            Move move = engine.getAlgorithm().search(board, wtime, btime, winc, binc, movestogo, depth);
+            long endTime = System.currentTimeMillis();
+            long ftime = endTime - startTime;
+            // Print the time taken
+            System.out.println("Time taken: " + ftime + "ms");
+            System.out.println("bestmove " + move.toString());
+
+            
     
             
         }
@@ -189,6 +283,21 @@ public class UCI {
 
         
     }
+
+    private static void setDepth(int depth) {
+        engine.setDepth(depth);
+        System.out.println("Depth set to " + depth);
+    }
+
+    // private static void setRazorDepth(int depth) {
+    //     engine.setRazorDepth(depth);
+    //     System.out.println("Razoring-Depth set to " + depth);
+    // }
+
+    // private static void setNPM(int npm) {
+    //     engine.setNPM(npm);
+    //     System.out.println("NullPruningMove set to " + npm);
+    // }
 
     private static void position(String[] inputArray) {
         // Example: position startpos moves e2e4 e7e5
@@ -219,6 +328,20 @@ public class UCI {
             for(int i = 0; i < inputArray.length; i++){
                 if(inputArray[i].equals("moves")){
                     for(int j = i + 1; j < inputArray.length; j++){
+                        Move move = new Move(inputArray[j], board);
+                        System.out.println("Move: from " + move.from + " to " + move.to + " type " + move.type);
+                        board.makeMove(move);
+                    }
+                }
+            }
+        } else if (inputArray[1].equals("startpos")) {
+            // Load the starting position
+            board = new BitBoard();
+
+            // Make the moves
+            for(int i = 0; i < inputArray.length; i++){
+                if(inputArray[i].equals("moves")){
+                    for(int j = i + 1; j < inputArray.length; j++){
                         Move move = new Move(inputArray[j]);
                         board.makeMove(move);
                     }
@@ -244,6 +367,8 @@ public class UCI {
         System.out.println("option name Threads type spin default 1 min 1 max 1024");
         System.out.println("option name Ponder type check default false");
         System.out.println("option name Debug Log File type string default debug.log");
+        // System.out.println("option razoring" + engine.getRazorDepth());
+        // System.out.println("option npm" + engine.getNPM());
         System.out.println();
         System.out.println("uciok");
     }

@@ -1,0 +1,83 @@
+FEN: rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
+=== Flowgine Perft Results ===
+[ 71 ms ]
+[PerftDivide]
+[Depth: 4]
+[ === ]
+a2a3: 8457
+a2a4: 9329
+b2b3: 9345
+b2b4: 9332
+c2c3: 9272
+c2c4: 9744
+d2d3: 11959
+d2d4: 12435
+e2e3: 13134
+e2e4: 13160
+f2f3: 8457
+f2f4: 8929
+g2g3: 9345
+g2g4: 9328
+h2h3: 8457
+h2h4: 9329
+b1a3: 8885
+b1c3: 9755
+g1f3: 9748
+g1h3: 8881
+
+Nodes searched: 197281
+
+=== StockFish Perft Results ===
+Stockfish 16.1 by the Stockfish developers (see AUTHORS file)
+info string NNUE evaluation using nn-baff1ede1f90.nnue
+info string NNUE evaluation using nn-b1a57edbea57.nnue
+a2a3: 8457
+b2b3: 9345
+c2c3: 9272
+d2d3: 11959
+e2e3: 13134
+f2f3: 8457
+g2g3: 9345
+h2h3: 8457
+a2a4: 9329
+b2b4: 9332
+c2c4: 9744
+d2d4: 12435
+e2e4: 13160
+f2f4: 8929
+g2g4: 9328
+h2h4: 9329
+b1a3: 8885
+b1c3: 9755
+g1f3: 9748
+g1h3: 8881
+
+Nodes searched: 197281
+
+
+
+=== Comparison of Individual Move Nodes ===
+[ - Depth: 4 - ]
+[v] Flowgine: a2a3 - 8457 | StockFish: a2a3 - 8457
+[v] Flowgine: a2a4 - 9329 | StockFish: a2a4 - 9329
+[v] Flowgine: b1a3 - 8885 | StockFish: b1a3 - 8885
+[v] Flowgine: b1c3 - 9755 | StockFish: b1c3 - 9755
+[v] Flowgine: b2b3 - 9345 | StockFish: b2b3 - 9345
+[v] Flowgine: b2b4 - 9332 | StockFish: b2b4 - 9332
+[v] Flowgine: c2c3 - 9272 | StockFish: c2c3 - 9272
+[v] Flowgine: c2c4 - 9744 | StockFish: c2c4 - 9744
+[v] Flowgine: d2d3 - 11959 | StockFish: d2d3 - 11959
+[v] Flowgine: d2d4 - 12435 | StockFish: d2d4 - 12435
+[v] Flowgine: e2e3 - 13134 | StockFish: e2e3 - 13134
+[v] Flowgine: e2e4 - 13160 | StockFish: e2e4 - 13160
+[v] Flowgine: f2f3 - 8457 | StockFish: f2f3 - 8457
+[v] Flowgine: f2f4 - 8929 | StockFish: f2f4 - 8929
+[v] Flowgine: g1f3 - 9748 | StockFish: g1f3 - 9748
+[v] Flowgine: g1h3 - 8881 | StockFish: g1h3 - 8881
+[v] Flowgine: g2g3 - 9345 | StockFish: g2g3 - 9345
+[v] Flowgine: g2g4 - 9328 | StockFish: g2g4 - 9328
+[v] Flowgine: h2h3 - 8457 | StockFish: h2h3 - 8457
+[v] Flowgine: h2h4 - 9329 | StockFish: h2h4 - 9329
+
+=== Total Nodes Comparison ===
+[*V*] Valid total nodes: 197281
