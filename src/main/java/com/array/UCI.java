@@ -1,9 +1,9 @@
-package com;
+package com.array;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.*;
 
-import com.algorithms.AlphaBetaPruningAlgorithm;
+import com.array.algorithms.AlphaBetaPruningAlgorithm;
 
 /**
  * This class is the UCI interface for the chess engine.

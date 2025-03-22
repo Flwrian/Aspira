@@ -1,4 +1,4 @@
-package com;
+package com.array;
 
 public class Game {
 

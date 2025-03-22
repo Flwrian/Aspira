@@ -1,6 +1,6 @@
-package com.pieces;
+package com.array.pieces;
 
-import com.Board;
+import com.array.Board;
 
 public class Queen {
 
