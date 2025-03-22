@@ -19,6 +19,8 @@ public class UCI {
     private static String ENGINE_NAME = "FlowgineV2";
     private static String AUTHOR = "Flwrian";
     private static String VERSION = "2.0";
+
+    private static String STARTING_POSITION = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
     
     private static BitBoard board = new BitBoard();
     // private static Engine engine;
@@ -54,6 +56,8 @@ public class UCI {
 
         NewChessAlgorithm advancedChessAlgorithm = new NewChessAlgorithm(4);
         engine.setAlgorithm(advancedChessAlgorithm);
+
+        board.loadFromFen(STARTING_POSITION);
         
         Scanner scanner = new Scanner(System.in);
         // Handle the UCI commands
@@ -307,6 +311,7 @@ public class UCI {
         if(inputArray[1].equals("startpos")){
             // Load the starting position
             board = new BitBoard();
+            board.loadFromFen(STARTING_POSITION);
 
             // Make the moves
             for(int i = 3; i < inputArray.length; i++){

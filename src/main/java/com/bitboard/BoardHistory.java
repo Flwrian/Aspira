@@ -21,6 +21,7 @@ public class BoardHistory {
     public long blackCastleKingSide;
     public long enPassantSquare;
     public boolean whiteTurn;
+    public int currentEvaluation;
 
     public Move move;
     
@@ -28,7 +29,7 @@ public class BoardHistory {
     public BoardHistory(long bitboard, Move move, long whitePawns, long whiteKnights, long whiteBishops, long whiteRooks,
             long whiteQueens, long whiteKing, long blackPawns, long blackKnights, long blackBishops, long blackRooks,
             long blackQueens, long blackKing, long whiteCastleQueenSide, long whiteCastleKingSide,
-            long blackCastleQueenSide, long blackCastleKingSide, long enPassantSquare, boolean whiteTurn) {
+            long blackCastleQueenSide, long blackCastleKingSide, long enPassantSquare, boolean whiteTurn, int currentEvaluation) {
         this.bitboard = bitboard;
         this.whitePawns = whitePawns;
         this.whiteKnights = whiteKnights;
@@ -48,6 +49,7 @@ public class BoardHistory {
         this.blackCastleKingSide = blackCastleKingSide;
         this.enPassantSquare = enPassantSquare;
         this.whiteTurn = whiteTurn;
+        this.currentEvaluation = currentEvaluation;
 
         this.move = move;
     }

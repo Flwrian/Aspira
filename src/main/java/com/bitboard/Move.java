@@ -18,7 +18,7 @@ public final class Move {
     public static final int PROMOTION_SCORE = 150;
     public static final int CAPTURE_SCORE = 100;
     public static final int CASTLING_SCORE = 150;
-    public static final int DOUBLE_PAWN_PUSH_SCORE = 1;
+    public static final int DOUBLE_PAWN_PUSH_SCORE = 0;
     public static final int IS_CHECK_SCORE = 150;
 
 
@@ -303,16 +303,16 @@ public final class Move {
             if (isWhite) {
                 switch (pieceTo) {
                     case BitBoard.QUEEN:
-                        promotionPiece = "Q";
+                        promotionPiece = "q";
                         break;
                     case BitBoard.ROOK:
-                        promotionPiece = "R";
+                        promotionPiece = "r";
                         break;
                     case BitBoard.BISHOP:
-                        promotionPiece = "B";
+                        promotionPiece = "b";
                         break;
                     case BitBoard.KNIGHT:
-                        promotionPiece = "N";
+                        promotionPiece = "n";
                         break;
                 }
             } 

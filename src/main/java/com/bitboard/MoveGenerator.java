@@ -141,7 +141,10 @@ public class MoveGenerator {
                         Move normalMove = new Move(from, to, BitBoard.PAWN, board.getPiece(to));
                         normalMove.setWhite(board.whiteTurn);
                         // If the move is a capture, we set the captured piece so we can use it in the move ordering
-                        normalMove.setSeeScore(Move.CAPTURE_SCORE + capturedPiece);
+                        if (capturedPiece != BitBoard.EMPTY) {
+                            normalMove.setType(Move.CAPTURE);
+                            normalMove.setSeeScore(Move.CAPTURE_SCORE + capturedPiece);
+                        }
                         moves.add(normalMove);
                     }
                 }
@@ -167,7 +170,7 @@ public class MoveGenerator {
                 
                 int to = BitBoard.getSquare(move);
                 
-                Move normalMove = new Move(from, to, board.getPiece(from), board.getPiece(to));
+                Move normalMove = new Move(from, to, BitBoard.KNIGHT, board.getPiece(to));
                 normalMove.setWhite(board.whiteTurn);
 
                 if (isCaptureMove(move, board) > 0) {
@@ -195,7 +198,7 @@ public class MoveGenerator {
 
                 int to = BitBoard.getSquare(move);
 
-                Move normalMove = new Move(from, to, board.getPiece(from), board.getPiece(to));
+                Move normalMove = new Move(from, to, BitBoard.BISHOP, board.getPiece(to));
                 normalMove.setWhite(board.whiteTurn);
 
                 if (isCaptureMove(move, board) > 0) {
@@ -223,7 +226,7 @@ public class MoveGenerator {
 
                 int to = BitBoard.getSquare(move);
 
-                Move normalMove = new Move(from, to, board.getPiece(from), board.getPiece(to));
+                Move normalMove = new Move(from, to, BitBoard.ROOK, board.getPiece(to));
                 normalMove.setWhite(board.whiteTurn);
 
                 if (isCaptureMove(move, board) > 0) {
@@ -252,7 +255,7 @@ public class MoveGenerator {
 
                 int to = BitBoard.getSquare(move);
 
-                Move normalMove = new Move(from, to, board.getPiece(from), board.getPiece(to));
+                Move normalMove = new Move(from, to, BitBoard.QUEEN, board.getPiece(to));
                 normalMove.setWhite(board.whiteTurn);
 
                 if (isCaptureMove(move, board) > 0) {
@@ -279,14 +282,15 @@ public class MoveGenerator {
 
             // Castling
             if (Math.abs(from - to) == 2) {
-                Move castling = new Move(from, to, board.getPiece(from), board.getPiece(to));
+                Move castling = new Move(from, to, BitBoard.KING, board.getPiece(to));
                 castling.setType(Move.CASTLING);
                 castling.setWhite(board.whiteTurn);
+                castling.setSeeScore(Move.CASTLING_SCORE);
                 moves.add(castling);
             }
 
             else{
-                Move normalMove = new Move(from, to, board.getPiece(from), board.getPiece(to));
+                Move normalMove = new Move(from, to, BitBoard.KING, board.getPiece(to));
                 normalMove.setWhite(board.whiteTurn);
 
                 if (isCaptureMove(move, board) > 0) {
