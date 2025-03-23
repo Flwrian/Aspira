@@ -13,7 +13,7 @@ public class Perft {
             return 1;
         }
         
-        MoveList moveList = bitBoard.getLegalMoves();
+        PackedMoveList moveList = bitBoard.getLegalMoves();
         long nodes = 0;
     
         for (int i = 0; i < moveList.size(); i++) {
@@ -110,47 +110,47 @@ public class Perft {
             e.printStackTrace();
         }
         }
-    // Version pour afficher les nœuds de chaque coup de départ
-    public static void perftDivide(BitBoard bitBoard, int depth) {
-        MoveList moveList = bitBoard.getLegalMoves();
-        long totalNodes = 0;
+    // // Version pour afficher les nœuds de chaque coup de départ
+    // public static void perftDivide(BitBoard bitBoard, int depth) {
+    //     MoveList moveList = bitBoard.getLegalMoves();
+    //     long totalNodes = 0;
     
-        // Itère sur chaque coup possible au premier niveau
-        for (int i = 0; i < moveList.size(); i++) {
-            Move move = moveList.get(i);
-            bitBoard.makeMove(move);
+    //     // Itère sur chaque coup possible au premier niveau
+    //     for (int i = 0; i < moveList.size(); i++) {
+    //         Move move = moveList.get(i);
+    //         bitBoard.makeMove(move);
     
-            // Obtenir le nombre de noeuds pour ce coup
-            long moveNodes = perft(bitBoard, depth - 1);
+    //         // Obtenir le nombre de noeuds pour ce coup
+    //         long moveNodes = perft(bitBoard, depth - 1);
     
-            // Affiche le coup du premier niveau
-            System.out.println(move.toString() + ": " + moveNodes);
+    //         // Affiche le coup du premier niveau
+    //         System.out.println(move.toString() + ": " + moveNodes);
     
-            // Si on est à une profondeur suffisante, afficher les coups du second niveau
-            if (depth > 1) {
-                MoveList secondLevelMoves = bitBoard.getLegalMoves(); // coups après ce move
-                for (int j = 0; j < secondLevelMoves.size(); j++) {
-                    Move secondMove = secondLevelMoves.get(j);
-                    bitBoard.makeMove(secondMove);
+    //         // Si on est à une profondeur suffisante, afficher les coups du second niveau
+    //         if (depth > 1) {
+    //             MoveList secondLevelMoves = bitBoard.getLegalMoves(); // coups après ce move
+    //             for (int j = 0; j < secondLevelMoves.size(); j++) {
+    //                 Move secondMove = secondLevelMoves.get(j);
+    //                 bitBoard.makeMove(secondMove);
     
-                    // Obtenir le nombre de noeuds pour le second coup
-                    long secondMoveNodes = perft(bitBoard, depth - 2);
+    //                 // Obtenir le nombre de noeuds pour le second coup
+    //                 long secondMoveNodes = perft(bitBoard, depth - 2);
     
-                    // Affiche le coup du second niveau avec indentation
-                    System.out.println("    - " + secondMove.toString() + ": " + secondMoveNodes);
+    //                 // Affiche le coup du second niveau avec indentation
+    //                 System.out.println("    - " + secondMove.toString() + ": " + secondMoveNodes);
     
-                    bitBoard.undoMove();
-                }
-            }
+    //                 bitBoard.undoMove();
+    //             }
+    //         }
     
-            bitBoard.undoMove();
-            totalNodes += moveNodes;
-        }
+    //         bitBoard.undoMove();
+    //         totalNodes += moveNodes;
+    //     }
     
-        // Affiche le nombre total de nœuds
-        System.out.println();
-        System.out.println("Nodes searched: " + totalNodes);
-    }
+    //     // Affiche le nombre total de nœuds
+    //     System.out.println();
+    //     System.out.println("Nodes searched: " + totalNodes);
+    // }
     
 
     public static String perftDivideString(BitBoard bitBoard, int depth) {
@@ -159,20 +159,20 @@ public class Perft {
         result += "[Depth: " + depth + "]\n";
         result += "[ === ]\n";
 
-        MoveList moveList = bitBoard.getLegalMoves();
+        PackedMoveList moveList = bitBoard.getLegalMoves();
 
         long totalNodes = 0;
         
         // Itère sur chaque coup possible au premier niveau
         for (int i = 0; i < moveList.size(); i++) {
-            Move move = moveList.get(i);
+            long move = moveList.get(i);
             bitBoard.makeMove(move);
     
             long moveNodes = perft(bitBoard, depth - 1);
             bitBoard.undoMove();
     
             // Affiche le coup et le nombre de nœuds associés
-            result += move.toString() + ": " + moveNodes + "\n";
+            // result += move.toString() + ": " + moveNodes + "\n";
     
             totalNodes += moveNodes;
         }
@@ -199,112 +199,112 @@ public class Perft {
         return "Nodes: " + nodes + " Time: " + elapsedTime + " NPS: " + nps + "M";
     }
 
-    private static long perftPseudoLegal(BitBoard bitBoard, int depth) {
-        if (depth == 0) {
-            return 1;
-        }
+    // private static long perftPseudoLegal(BitBoard bitBoard, int depth) {
+    //     if (depth == 0) {
+    //         return 1;
+    //     }
         
-        MoveList moveList = bitBoard.getPseudoLegalMoves();
-        long nodes = 0;
+    //     MoveList moveList = bitBoard.getPseudoLegalMoves();
+    //     long nodes = 0;
     
-        for (int i = 0; i < moveList.size(); i++) {
-            bitBoard.makeMove(moveList.get(i));
-            nodes += perftPseudoLegal(bitBoard, depth - 1);
-            bitBoard.undoMove();
-        }
-
-        
-        return nodes;
-    }
-
-    public static String perftDivideStringPseudoLegal(BitBoard bitBoard, int depth) {
-        String result = "";
-        result += "[PerftDivide]\n";
-        result += "[Depth: " + depth + "]\n";
-        result += "[ === ]\n";
-
-        MoveList moveList = bitBoard.getPseudoLegalMoves();
-        long totalNodes = 0;
-    
-        // Itère sur chaque coup possible au premier niveau
-        for (int i = 0; i < moveList.size(); i++) {
-            Move move = moveList.get(i);
-            bitBoard.makeMove(move);
-    
-            long moveNodes = perftPseudoLegal(bitBoard, depth - 1);
-            bitBoard.undoMove();
-    
-            // Affiche le coup et le nombre de nœuds associés
-            result += move.toString() + ": " + moveNodes + "\n";
-    
-            totalNodes += moveNodes;
-        }
-    
-        // Affiche le nombre total de nœuds
-        result += "\nNodes searched: " + totalNodes + "\n";
-        return result;
-    }
-
-    // Version pour afficher les nœuds à partir d'une position donnée
-    public static void perftStart(BitBoard bitBoard, int depth) {
-        long nodes = perft(bitBoard, depth);
-        System.out.println("Nodes searched: " + nodes);
-    }
-    
-
-    public static void main(String[] args) {
-        BitBoard bitBoard = new BitBoard();
-
-        // // e2e3
-        // Move move = new Move(4+8, 4+8+8, BitBoard.PAWN, BitBoard.PAWN);
-        // bitBoard.makeMove(move);
-
-        // // f7f5
-        // move = new Move(5+6*8, 5+4*8, BitBoard.PAWN, BitBoard.PAWN);
-        // bitBoard.makeMove(move);
-
-        // // b1a3
-        // Move move = new Move(1, 16, BitBoard.KNIGHT, BitBoard.KNIGHT);
-        // bitBoard.makeMove(move);
-
-        // // b8a6
-        // move = new Move(57, 40, BitBoard.KNIGHT, BitBoard.KNIGHT);
-        // bitBoard.makeMove(move);
-
-        // load a position
-
-
-        // bitBoard.loadFromFen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1");
-        // // // b7b5
-        // long time = System.currentTimeMillis();
-        // System.out.println(perft(bitBoard, 5));
-        // System.out.println("Seconds: " + (System.currentTimeMillis() - time) / 1000.0);
+    //     for (int i = 0; i < moveList.size(); i++) {
+    //         bitBoard.makeMove(moveList.get(i));
+    //         nodes += perftPseudoLegal(bitBoard, depth - 1);
+    //         bitBoard.undoMove();
+    //     }
 
         
-        bitBoard.loadFromFen("n1n5/1Pk5/8/8/8/8/5Kp1/5N1N b - - 0 1");
-        perftDivide(bitBoard, 4);
-        
-    }
+    //     return nodes;
+    // }
 
-    public static int perftOnCaptures(BitBoard bitBoard, int depth) {
-        if (depth == 0) {
-            return 1;
-        }
-        
-        MoveList moveList = bitBoard.getCaptureMoves();
-        if (moveList.size() == 0) {
-            return 0;
-        }
-        int nodes = 0;
+    // public static String perftDivideStringPseudoLegal(BitBoard bitBoard, int depth) {
+    //     String result = "";
+    //     result += "[PerftDivide]\n";
+    //     result += "[Depth: " + depth + "]\n";
+    //     result += "[ === ]\n";
+
+    //     MoveList moveList = bitBoard.getPseudoLegalMoves();
+    //     long totalNodes = 0;
     
-        for (int i = 0; i < moveList.size(); i++) { 
-            Move move = moveList.get(i);
-            bitBoard.makeMove(move);
-            nodes += perftOnCaptures(bitBoard, depth - 1);
-            bitBoard.undoMove();
-        }
+    //     // Itère sur chaque coup possible au premier niveau
+    //     for (int i = 0; i < moveList.size(); i++) {
+    //         Move move = moveList.get(i);
+    //         bitBoard.makeMove(move);
+    
+    //         long moveNodes = perftPseudoLegal(bitBoard, depth - 1);
+    //         bitBoard.undoMove();
+    
+    //         // Affiche le coup et le nombre de nœuds associés
+    //         result += move.toString() + ": " + moveNodes + "\n";
+    
+    //         totalNodes += moveNodes;
+    //     }
+    
+    //     // Affiche le nombre total de nœuds
+    //     result += "\nNodes searched: " + totalNodes + "\n";
+    //     return result;
+    // }
+
+    // // Version pour afficher les nœuds à partir d'une position donnée
+    // public static void perftStart(BitBoard bitBoard, int depth) {
+    //     long nodes = perft(bitBoard, depth);
+    //     System.out.println("Nodes searched: " + nodes);
+    // }
+    
+
+    // public static void main(String[] args) {
+    //     BitBoard bitBoard = new BitBoard();
+
+    //     // // e2e3
+    //     // Move move = new Move(4+8, 4+8+8, BitBoard.PAWN, BitBoard.PAWN);
+    //     // bitBoard.makeMove(move);
+
+    //     // // f7f5
+    //     // move = new Move(5+6*8, 5+4*8, BitBoard.PAWN, BitBoard.PAWN);
+    //     // bitBoard.makeMove(move);
+
+    //     // // b1a3
+    //     // Move move = new Move(1, 16, BitBoard.KNIGHT, BitBoard.KNIGHT);
+    //     // bitBoard.makeMove(move);
+
+    //     // // b8a6
+    //     // move = new Move(57, 40, BitBoard.KNIGHT, BitBoard.KNIGHT);
+    //     // bitBoard.makeMove(move);
+
+    //     // load a position
+
+
+    //     // bitBoard.loadFromFen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1");
+    //     // // // b7b5
+    //     // long time = System.currentTimeMillis();
+    //     // System.out.println(perft(bitBoard, 5));
+    //     // System.out.println("Seconds: " + (System.currentTimeMillis() - time) / 1000.0);
 
         
-        return nodes;
-    }
+    //     bitBoard.loadFromFen("n1n5/1Pk5/8/8/8/8/5Kp1/5N1N b - - 0 1");
+    //     perftDivide(bitBoard, 4);
+        
+    // }
+
+    // public static int perftOnCaptures(BitBoard bitBoard, int depth) {
+    //     if (depth == 0) {
+    //         return 1;
+    //     }
+        
+    //     MoveList moveList = bitBoard.getCaptureMoves();
+    //     if (moveList.size() == 0) {
+    //         return 0;
+    //     }
+    //     int nodes = 0;
+    
+    //     for (int i = 0; i < moveList.size(); i++) { 
+    //         Move move = moveList.get(i);
+    //         bitBoard.makeMove(move);
+    //         nodes += perftOnCaptures(bitBoard, depth - 1);
+    //         bitBoard.undoMove();
+    //     }
+
+        
+    //     return nodes;
+    // }
 }

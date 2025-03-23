@@ -227,6 +227,82 @@ public class BitBoard {
         ( G6 | F7)
     };
 
+    // king pre-encoded moves
+    public static final long[] KING_MOVES = {
+        (B1 | B2 | A2), // A1
+        (A1 | C1 | C2 | B2), // B1
+        (B1 | D1 | D2 | C2 | B2), // C1
+        (C1 | E1 | E2 | D2 | C2), // D1
+        (D1 | F1 | F2 | E2 | D2), // E1
+        (E1 | G1 | G2 | F2 | E2), // F1
+        (F1 | H1 | H2 | G2 | F2), // G1
+        (G1 | G2 | H2), // H1
+
+        (A1 | A3 | B3 | B2), // A2
+        (A2 | A1 | B1 | C1 | C2 | C3 | B3 | A3), // B2
+        (B2 | B1 | C1 | D1 | D2 | D3 | C3 | B3), // C2
+        (C2 | C1 | D1 | E1 | E2 | E3 | D3 | C3), // D2
+        (D2 | D1 | E1 | F1 | F2 | F3 | E3 | D3), // E2
+        (E2 | E1 | F1 | G1 | G2 | G3 | F3 | E3), // F2
+        (F2 | F1 | G1 | H1 | H2 | H3 | G3 | F3), // G2
+        (G2 | G1 | H1 | H3 | G3), // H2
+
+        (A2 | A4 | B4 | B3), // A3
+        (A3 | A2 | B2 | C2 | C3 | C4 | B4 | A4), // B3
+        (B3 | B2 | C2 | D2 | D3 | D4 | C4 | B4), // C3
+        (C3 | C2 | D2 | E2 | E3 | E4 | D4 | C4), // D3
+        (D3 | D2 | E2 | F2 | F3 | F4 | E4 | D4), // E3
+        (E3 | E2 | F2 | G2 | G3 | G4 | F4 | E4), // F3
+        (F3 | F2 | G2 | H2 | H3 | H4 | G4 | F4), // G3
+        (G3 | G2 | H2 | H4 | G4), // H3
+
+        (A3 | A5 | B5 | B4), // A4
+        (A4 | A3 | B3 | C3 | C4 | C5 | B5 | A5), // B4
+        (B4 | B3 | C3 | D3 | D4 | D5 | C5 | B5), // C4
+        (C4 | C3 | D3 | E3 | E4 | E5 | D5 | C5), // D4
+        (D4 | D3 | E3 | F3 | F4 | F5 | E5 | D5), // E4
+        (E4 | E3 | F3 | G3 | G4 | G5 | F5 | E5), // F4
+        (F4 | F3 | G3 | H3 | H4 | H5 | G5 | F5), // G4
+        (G4 | G3 | H3 | H5 | G5), // H4
+
+        (A4 | A6 | B6 | B5), // A5
+        (A5 | A4 | B4 | C4 | C5 | C6 | B6 | A6), // B5
+        (B5 | B4 | C4 | D4 | D5 | D6 | C6 | B6), // C5
+        (C5 | C4 | D4 | E4 | E5 | E6 | D6 | C6), // D5
+        (D5 | D4 | E4 | F4 | F5 | F6 | E6 | D6), // E5
+        (E5 | E4 | F4 | G4 | G5 | G6 | F6 | E6), // F5
+        (F5 | F4 | G4 | H4 | H5 | H6 | G6 | F6), // G5
+        (G5 | G4 | H4 | H6 | G6), // H5
+
+        (A5 | A7 | B7 | B6), // A6
+        (A6 | A5 | B5 | C5 | C6 | C7 | B7 | A7), // B6
+        (B6 | B5 | C5 | D5 | D6 | D7 | C7 | B7), // C6
+        (C6 | C5 | D5 | E5 | E6 | E7 | D7 | C7), // D6
+        (D6 | D5 | E5 | F5 | F6 | F7 | E7 | D7), // E6
+        (E6 | E5 | F5 | G5 | G6 | G7 | F7 | E7), // F6
+        (F6 | F5 | G5 | H5 | H6 | H7 | G7 | F7), // G6
+        (G6 | G5 | H5 | H7 | G7), // H6
+
+        (A6 | A8 | B8 | B7), // A7
+        (A7 | A6 | B6 | C6 | C7 | C8 | B8 | A8), // B7
+        (B7 | B6 | C6 | D6 | D7 | D8 | C8 | B8), // C7
+        (C7 | C6 | D6 | E6 | E7 | E8 | D8 | C8), // D7
+        (D7 | D6 | E6 | F6 | F7 | F8 | E8 | D8), // E7
+        (E7 | E6 | F6 | G6 | G7 | G8 | F8 | E8), // F7
+        (F7 | F6 | G6 | H6 | H7 | H8 | G8 | F8), // G7
+        (G7 | G6 | H6 | H8 | G8), // H7
+
+        (A7 | B7 | B8), // A8
+        (A8 | A7 | B7 | C7 | C8), // B8
+        (B8 | B7 | C7 | D7 | D8), // C8
+        (C8 | C7 | D7 | E7 | E8), // D8
+        (D8 | D7 | E7 | F7 | F8), // E8
+        (E8 | E7 | F7 | G7 | G8), // F8
+        (F8 | F7 | G7 | H7 | H8), // G8
+        (G8 | G7 | H7), // H8
+    };
+
+
     private static final int[] PAWN_TABLE = {
         0,   0,   0,   0,   0,   0,   0,   0,
      -11,  34, 126,  68,  95,  61, 134,  98,
@@ -395,7 +471,7 @@ public class BitBoard {
 
     }
 
-    private void saveBoardHistory(Move move) {
+    private void saveBoardHistory(long move) {
         BoardHistory boardHistory = new BoardHistory(bitboard, move, whitePawns, whiteKnights, whiteBishops, whiteRooks, whiteQueens, whiteKing, blackPawns, blackKnights, blackBishops, blackRooks, blackQueens, blackKing, whiteCastleQueenSide, whiteCastleKingSide, blackCastleQueenSide, blackCastleKingSide, enPassantSquare, whiteTurn, currentEvaluation);
         history.push(boardHistory);
     }
@@ -1049,14 +1125,14 @@ public class BitBoard {
         whiteTurn = !whiteTurn;
     }
 
-    public void makeMove(Move move) {
+    public void makeMove(long move) {
         // Save the current board state
         saveBoardHistory(move);
         // saveBoardHistoryLONG();
     
         // Convert squares to bitboards
-        long fromBitboard = 1L << move.from;
-        long toBitboard = 1L << move.to;
+        long fromBitboard = 1L << PackedMove.getFrom(move);
+        long toBitboard = 1L << PackedMove.getTo(move);
 
         
         // Separate logic for white and black moves
@@ -1067,7 +1143,7 @@ public class BitBoard {
             if ((whitePawns & fromBitboard) != 0) {
     
                 // Handle en passant capture
-                if (move.type == Move.EN_PASSENT) {
+                if (PackedMove.getFlags(move) == Move.EN_PASSENT) {
                     long capturedPawn = enPassantSquare >> 8;
                     blackPawns &= ~capturedPawn;
 
@@ -1082,7 +1158,7 @@ public class BitBoard {
                 }
     
                 // Handle double pawn push
-                if (move.type == Move.DOUBLE_PAWN_PUSH) {
+                if (PackedMove.getFlags(move) == Move.DOUBLE_PAWN_PUSH) {
                     enPassantSquare = toBitboard >> 8;
 
                     // Move pawn
@@ -1095,8 +1171,8 @@ public class BitBoard {
                     enPassantSquare = 0L; // Reset en passant square
 
                     // Handle promotion
-                    if (move.type == Move.PROMOTION) {
-                        switch (move.pieceTo) {
+                    if (PackedMove.getFlags(move) == Move.PROMOTION) {
+                        switch (PackedMove.getPromotion(move)) {
                             case KNIGHT:
                                 // Update currentEvaluation : in case of promotion, we remove the value of the pawn and we add the value of the new piece
                                 currentEvaluation += KNIGHT_SCORE + KNIGHT_TABLE[Long.numberOfTrailingZeros(toBitboard) ^ 56] - PAWN_SCORE - PAWN_TABLE[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
@@ -1191,7 +1267,7 @@ public class BitBoard {
             if ((blackPawns & fromBitboard) != 0) {
     
                 // Handle en passant capture
-                if (move.type == Move.EN_PASSENT) {
+                if (PackedMove.getFlags(move) == Move.EN_PASSENT) {
                     long capturedPawn = enPassantSquare << 8;
                     whitePawns &= ~capturedPawn;
 
@@ -1204,7 +1280,7 @@ public class BitBoard {
                 }
     
                 // Handle double pawn push
-                if (move.type == Move.DOUBLE_PAWN_PUSH) {
+                if (PackedMove.getFlags(move) == Move.DOUBLE_PAWN_PUSH) {
                     enPassantSquare = toBitboard << 8;
 
                     // Move pawn
@@ -1218,8 +1294,8 @@ public class BitBoard {
 
                     
                     // Handle promotion
-                    if (move.type == Move.PROMOTION) {
-                        switch (move.pieceTo) {
+                    if (PackedMove.getFlags(move) == Move.PROMOTION) {
+                        switch (PackedMove.getPromotion(move)) {
                             case KNIGHT:
                                 // Update currentEvaluation : in case of promotion, we remove the value of the pawn and we add the value of the new piece
                                 currentEvaluation -= KNIGHT_SCORE + KNIGHT_TABLE[Long.numberOfTrailingZeros(toBitboard)] - PAWN_SCORE - PAWN_TABLE[Long.numberOfTrailingZeros(fromBitboard)];
@@ -1312,7 +1388,7 @@ public class BitBoard {
     
         // Update turn and reset en passant square if not a double pawn push
         whiteTurn = !whiteTurn;
-        if (move.type != Move.DOUBLE_PAWN_PUSH) {
+        if (PackedMove.getFlags(move) != Move.DOUBLE_PAWN_PUSH) {
             enPassantSquare = 0L;
         }
     
@@ -1367,145 +1443,7 @@ public class BitBoard {
         }
     }
 
-    public Move makeRandomMove() {
-        MoveList moveList = getLegalMoves();
-        int randomIndex = (int) (Math.random() * moveList.size());
-        Move move = moveList.get(randomIndex);
-        return move;
-    }
-
-    public boolean isLegalMove(Move move) {
-        MoveList moveList = getLegalMoves();
-        // System.out.println("legal moves: " + moveList);
-        return moveList.contains(move);
-    }
-
-    public void makeMove(String move) {
-        int fromSquare = getSquare(move.substring(0, 2));
-        int toSquare = getSquare(move.substring(2, 4));
-        int pieceFrom = getPiece(fromSquare);
-
-        // piece to if last character is not a digit
-        int pieceTo = 0;
-
-        // if last character is q or r or b or n
-        if (move.length() == 5) {
-            char lastChar = Character.toLowerCase(move.charAt(4));
-            switch (lastChar) {
-                case 'q':
-                    pieceTo = QUEEN;
-                    break;
-                case 'r':
-                    pieceTo = ROOK;
-                    break;
-                case 'b':
-                    pieceTo = BISHOP;
-                    break;
-                case 'n':
-                    pieceTo = KNIGHT;
-                    break;
-            }
-        }
-
-        if (move.length() == 5) {
-            System.out.println("Promotion move");
-            System.out.println("to piece: " + pieceTo);
-            Move m = new Move(fromSquare, toSquare, pieceFrom, pieceTo);
-            m.setType(Move.PROMOTION);
-            m.setWhite(whiteTurn);
-            makeMove(m);
-        } else {
-            Move m = new Move(fromSquare, toSquare, pieceFrom, pieceFrom);
-            makeMove(m);
-        }
-    }
-
-    // pseudo legal
-    public MoveList getPseudoLegalMoves() {
-        return MoveGenerator.generatePseudoLegalMoves(this);
-    }
-
-    // legal moves
-    public MoveList getLegalMoves(){
-        MoveList moveList = MoveGenerator.generatePseudoLegalMoves(this);
-        // System.out.println("Pseudo legal moves: " + moveList);
-
-        // Pour chaque coup, vérifier si le roi est en échec après le coup
-        // Si le roi est en échec, le coup n'est pas légal
-        // Sinon, le coup est légal
-        for (int i = 0; i < moveList.size(); i++) {
-            Move move = moveList.get(i);
-            // System.out.println("chess board before making move:" + move);
-            // System.out.println("move from: " + move.from);
-            // System.out.println("move to: " + move.to);
-            // System.out.println("piece from: " + move.pieceFrom);
-            // System.out.println("piece to: " + move.pieceTo);
-            // System.out.println("white turn: " + whiteTurn);
-            // printChessBoard();
-            makeMove(move);
-            // System.out.println("chess board after making move: " + move);
-            // System.out.println("move from: " + move.from);
-            // System.out.println("move to: " + move.to);
-            // System.out.println("piece from: " + move.pieceFrom);
-            // System.out.println("piece to: " + move.pieceTo);
-            // System.out.println("white turn: " + whiteTurn);
-            // printChessBoard();
-            if (isKingInCheck(!whiteTurn)) {
-                moveList.remove(i);
-                i--;
-            }
-            undoMove();
-            
-        }
-
-        // System.out.println("Legal moves: " + moveList);
-
-        return moveList;
-    }
-
-    public boolean isKingInCheck(boolean whiteTurn) {
-        // Generate opponent mask attack
-        long opponentAttacks = MoveGenerator.generateMask(this, !whiteTurn);
-        long king = whiteTurn ? whiteKing : blackKing;
-        return (opponentAttacks & king) != 0;
-
-    }
-
-    public MoveList getCaptureMoves() {
-        MoveList moveList = MoveGenerator.generateCaptureMoves(this);
-
-        
-        // Pour chaque coup, vérifier si le roi est en échec après le coup
-        // Si le roi est en échec, le coup n'est pas légal
-        // Sinon, le coup est légal
-        for (int i = 0; i < moveList.size(); i++) {
-            Move move = moveList.get(i);
-            makeMove(move);
-            if (isKingInCheck(!whiteTurn)) {
-                moveList.remove(i);
-                i--;
-            }
-            undoMove();
-            
-        }
-        
-        return moveList;
-    }
-
     
-    
-    public boolean isStaleMate() {
-        MoveList moveList = getLegalMoves();
-        return moveList.size() == 0 && !isKingInCheck(whiteTurn);
-    }
-
-    // pseudo legal
-    public boolean isCheckMate() {
-        MoveList moveList = getLegalMoves();
-        return moveList.size() == 0 && isKingInCheck(whiteTurn);
-    }
-
-
     public void processWhiteCastleKingSide(long fromBitboard) {
         // Roque du côté du roi
         whiteKing &= ~fromBitboard;
@@ -1573,6 +1511,135 @@ public class BitBoard {
         // update currentEvaluation : in case of castling, we remove the value PSQT of the rook that has been moved and we add the value PSQT of the new position of the rook
         currentEvaluation -= ROOK_TABLE[Long.numberOfTrailingZeros(blackRooks)] - ROOK_TABLE[Long.numberOfTrailingZeros(fromBitboard)]; // we remove the value PSQT of the rook that has been moved and we add the value PSQT of the new position of the rook
     }
+
+    // public Move makeRandomMove() {
+    //     MoveList moveList = getLegalMoves();
+    //     int randomIndex = (int) (Math.random() * moveList.size());
+    //     Move move = moveList.get(randomIndex);
+    //     return move;
+    // }
+
+    // public boolean isLegalMove(Move move) {
+    //     MoveList moveList = getLegalMoves();
+    //     // System.out.println("legal moves: " + moveList);
+    //     return moveList.contains(move);
+    // }
+
+    public void makeMove(String move) {
+        int fromSquare = getSquare(move.substring(0, 2));
+        int toSquare = getSquare(move.substring(2, 4));
+        int pieceFrom = getPiece(fromSquare);
+
+        // piece to if last character is not a digit
+        int pieceTo = 0;
+
+        // if last character is q or r or b or n
+        if (move.length() == 5) {
+            char lastChar = Character.toLowerCase(move.charAt(4));
+            switch (lastChar) {
+                case 'q':
+                    pieceTo = QUEEN;
+                    break;
+                case 'r':
+                    pieceTo = ROOK;
+                    break;
+                case 'b':
+                    pieceTo = BISHOP;
+                    break;
+                case 'n':
+                    pieceTo = KNIGHT;
+                    break;
+            }
+        }
+
+        if (move.length() == 5) {
+            System.out.println("Promotion move");
+            System.out.println("to piece: " + pieceTo);
+            long moveLong = PackedMove.encode(fromSquare, pieceTo, pieceFrom, pieceTo, toSquare, pieceFrom, pieceTo);
+            System.out.println("Move: " + moveLong);
+            makeMove(moveLong);
+        } else {
+            System.out.println("Normal move");
+            long moveLong = PackedMove.encode(fromSquare, pieceFrom, pieceFrom, pieceTo, toSquare, pieceFrom, pieceTo);
+            System.out.println("Move: " + moveLong);
+            makeMove(moveLong);
+        }
+    }
+
+    // pseudo legal
+    public PackedMoveList getPseudoLegalMoves() {
+        return MoveGenerator.generatePseudoLegalMoves(this);
+    }
+
+    
+
+
+    // legal moves
+    public PackedMoveList getLegalMoves(){
+        PackedMoveList moveList = MoveGenerator.generatePseudoLegalMoves(this);
+
+        // Pour chaque coup, vérifier si le roi est en échec après le coup
+        // Si le roi est en échec, le coup n'est pas légal
+        // Sinon, le coup est légal
+        for (int i = 0; i < moveList.size(); i++) {
+            long move = moveList.get(i);
+            makeMove(move);
+            if (isKingInCheck(!whiteTurn)) {
+                moveList.remove(i);
+                i--;
+            }
+            undoMove();
+            
+        }
+
+        // System.out.println("Legal moves: " + moveList);
+
+        return moveList;
+    }
+
+    public boolean isKingInCheck(boolean whiteTurn) {
+        // Generate opponent mask attack
+        long opponentAttacks = MoveGenerator.generateMask(this, !whiteTurn);
+        long king = whiteTurn ? whiteKing : blackKing;
+        return (opponentAttacks & king) != 0;
+
+    }
+
+    // public PackedMoveList getCaptureMoves() {
+    //     PackedMoveList moveList = MoveGenerator.generateCaptureMoves(this);
+
+        
+    //     // Pour chaque coup, vérifier si le roi est en échec après le coup
+    //     // Si le roi est en échec, le coup n'est pas légal
+    //     // Sinon, le coup est légal
+    //     for (int i = 0; i < moveList.size(); i++) {
+    //         long move = moveList.get(i);
+    //         makeMove(move);
+    //         if (isKingInCheck(!whiteTurn)) {
+    //             moveList.remove(i);
+    //             i--;
+    //         }
+    //         undoMove();
+            
+    //     }
+        
+    //     return moveList;
+    // }
+
+    
+    
+    // public boolean isStaleMate() {
+    //     MoveList moveList = getLegalMoves();
+    //     return moveList.size() == 0 && !isKingInCheck(whiteTurn);
+    // }
+
+    // // pseudo legal
+    // public boolean isCheckMate() {
+    //     MoveList moveList = getLegalMoves();
+    //     return moveList.size() == 0 && isKingInCheck(whiteTurn);
+    // }
+
+
 
     private void updateBitBoard() {
         whitePieces = whitePawns | whiteKnights | whiteBishops | whiteRooks | whiteQueens | whiteKing;

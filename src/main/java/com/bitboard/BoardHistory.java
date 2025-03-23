@@ -23,10 +23,10 @@ public class BoardHistory {
     public boolean whiteTurn;
     public int currentEvaluation;
 
-    public Move move;
+    public long move;
     
 
-    public BoardHistory(long bitboard, Move move, long whitePawns, long whiteKnights, long whiteBishops, long whiteRooks,
+    public BoardHistory(long bitboard, long move, long whitePawns, long whiteKnights, long whiteBishops, long whiteRooks,
             long whiteQueens, long whiteKing, long blackPawns, long blackKnights, long blackBishops, long blackRooks,
             long blackQueens, long blackKing, long whiteCastleQueenSide, long whiteCastleKingSide,
             long blackCastleQueenSide, long blackCastleKingSide, long enPassantSquare, boolean whiteTurn, int currentEvaluation) {

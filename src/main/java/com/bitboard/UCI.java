@@ -333,9 +333,7 @@ public class UCI {
             for(int i = 0; i < inputArray.length; i++){
                 if(inputArray[i].equals("moves")){
                     for(int j = i + 1; j < inputArray.length; j++){
-                        Move move = new Move(inputArray[j], board);
-                        System.out.println("Move: from " + move.from + " to " + move.to + " type " + move.type);
-                        board.makeMove(move);
+                        board.makeMove(inputArray[j]);
                     }
                 }
             }
@@ -347,8 +345,7 @@ public class UCI {
             for(int i = 0; i < inputArray.length; i++){
                 if(inputArray[i].equals("moves")){
                     for(int j = i + 1; j < inputArray.length; j++){
-                        Move move = new Move(inputArray[j]);
-                        board.makeMove(move);
+                        board.makeMove(inputArray[j]);
                     }
                 }
             }
