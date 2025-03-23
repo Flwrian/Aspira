@@ -29,14 +29,6 @@ ________________________________________________________________________________
         bitBoard.printChessBoard();
 
         // System.out.println(bitBoard.getLegalMoves());
-
-        System.out.println("Testing Magic Bitboards for Rook and Bishop Moves");
-        
-        MoveGenerator.initialize();
-        // bitBoard.printBitBoard(MoveGenerator.rookAttacks[27][4]);
-        // bitBoard.printBitBoard(MoveGenerator.getRookAttacks(27, BitBoard.A1));
-
-        bitBoard.printBitBoard(MoveGenerator.generateRookAttackBoard(BitBoard.getLSB(bitBoard.whiteRooks), bitBoard));
         
         // Engine engine1 = new Engine(bitBoard, 4, new AdvancedChessAlgorithm(4));
         // Engine engine2 = new Engine(bitBoard, 4, new AdvancedChessAlgorithm(4));

@@ -480,41 +480,6 @@ public class BitBoard {
     //     bbHistory.push(new long[]{whitePawns, whiteKnights, whiteBishops, whiteRooks, whiteQueens, whiteKing, blackPawns, blackKnights, blackBishops, blackRooks, blackQueens, blackKing, whiteCastleQueenSide, whiteCastleKingSide, blackCastleQueenSide, blackCastleKingSide, enPassantSquare, (whiteTurn ? 1L : 0L)});
     // }
 
-    public void undoMove() {
-        if (!history.isEmpty()) {
-            BoardHistory boardHistory = history.pop();
-            restoreBoardHistory(boardHistory);
-            // restoreBoardHistoryLONG(bbHistory.pop());
-        }
-    }
-
-    public void restoreBoardHistory(BoardHistory boardHistory) {
-        bitboard = boardHistory.bitboard;
-        whitePawns = boardHistory.whitePawns;
-        whiteKnights = boardHistory.whiteKnights;
-        whiteBishops = boardHistory.whiteBishops;
-        whiteRooks = boardHistory.whiteRooks;
-        whiteQueens = boardHistory.whiteQueens;
-        whiteKing = boardHistory.whiteKing;
-        blackPawns = boardHistory.blackPawns;
-        blackKnights = boardHistory.blackKnights;
-        blackBishops = boardHistory.blackBishops;
-        blackRooks = boardHistory.blackRooks;
-        blackQueens = boardHistory.blackQueens;
-        blackKing = boardHistory.blackKing;
-        whiteCastleQueenSide = boardHistory.whiteCastleQueenSide;
-        whiteCastleKingSide = boardHistory.whiteCastleKingSide;
-        blackCastleQueenSide = boardHistory.blackCastleQueenSide;
-        blackCastleKingSide = boardHistory.blackCastleKingSide;
-        enPassantSquare = boardHistory.enPassantSquare;
-        whiteTurn = boardHistory.whiteTurn;
-
-        currentEvaluation = boardHistory.currentEvaluation;
-        
-        whitePieces = whitePawns | whiteKnights | whiteBishops | whiteRooks | whiteQueens | whiteKing;
-        blackPieces = blackPawns | blackKnights | blackBishops | blackRooks | blackQueens | blackKing;
-    }
-
     public void restoreBoardHistoryLONG(long[] boardHistory) {
         whitePawns = boardHistory[0];
         whiteKnights = boardHistory[1];
@@ -647,7 +612,7 @@ public class BitBoard {
             System.out.println(fenParts[3]);
             int file = fenParts[3].charAt(0) - 'a';
             int rank = fenParts[3].charAt(1) - '1';
-            enPassantSquare = 1L << (rank * 8 + (7 - file));
+            enPassantSquare = 1L << (rank * 8 + file);
         } else {
             enPassantSquare = 0L;
         }
@@ -1131,8 +1096,8 @@ public class BitBoard {
         // saveBoardHistoryLONG();
     
         // Convert squares to bitboards
-        long fromBitboard = 1L << PackedMove.getFrom(move);
-        long toBitboard = 1L << PackedMove.getTo(move);
+        final long fromBitboard = 1L << PackedMove.getFrom(move);
+        final long toBitboard = 1L << PackedMove.getTo(move);
 
         
         // Separate logic for white and black moves
@@ -1143,10 +1108,8 @@ public class BitBoard {
             if ((whitePawns & fromBitboard) != 0) {
     
                 // Handle en passant capture
-                System.out.println("packed move flags: " + PackedMove.getFlags(move));
-                System.out.println("en passant move flag: " + Move.EN_PASSENT);
                 if (PackedMove.getFlags(move) == Move.EN_PASSENT) {
-                    long capturedPawn = enPassantSquare >> 8;
+                    final long capturedPawn = enPassantSquare >> 8;
                     blackPawns &= ~capturedPawn;
 
                     // Move pawn
@@ -1156,7 +1119,6 @@ public class BitBoard {
                     // Update currentEvaluation : in case of en passant capture, we are white so we add the value of the black pawn to the evaluation, 
                     currentEvaluation -= PAWN_TABLE[Long.numberOfTrailingZeros(toBitboard) ^ 56] - PAWN_TABLE[Long.numberOfTrailingZeros(fromBitboard) ^ 56]; // we remove the value PSQT of the pawn that has been moved and we add the value PSQT of the new position of the pawn
 
-                    
                 }
     
                 // Handle double pawn push
@@ -1270,7 +1232,7 @@ public class BitBoard {
     
                 // Handle en passant capture
                 if (PackedMove.getFlags(move) == Move.EN_PASSENT) {
-                    long capturedPawn = enPassantSquare << 8;
+                    final long capturedPawn = enPassantSquare << 8;
                     whitePawns &= ~capturedPawn;
 
                     // Move pawn
@@ -1398,6 +1360,41 @@ public class BitBoard {
         updateBitBoard();
 
 
+    }
+
+    public void undoMove() {
+        if (!history.isEmpty()) {
+            BoardHistory boardHistory = history.pop();
+            restoreBoardHistory(boardHistory);
+            // restoreBoardHistoryLONG(bbHistory.pop());
+        }
+    }
+
+    public void restoreBoardHistory(BoardHistory boardHistory) {
+        bitboard = boardHistory.bitboard;
+        whitePawns = boardHistory.whitePawns;
+        whiteKnights = boardHistory.whiteKnights;
+        whiteBishops = boardHistory.whiteBishops;
+        whiteRooks = boardHistory.whiteRooks;
+        whiteQueens = boardHistory.whiteQueens;
+        whiteKing = boardHistory.whiteKing;
+        blackPawns = boardHistory.blackPawns;
+        blackKnights = boardHistory.blackKnights;
+        blackBishops = boardHistory.blackBishops;
+        blackRooks = boardHistory.blackRooks;
+        blackQueens = boardHistory.blackQueens;
+        blackKing = boardHistory.blackKing;
+        whiteCastleQueenSide = boardHistory.whiteCastleQueenSide;
+        whiteCastleKingSide = boardHistory.whiteCastleKingSide;
+        blackCastleQueenSide = boardHistory.blackCastleQueenSide;
+        blackCastleKingSide = boardHistory.blackCastleKingSide;
+        enPassantSquare = boardHistory.enPassantSquare;
+        whiteTurn = boardHistory.whiteTurn;
+
+        currentEvaluation = boardHistory.currentEvaluation;
+        
+        whitePieces = whitePawns | whiteKnights | whiteBishops | whiteRooks | whiteQueens | whiteKing;
+        blackPieces = blackPawns | blackKnights | blackBishops | blackRooks | blackQueens | blackKing;
     }
     
 
@@ -1606,6 +1603,51 @@ public class BitBoard {
         return (opponentAttacks & king) != 0;
 
     }
+
+    public boolean isLegalMove(long move) {
+        int from = PackedMove.getFrom(move);
+        int to = PackedMove.getTo(move);
+        long fromBit = 1L << from;
+        long toBit = 1L << to;
+        long tempWhitePieces = whitePieces;
+        long tempBlackPieces = blackPieces;
+        long tempOccupancy = whitePieces | blackPieces;
+    
+        boolean isKingMove;
+        long kingSquare;
+        
+        if (whiteTurn) {
+            isKingMove = (whiteKing & fromBit) != 0;
+            kingSquare = isKingMove ? toBit : whiteKing;
+            tempWhitePieces = (tempWhitePieces & ~fromBit) | toBit;
+        } else {
+            isKingMove = (blackKing & fromBit) != 0;
+            kingSquare = isKingMove ? toBit : blackKing;
+            tempBlackPieces = (tempBlackPieces & ~fromBit) | toBit;
+        }
+    
+        tempOccupancy = (tempOccupancy & ~fromBit) | toBit;
+    
+        // Simule le board temporaire sans l'appliquer réellement
+        return !MoveGenerator.isSquareAttacked(Long.numberOfTrailingZeros(kingSquare), this);
+    }
+    
+
+    public PackedMoveList getLegalMovesFast() {
+        PackedMoveList pseudoMoves = MoveGenerator.generatePseudoLegalMoves(this);
+        PackedMoveList legalMoves = new PackedMoveList(218);
+    
+        for (int i = 0; i < pseudoMoves.size(); i++) {
+            long move = pseudoMoves.get(i);
+            if (isLegalMove(move)) {
+                legalMoves.add(move);
+            }
+        }
+    
+        return legalMoves;
+    }
+    
+    
 
     // public PackedMoveList getCaptureMoves() {
     //     PackedMoveList moveList = MoveGenerator.generateCaptureMoves(this);
