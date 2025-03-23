@@ -1143,6 +1143,8 @@ public class BitBoard {
             if ((whitePawns & fromBitboard) != 0) {
     
                 // Handle en passant capture
+                System.out.println("packed move flags: " + PackedMove.getFlags(move));
+                System.out.println("en passant move flag: " + Move.EN_PASSENT);
                 if (PackedMove.getFlags(move) == Move.EN_PASSENT) {
                     long capturedPawn = enPassantSquare >> 8;
                     blackPawns &= ~capturedPawn;

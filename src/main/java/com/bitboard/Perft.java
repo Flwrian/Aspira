@@ -160,7 +160,6 @@ public class Perft {
         result += "[ === ]\n";
 
         PackedMoveList moveList = bitBoard.getLegalMoves();
-
         long totalNodes = 0;
         
         // Itère sur chaque coup possible au premier niveau
@@ -172,7 +171,8 @@ public class Perft {
             bitBoard.undoMove();
     
             // Affiche le coup et le nombre de nœuds associés
-            // result += move.toString() + ": " + moveNodes + "\n";
+            Move m2 = PackedMove.unpack(move);
+            result += m2.toString() + ": " + moveNodes + "\n";
     
             totalNodes += moveNodes;
         }

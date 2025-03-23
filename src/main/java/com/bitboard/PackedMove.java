@@ -38,4 +38,16 @@ public class PackedMove {
     public static long setScore(long move, int newScore) {
         return (move & ~(0xFFFFFL << 28)) | (((long) newScore & 0xFFFFF) << 28);
     }
+
+    public static Move unpack(long packedMove) {
+        Move m = new Move(
+            PackedMove.getFrom(packedMove),
+            PackedMove.getTo(packedMove),
+            PackedMove.getPieceFrom(packedMove),
+            PackedMove.getCaptured(packedMove)
+        );
+        m.setType((byte) PackedMove.getFlags(packedMove));
+        m.setSeeScore(PackedMove.getScore(packedMove));
+        return m;
+    }
 }

@@ -345,6 +345,7 @@ public class MoveGenerator {
     
                 // En Passant
                 if (to == BitBoard.getSquare(board.enPassantSquare)) {
+                    System.out.println("En Passant: " + from + " -> " + to);
                     long packed = PackedMove.encode(from, to, BitBoard.PAWN, capturedPiece, 0, Move.EN_PASSENT, Move.EN_PASSENT);
                     moves.add(packed);
                     continue;
@@ -468,7 +469,8 @@ public class MoveGenerator {
             long packed = PackedMove.encode(from, to, BitBoard.KING, captured, 0, flag, score);
             moves.add(packed);
         }
-    
+        
+        System.out.println("Generated " + moves.size() + " moves");
         return moves;
     }
     
