@@ -52,9 +52,6 @@ All contributions are welcome, whether it's code, documentation, or just feedbac
 
 ---
 
-## Thanks
-Special thanks to everyone in the Stockfish Discord community for their support and resources.
-
 
 ## Dev Log
 
@@ -88,3 +85,7 @@ In terms of performance, Aspira move generation is currently around 15MNPS (mill
 - **Evaluation**: Develop a basic evaluation function to assess positions and improve decision-making. Focus on material balance, piece activity, king safety, pawn structure, mobility, piece-square tables midgame/endgame, etc.
 - **Legal moveGen only**: Implement a legal move generator (will result in a ~100% movegen speed increase).
 - **Feature Expansion**: Explore advanced features like neural network integration, machine learning, and adaptive play styles.
+
+
+## Thanks
+Special thanks to everyone in the Stockfish Discord community for their support and resources.
