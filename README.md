@@ -1,62 +1,91 @@
-# Chess Game + Engine
-This is a chess game and engine written in Java. Note that this is a work in progress and is not finished yet. There are a lot of things that need to be done. If you want to help, feel free to do so. I'm still learning new things and trying to play better chess too :)
+# Aspira – Java Chess Engine
 
-## More info
-I am aware that there are more efficient ways to program a chess engine. I am not trying to make the most efficient chess engine, but rather a chess engine that I made myself. I am also aware that there are a lot of bugs and glitches and that the code is not very clean.
-## Done
-- [x] Add a chess engine
-- [x] Multiple algorithms for the engine
-- [x] You can implement your own algorithm
-- [x] Save and load games (FEN and PGN formats)
-- [x] Fix weird pawn glitch (A file to H file)
-- [x] UCI protocol
-## Need to do
-- [ ] Add a GUI
-- [ ] Add castling
-- [ ] Add en passant
-- [ ] Add pawn promotion to other pieces than queen
-- [ ] Add a timer
-- [ ] Add a lot of tests
+**Aspira** is a chess engine written entirely in Java. It’s a work in progress, born from curiosity and a passion for both programming and chess.  
+The goal isn't just to make a strong engine, but to learn deeply by building everything myself — from board representation to move generation and search.
+
+---
+
+## What’s done so far
+
+- Core chess engine  
+- Multiple pluggable search algorithms  
+- UCI protocol  
+- FEN and PGN load/save  
+- Basic legality enforcement (fixed pawn bugs on file A and H)  
+- Castling, en passant, and promotion rules supported  
+- Move generation via bitboards  
+- Full Perft testing and rule verification  
+- Passing Ethereal's Perft test suite (20/03/2025)
+
+---
+
+## Still to do
+
+- GUI (visual board, mouse input, move highlighting)  
+- Timer and clock management  
+- Promote to non-queen pieces via GUI  
+- More tests for edge cases and deep search validation  
+
+---
+
+## Performance Goals & Engine V2
+
+Before **V2 (09/07/2024)**, the engine was functional but very limited — it lacked key rules like castling and en passant, and performance was poor due to naive data structures and logic.  
+V2 marked a turning point: a complete rebuild focused on speed, correctness, and a more competitive base.
+
+Key improvements in V2 and beyond:
+
+- Transitioned to bitboards for faster and cleaner board representation  
+- Switched from object-based moves to packed `long` values to reduce garbage collection  
+- Combined low-GC move creation with bitboards for major performance boosts  
+- Integrated Zobrist hashing for position tracking  
+- Built complete Perft testing tools for debugging and validation  
+- Rewriting the search to allow for pruning, ordering, and efficiency  
+
+---
+
+## Contributing
+Aspira is open to contributions! If you have ideas, suggestions, or want to help out, feel free to reach out.
+You can also check out the issues page for tasks and features that need attention.
+If you're interested in contributing, please fork the repository and submit a pull request.
+All contributions are welcome, whether it's code, documentation, or just feedback.
+
+---
 
 
-## Improvements
-- [ ] Make the engine faster by using bitboards and other optimizations (see [here](https://www.chessprogramming.org/Bitboards))
-- [ ] Use Zobrist hashing to speed up the engine
+## Dev Log
 
-# V2 09/07/2024
+**09/07/2024** – Start of Aspira V2  
+Complete rewrite of the core to fix all rule-related limitations and performance issues.  
 
-V2 of the engine will be a fully working chess engine. Faster & better.
+**20/03/2025** – Passing full Ethereal Perft suite  
+Rules are done. Time to work on strength and search.
 
-# Plan
+**23/03/2025** – Reworked move representation  
+Moved from Java `Move` objects to 64-bit packed `long` moves.  
+This reduced GC pressure and heap allocations significantly. When combined with bitboard-based move generation, performance improved by ~20%.
 
-The previous version was a bit bad in terms of performance and the game itself since there was no such things as en passant or castling.
+**24/03/2025** – Implemented magic bitboards  
+Aspira now uses magic bitboards for sliding piece move generation.  
+This change further solidified the ~70% gain in movegen performance and laid the foundation for deeper and faster search.
 
-So I went on to fix those problems.
+---
 
-## Speed
+## Current Status
+Aspira is currently in a state of rapid development. The core engine is functional, and the move generation is efficient.
+The focus is now on enhancing the search algorithm and implementing a basic evaluation function.
+The engine is capable of playing legal moves and understanding basic chess rules, but it lacks advanced features like a sophisticated search algorithm and evaluation function.
+The engine is not yet competitive with top engines, but it serves as a solid foundation for future improvements.
 
-My goal was to make things faster using differents techniques such as :
+## Performance
+In terms of performance, Aspira move generation is currently around 15MNPS (million nodes per second) on a Ryzen 7 7800X3D CPU as of March 2025.
 
-- bitboards
-- better movegen
-- drop space constraint for better runtime
+## Future Plans
+- **Search**: Implement a more sophisticated search algorithm with alpha-beta pruning, transposition tables, and move ordering, killers, etc.
+- **Evaluation**: Develop a basic evaluation function to assess positions and improve decision-making. Focus on material balance, piece activity, king safety, pawn structure, mobility, piece-square tables midgame/endgame, etc.
+- **Legal moveGen only**: Implement a legal move generator (will result in a ~100% movegen speed increase).
+- **Feature Expansion**: Explore advanced features like neural network integration, machine learning, and adaptive play styles.
 
-## Rules
 
-This time, I wanted to make something that could really compete with me and also other bots. With the previous version, since there was no castling and en passant, the AI couldn't really play if those moves were played.
-
-Now, the engine is fully working with every rules.
-
-## Testing
-
-I made testing better using Perft test.
-
-Testing is very important to know if there are no bugs or if performances increase.
-
-## 20/03/2025
-
-passing ethereal perft suite.
-
-I can now focus on the engine itself and not on the rules.
-
-I'm planning to rewrite the entire search algorithm and experiment with different things.
+## Thanks
+Special thanks to everyone in the Stockfish Discord community for their support and resources.
