@@ -27,6 +27,18 @@ public class PackedMove {
              | (((long) seeScore & 0xFFFFF) << 28); // 20 bits
     }
 
+    public static long encode(Move move) {
+        return encode(
+            move.from,
+            move.to,
+            move.pieceFrom,
+            move.pieceTo,
+            move.getPieceTo(),
+            move.getType(),
+            move.getSeeScore()
+        );
+    }
+
     public static int getFrom(long move)        { return (int)((move >> 6) & 0x3F); }
     public static int getTo(long move)          { return (int)(move & 0x3F); }
     public static int getPromotion(long move)   { return (int)((move >> 12) & 0xF); }
@@ -44,7 +56,7 @@ public class PackedMove {
             PackedMove.getFrom(packedMove),
             PackedMove.getTo(packedMove),
             PackedMove.getPieceFrom(packedMove),
-            PackedMove.getCaptured(packedMove)
+            PackedMove.getPromotion(packedMove)
         );
         m.setType((byte) PackedMove.getFlags(packedMove));
         m.setSeeScore(PackedMove.getScore(packedMove));

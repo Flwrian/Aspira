@@ -118,7 +118,6 @@ public final class Move {
         this.to = (7 - rankTo) * 8 + fileTo;
 
         this.pieceFrom = board.getPiece(from);
-        System.out.println("Piece from: " + pieceFrom);
         this.pieceTo = board.getPiece(to);
         this.isWhite = board.whiteTurn;
 
@@ -126,7 +125,6 @@ public final class Move {
         // if piece from is king and it tries to move two squares, it is a castling move
         //! ce code pue sa mere va falloir le changer
         if (pieceFrom == BitBoard.KING || pieceFrom == BitBoard.KING*2 && Math.abs(from - to) >= 2) {
-            System.out.println("Castling move");
             this.type = CASTLING;
             return;
         }

@@ -33,6 +33,8 @@ public class Perft {
         PackedMoveList moveList = bitBoard.getLegalMoves();
         long totalNodes = 0;
 
+        long time = System.currentTimeMillis();
+
         // Itère sur chaque coup possible au premier niveau
         for (int i = 0; i < moveList.size(); i++) {
             long move = moveList.get(i);
@@ -47,9 +49,14 @@ public class Perft {
 
             totalNodes += moveNodes;
         }
+        long time2 = System.currentTimeMillis();
 
-        // Affiche le nombre total de nœuds
-        result += "\nNodes searched: " + totalNodes + "\n";
+
+        result += "|--------------------------------------------|\n";
+        result += "| Time: " + (time2 - time) + "ms\n";
+        result += "| Nodes: " + totalNodes + "\n";
+        result += "| Nodes/second (M): " + (float)(totalNodes * 1000) / (time2 - time) / 1000000 + "\n";
+        result += "|--------------------------------------------|\n";
         return result;
     }
     

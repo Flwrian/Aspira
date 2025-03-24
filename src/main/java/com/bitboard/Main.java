@@ -1,11 +1,6 @@
 package com.bitboard;
 
-import com.bitboard.algorithms.AdvancedChessAlgorithm;
-import com.bitboard.algorithms.AlphaBeta;
-import com.bitboard.algorithms.CustomAlgorithm;
-import com.bitboard.algorithms.MaterialAlgorithm;
 import com.bitboard.algorithms.NewChessAlgorithm;
-import com.bitboard.algorithms.RandomAlgorithm;
 
 public class Main {
     
@@ -27,6 +22,19 @@ ________________________________________________________________________________
 
         """);
         bitBoard.printChessBoard();
+        bitBoard.loadFromFen("rnbqkbnr/1ppppppp/8/p7/8/P7/1PPPPPPP/RNBQKBNR w KQkq a6 0 2");
+
+        // MoveGenerator.initMagicNumbers();
+        MoveGenerator.initSliderAttacks(false);
+        MoveGenerator.initSliderAttacks(true);
+
+        // bitBoard.printBitBoard(MoveGenerator.generateBishopAttacks(35, bitBoard.bitboard));
+        // bitBoard.printBitBoard(MoveGenerator.generateRookAttacks(0, bitBoard.bitboard));
+        bitBoard.printBitBoard(MoveGenerator.getRookAttacks(0, bitBoard.bitboard));
+        bitBoard.printBitBoard(MoveGenerator.generateWhiteRookMoves(0x1L, bitBoard));
+
+
+        // bitBoard.printBitBoard(MoveGenerator.maskRookAttacks(35, bitBoard));
 
         // System.out.println(bitBoard.getLegalMoves());
         

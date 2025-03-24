@@ -3,9 +3,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.*;
 
-import com.bitboard.algorithms.AdvancedChessAlgorithm;
-import com.bitboard.algorithms.AlphaBeta;
-import com.bitboard.algorithms.CustomAlgorithm;
+
 import com.bitboard.algorithms.NewChessAlgorithm;
 
 
@@ -16,9 +14,9 @@ import com.bitboard.algorithms.NewChessAlgorithm;
 public class UCI {
     
 
-    private static String ENGINE_NAME = "FlowgineV2";
+    private static String ENGINE_NAME = "Aspira";
     private static String AUTHOR = "Flwrian";
-    private static String VERSION = "2.0";
+    private static String VERSION = "1.0";
 
     private static String STARTING_POSITION = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
     
@@ -308,17 +306,7 @@ public class UCI {
         // Example2: position fen rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1 moves e2e4 e7e5
         // So we need to load the starting position and then make the moves
 
-        if(inputArray[1].equals("startpos")){
-            // Load the starting position
-            board = new BitBoard();
-            board.loadFromFen(STARTING_POSITION);
-
-            // Make the moves
-            for(int i = 3; i < inputArray.length; i++){
-                board.makeMove(inputArray[i]);
-            }
-
-        } else if(inputArray[1].equals("fen")){
+        if(inputArray[1].equals("fen")){
             // Load the position from the FEN string
             String fen = "";
             for(int i = 2; i < inputArray.length; i++){
@@ -345,7 +333,8 @@ public class UCI {
             for(int i = 0; i < inputArray.length; i++){
                 if(inputArray[i].equals("moves")){
                     for(int j = i + 1; j < inputArray.length; j++){
-                        board.makeMove(inputArray[j]);
+                        Move move = new Move(inputArray[j], board);
+                        board.makeMove(PackedMove.encode(move));
                     }
                 }
             }

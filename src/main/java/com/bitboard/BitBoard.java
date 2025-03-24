@@ -230,76 +230,76 @@ public class BitBoard {
     // king pre-encoded moves
     public static final long[] KING_MOVES = {
         (B1 | B2 | A2), // A1
-        (A1 | C1 | C2 | B2), // B1
-        (B1 | D1 | D2 | C2 | B2), // C1
-        (C1 | E1 | E2 | D2 | C2), // D1
-        (D1 | F1 | F2 | E2 | D2), // E1
-        (E1 | G1 | G2 | F2 | E2), // F1
-        (F1 | H1 | H2 | G2 | F2), // G1
+        (A1 | C1 | C2 | A2 | B2), // B1
+        (B1 | D1 | D2 | B2 | C2), // C1
+        (C1 | E1 | E2 | C2 | D2), // D1
+        (D1 | F1 | F2 | D2 | E2), // E1
+        (E1 | G1 | G2 | E2 | F2), // F1
+        (F1 | H1 | H2 | F2 | G2), // G1
         (G1 | G2 | H2), // H1
-
-        (A1 | A3 | B3 | B2), // A2
-        (A2 | A1 | B1 | C1 | C2 | C3 | B3 | A3), // B2
-        (B2 | B1 | C1 | D1 | D2 | D3 | C3 | B3), // C2
-        (C2 | C1 | D1 | E1 | E2 | E3 | D3 | C3), // D2
-        (D2 | D1 | E1 | F1 | F2 | F3 | E3 | D3), // E2
-        (E2 | E1 | F1 | G1 | G2 | G3 | F3 | E3), // F2
-        (F2 | F1 | G1 | H1 | H2 | H3 | G3 | F3), // G2
+        
+        (A1 | B1 | B3 | A3 | B2), // A2
+        (A2 | C2 | A1 | C1 | B1 | C3 | A3 | B3), // B2
+        (B2 | D2 | B1 | D1 | C1 | D3 | B3 | C3), // C2
+        (C2 | E2 | C1 | E1 | D1 | E3 | C3 | D3), // D2
+        (D2 | F2 | D1 | F1 | E1 | F3 | D3 | E3), // E2
+        (E2 | G2 | E1 | G1 | F1 | G3 | E3 | F3), // F2
+        (F2 | H2 | F1 | H1 | G1 | H3 | F3 | G3), // G2
         (G2 | G1 | H1 | H3 | G3), // H2
-
-        (A2 | A4 | B4 | B3), // A3
-        (A3 | A2 | B2 | C2 | C3 | C4 | B4 | A4), // B3
-        (B3 | B2 | C2 | D2 | D3 | D4 | C4 | B4), // C3
-        (C3 | C2 | D2 | E2 | E3 | E4 | D4 | C4), // D3
-        (D3 | D2 | E2 | F2 | F3 | F4 | E4 | D4), // E3
-        (E3 | E2 | F2 | G2 | G3 | G4 | F4 | E4), // F3
-        (F3 | F2 | G2 | H2 | H3 | H4 | G4 | F4), // G3
+        
+        (A2 | B2 | B4 | A4 | B3), // A3
+        (A3 | C3 | A2 | C2 | B2 | C4 | A4 | B4), // B3
+        (B3 | D3 | B2 | D2 | C2 | D4 | B4 | C4), // C3
+        (C3 | E3 | C2 | E2 | D2 | E4 | C4 | D4), // D3
+        (D3 | F3 | D2 | F2 | E2 | F4 | D4 | E4), // E3
+        (E3 | G3 | E2 | G2 | F2 | G4 | E4 | F4), // F3
+        (F3 | H3 | F2 | H2 | G2 | H4 | F4 | G4), // G3
         (G3 | G2 | H2 | H4 | G4), // H3
-
-        (A3 | A5 | B5 | B4), // A4
-        (A4 | A3 | B3 | C3 | C4 | C5 | B5 | A5), // B4
-        (B4 | B3 | C3 | D3 | D4 | D5 | C5 | B5), // C4
-        (C4 | C3 | D3 | E3 | E4 | E5 | D5 | C5), // D4
-        (D4 | D3 | E3 | F3 | F4 | F5 | E5 | D5), // E4
-        (E4 | E3 | F3 | G3 | G4 | G5 | F5 | E5), // F4
-        (F4 | F3 | G3 | H3 | H4 | H5 | G5 | F5), // G4
+        
+        (A3 | B3 | B5 | A5 | B4), // A4
+        (A4 | C4 | A3 | C3 | B3 | C5 | A5 | B5), // B4
+        (B4 | D4 | B3 | D3 | C3 | D5 | B5 | C5), // C4
+        (C4 | E4 | C3 | E3 | D3 | E5 | C5 | D5), // D4
+        (D4 | F4 | D3 | F3 | E3 | F5 | D5 | E5), // E4
+        (E4 | G4 | E3 | G3 | F3 | G5 | E5 | F5), // F4
+        (F4 | H4 | F3 | H3 | G3 | H5 | F5 | G5), // G4
         (G4 | G3 | H3 | H5 | G5), // H4
-
-        (A4 | A6 | B6 | B5), // A5
-        (A5 | A4 | B4 | C4 | C5 | C6 | B6 | A6), // B5
-        (B5 | B4 | C4 | D4 | D5 | D6 | C6 | B6), // C5
-        (C5 | C4 | D4 | E4 | E5 | E6 | D6 | C6), // D5
-        (D5 | D4 | E4 | F4 | F5 | F6 | E6 | D6), // E5
-        (E5 | E4 | F4 | G4 | G5 | G6 | F6 | E6), // F5
-        (F5 | F4 | G4 | H4 | H5 | H6 | G6 | F6), // G5
+        
+        (A4 | B4 | B6 | A6 | B5), // A5
+        (A5 | C5 | A4 | C4 | B4 | C6 | A6 | B6), // B5
+        (B5 | D5 | B4 | D4 | C4 | D6 | B6 | C6), // C5
+        (C5 | E5 | C4 | E4 | D4 | E6 | C6 | D6), // D5
+        (D5 | F5 | D4 | F4 | E4 | F6 | D6 | E6), // E5
+        (E5 | G5 | E4 | G4 | F4 | G6 | E6 | F6), // F5
+        (F5 | H5 | F4 | H4 | G4 | H6 | F6 | G6), // G5
         (G5 | G4 | H4 | H6 | G6), // H5
-
-        (A5 | A7 | B7 | B6), // A6
-        (A6 | A5 | B5 | C5 | C6 | C7 | B7 | A7), // B6
-        (B6 | B5 | C5 | D5 | D6 | D7 | C7 | B7), // C6
-        (C6 | C5 | D5 | E5 | E6 | E7 | D7 | C7), // D6
-        (D6 | D5 | E5 | F5 | F6 | F7 | E7 | D7), // E6
-        (E6 | E5 | F5 | G5 | G6 | G7 | F7 | E7), // F6
-        (F6 | F5 | G5 | H5 | H6 | H7 | G7 | F7), // G6
+        
+        (A5 | B5 | B7 | A7 | B6), // A6
+        (A6 | C6 | A5 | C5 | B5 | C7 | A7 | B7), // B6
+        (B6 | D6 | B5 | D5 | C5 | D7 | B7 | C7), // C6
+        (C6 | E6 | C5 | E5 | D5 | E7 | C7 | D7), // D6
+        (D6 | F6 | D5 | F5 | E5 | F7 | D7 | E7), // E6
+        (E6 | G6 | E5 | G5 | F5 | G7 | E7 | F7), // F6
+        (F6 | H6 | F5 | H5 | G5 | H7 | F7 | G7), // G6
         (G6 | G5 | H5 | H7 | G7), // H6
-
-        (A6 | A8 | B8 | B7), // A7
-        (A7 | A6 | B6 | C6 | C7 | C8 | B8 | A8), // B7
-        (B7 | B6 | C6 | D6 | D7 | D8 | C8 | B8), // C7
-        (C7 | C6 | D6 | E6 | E7 | E8 | D8 | C8), // D7
-        (D7 | D6 | E6 | F6 | F7 | F8 | E8 | D8), // E7
-        (E7 | E6 | F6 | G6 | G7 | G8 | F8 | E8), // F7
-        (F7 | F6 | G6 | H6 | H7 | H8 | G8 | F8), // G7
+        
+        (A6 | B6 | B8 | A8 | B7), // A7
+        (A7 | C7 | A6 | C6 | B6 | C8 | A8 | B8), // B7
+        (B7 | D7 | B6 | D6 | C6 | D8 | B8 | C8), // C7
+        (C7 | E7 | C6 | E6 | D6 | E8 | C8 | D8), // D7
+        (D7 | F7 | D6 | F6 | E6 | F8 | D8 | E8), // E7
+        (E7 | G7 | E6 | G6 | F6 | G8 | E8 | F8), // F7
+        (F7 | H7 | F6 | H6 | G6 | H8 | F8 | G8), // G7
         (G7 | G6 | H6 | H8 | G8), // H7
-
+        
         (A7 | B7 | B8), // A8
-        (A8 | A7 | B7 | C7 | C8), // B8
-        (B8 | B7 | C7 | D7 | D8), // C8
-        (C8 | C7 | D7 | E7 | E8), // D8
-        (D8 | D7 | E7 | F7 | F8), // E8
-        (E8 | E7 | F7 | G7 | G8), // F8
-        (F8 | F7 | G7 | H7 | H8), // G8
-        (G8 | G7 | H7), // H8
+        (A8 | C8 | A7 | C7 | B7), // B8
+        (B8 | D8 | B7 | D7 | C7), // C8
+        (C8 | E8 | C7 | E7 | D7), // D8
+        (D8 | F8 | D7 | F7 | E7), // E8
+        (E8 | G8 | E7 | G7 | F7), // F8
+        (F8 | H8 | F7 | H7 | G7), // G8
+        (G8 | G7 | H7)  // H8
     };
 
 
@@ -889,7 +889,7 @@ public class BitBoard {
             writer.print((rank + 1) + "  |"); // Numéro de rangée sur le côté gauche
             
             // Parcourir chaque colonne de la rangée
-            for (int file = 7; file >= 0; file--) {
+            for (int file = 0; file < 8; file++) {
                 int squareIndex = rank * 8 + file;
 
                 long mask = 1L << squareIndex;
@@ -901,7 +901,7 @@ public class BitBoard {
                 }
     
                 // Ajouter un séparateur "|"
-                if (file != 0) {
+                if (file != 7) {
                     writer.print("|");
                 }
             }
@@ -1602,49 +1602,6 @@ public class BitBoard {
         long king = whiteTurn ? whiteKing : blackKing;
         return (opponentAttacks & king) != 0;
 
-    }
-
-    public boolean isLegalMove(long move) {
-        int from = PackedMove.getFrom(move);
-        int to = PackedMove.getTo(move);
-        long fromBit = 1L << from;
-        long toBit = 1L << to;
-        long tempWhitePieces = whitePieces;
-        long tempBlackPieces = blackPieces;
-        long tempOccupancy = whitePieces | blackPieces;
-    
-        boolean isKingMove;
-        long kingSquare;
-        
-        if (whiteTurn) {
-            isKingMove = (whiteKing & fromBit) != 0;
-            kingSquare = isKingMove ? toBit : whiteKing;
-            tempWhitePieces = (tempWhitePieces & ~fromBit) | toBit;
-        } else {
-            isKingMove = (blackKing & fromBit) != 0;
-            kingSquare = isKingMove ? toBit : blackKing;
-            tempBlackPieces = (tempBlackPieces & ~fromBit) | toBit;
-        }
-    
-        tempOccupancy = (tempOccupancy & ~fromBit) | toBit;
-    
-        // Simule le board temporaire sans l'appliquer réellement
-        return !MoveGenerator.isSquareAttacked(Long.numberOfTrailingZeros(kingSquare), this);
-    }
-    
-
-    public PackedMoveList getLegalMovesFast() {
-        PackedMoveList pseudoMoves = MoveGenerator.generatePseudoLegalMoves(this);
-        PackedMoveList legalMoves = new PackedMoveList(218);
-    
-        for (int i = 0; i < pseudoMoves.size(); i++) {
-            long move = pseudoMoves.get(i);
-            if (isLegalMove(move)) {
-                legalMoves.add(move);
-            }
-        }
-    
-        return legalMoves;
     }
     
     

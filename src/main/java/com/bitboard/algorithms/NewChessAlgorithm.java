@@ -3,6 +3,8 @@ package com.bitboard.algorithms;
 import com.bitboard.BitBoard;
 import com.bitboard.Move;
 import com.bitboard.MoveList;
+import com.bitboard.PackedMove;
+import com.bitboard.PackedMoveList;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,37 +27,51 @@ public class NewChessAlgorithm implements ChessAlgorithm {
     @Override
     public Move search(BitBoard board, int wtime, int btime, int winc, int binc, int movestogo, int depth) {
         nodes = 0;
-        Move bestMove = null;
+        long bestPackedMove = 0L;
 
-        MoveList moves = board.getLegalMoves();
-        moves.sort((m1, m2) -> m2.getSeeScore() - m1.getSeeScore());
-        System.out.println(moves);
+        // Get initial legal moves (optional)
+        PackedMoveList rootMoves = board.getLegalMoves();
+        rootMoves.sortByScoreDescending();
+
+        // System.out.println("Root Moves:");
+        // for (int i = 0; i < rootMoves.size(); i++) {
+        //     Move printable = PackedMove.unpack(rootMoves.get(i));
+        //     System.out.println("\t" + printable + " (score: " + PackedMove.getScore(rootMoves.get(i)) + ")");
+        // }
 
         for (int currentDepth = 1; currentDepth <= depth; currentDepth++) {
             long startTime = System.currentTimeMillis();
+
             MoveValue result = alphaBeta(board, currentDepth, Integer.MIN_VALUE, Integer.MAX_VALUE, board.whiteTurn);
             long endTime = System.currentTimeMillis();
-            bestMove = result.bestMove;
 
-            System.out.println("info depth " + currentDepth + " score cp " + result.value + " nodes " + nodes + " time " + (endTime - startTime) + " pv " + bestMove);
+            bestPackedMove = result.move;
+
+            Move bestPrintableMove = PackedMove.unpack(bestPackedMove);
+            System.out.println("info depth " + currentDepth + " score cp " + result.value + " nodes " + nodes + " time " + (endTime - startTime) + " pv " + bestPrintableMove);
         }
-        return bestMove;
+
+        // Return as a Move object for UCI or GUI integration
+        return PackedMove.unpack(bestPackedMove);
     }
+
 
     public MoveValue alphaBeta(BitBoard board, int depth, int alpha, int beta, boolean maximizingPlayer) {
         nodes++;
 
         if (depth == 0) {
-            return new MoveValue(null, evaluate(board));
+            return new MoveValue(0L, evaluate(board)); // 0L = null move
         }
-        
-        MoveList moves = board.getLegalMoves();
-        moves.sort((m1, m2) -> m2.getSeeScore() - m1.getSeeScore());
 
-        Move bestMove = null;
+        PackedMoveList moves = board.getLegalMoves();
+        moves.sortByScoreDescending();
+
+        long bestMove = 0L;
         int bestValue = maximizingPlayer ? Integer.MIN_VALUE : Integer.MAX_VALUE;
 
-        for (Move move : moves) {
+        for (int i = 0; i < moves.size(); i++) {
+            long move = moves.get(i);
+
             board.makeMove(move);
             int value = alphaBeta(board, depth - 1, alpha, beta, !maximizingPlayer).value;
             board.undoMove();
@@ -75,48 +91,13 @@ public class NewChessAlgorithm implements ChessAlgorithm {
             }
 
             if (alpha >= beta) {
-                break;
+                break; // alpha-beta pruning
             }
         }
 
         return new MoveValue(bestMove, bestValue);
     }
 
-    public MoveValue quiescenceSearch(BitBoard board, int alpha, int beta, boolean maximizingPlayer) {
-        int eval = evaluate(board);
-    
-        if (eval >= beta) {
-            return new MoveValue(null, beta);
-        }
-        if (eval > alpha) {
-            alpha = eval;
-        }
-    
-        MoveList captureMoves = board.getCaptureMoves();
-        captureMoves.sort((m1, m2) -> m2.getSeeScore() - m1.getSeeScore()); 
-    
-        for (Move move : captureMoves) {
-            board.makeMove(move);
-            int value = quiescenceSearch(board, alpha, beta, !maximizingPlayer).value;
-            board.undoMove();
-    
-            if (maximizingPlayer) {
-                if (value > alpha) {
-                    alpha = value;
-                }
-            } else {
-                if (value < beta) {
-                    beta = value;
-                }
-            }
-    
-            if (alpha >= beta) {
-                break;
-            }
-        }
-    
-        return new MoveValue(null, alpha);
-    }
     
     
 
@@ -125,32 +106,19 @@ public class NewChessAlgorithm implements ChessAlgorithm {
         return board.currentEvaluation;
     }
 
-    public int mobility(BitBoard board) {
-        int mobility = 0;
-        MoveList moves = board.getPseudoLegalMoves();
-        for (int i = 0; i < moves.size(); i++) {
-            Move move = moves.get(i);
-            if (move.isCapture()) {
-                mobility += 2;
-            } else {
-                mobility += 1;
-            }
-        }
-        return mobility;
-    }
-
     @Override
     public String getName() {
         return "NewChessAlgorithm";
     }
 
-    private class MoveValue {
-        Move bestMove;
-        int value;
-
-        public MoveValue(Move bestMove, int value) {
-            this.bestMove = bestMove;
+    public class MoveValue {
+        public final long move; // packed move
+        public final int value;
+    
+        public MoveValue(long move, int value) {
+            this.move = move;
             this.value = value;
         }
     }
+    
 }

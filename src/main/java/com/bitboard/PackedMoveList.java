@@ -38,4 +38,15 @@ public class PackedMoveList {
     public void sortByScore() {
         Arrays.sort(moves, 0, size); // if score is part of the encoding
     }
+
+    public void sortByScoreDescending() {
+        Arrays.sort(moves, 0, size); // Ascending by default
+    
+        // Reverse in-place
+        for (int i = 0; i < size / 2; i++) {
+            long tmp = moves[i];
+            moves[i] = moves[size - 1 - i];
+            moves[size - 1 - i] = tmp;
+        }
+    }
 }
