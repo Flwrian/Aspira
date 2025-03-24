@@ -49,32 +49,32 @@ public class Engine {
     }
 
     // play
-    public void play() {
-        Move bestMove = algorithm.search(board, 0, 0, 0, 0, 0, depth);
-        if (bestMove == null) {
-            // System.out.println("No legal moves found. Game over.");
-            if (board.isStaleMate()){
-                // System.out.println("Stalemate!");
-                return;
-            } else if (board.isCheckMate()) {
-                // System.out.println("Checkmate!");
-                return;
-            }
-            // play random move
-            bestMove = board.makeRandomMove();
-            // System.out.println("Random move: " + bestMove);
-            boolean isLegal = board.isLegalMove(bestMove);
-            // System.out.println("Is legal: " + isLegal);
-            if (!isLegal) {
-                // System.out.println("Illegal move: " + bestMove);
-                return;
-            }
-            lastMove = bestMove;
-        }
-        board.makeMove(bestMove);
-        addMoveToPGN(bestMove);
-        lastMove = bestMove;
-    }
+    // public void play() {
+    //     Move bestMove = algorithm.search(board, 0, 0, 0, 0, 0, depth);
+    //     if (bestMove == null) {
+    //         // System.out.println("No legal moves found. Game over.");
+    //         if (board.isStaleMate()){
+    //             // System.out.println("Stalemate!");
+    //             return;
+    //         } else if (board.isCheckMate()) {
+    //             // System.out.println("Checkmate!");
+    //             return;
+    //         }
+    //         // play random move
+    //         bestMove = board.makeRandomMove();
+    //         // System.out.println("Random move: " + bestMove);
+    //         boolean isLegal = board.isLegalMove(bestMove);
+    //         // System.out.println("Is legal: " + isLegal);
+    //         if (!isLegal) {
+    //             // System.out.println("Illegal move: " + bestMove);
+    //             return;
+    //         }
+    //         lastMove = bestMove;
+    //     }
+    //     board.makeMove(bestMove);
+    //     addMoveToPGN(bestMove);
+    //     lastMove = bestMove;
+    // }
     
     public Move getLastMove() {
         return lastMove;

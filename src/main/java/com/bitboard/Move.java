@@ -18,7 +18,7 @@ public final class Move {
     public static final int PROMOTION_SCORE = 150;
     public static final int CAPTURE_SCORE = 100;
     public static final int CASTLING_SCORE = 150;
-    public static final int DOUBLE_PAWN_PUSH_SCORE = 1;
+    public static final int DOUBLE_PAWN_PUSH_SCORE = 0;
     public static final int IS_CHECK_SCORE = 150;
 
 
@@ -118,7 +118,6 @@ public final class Move {
         this.to = (7 - rankTo) * 8 + fileTo;
 
         this.pieceFrom = board.getPiece(from);
-        System.out.println("Piece from: " + pieceFrom);
         this.pieceTo = board.getPiece(to);
         this.isWhite = board.whiteTurn;
 
@@ -126,7 +125,6 @@ public final class Move {
         // if piece from is king and it tries to move two squares, it is a castling move
         //! ce code pue sa mere va falloir le changer
         if (pieceFrom == BitBoard.KING || pieceFrom == BitBoard.KING*2 && Math.abs(from - to) >= 2) {
-            System.out.println("Castling move");
             this.type = CASTLING;
             return;
         }
@@ -303,16 +301,16 @@ public final class Move {
             if (isWhite) {
                 switch (pieceTo) {
                     case BitBoard.QUEEN:
-                        promotionPiece = "Q";
+                        promotionPiece = "q";
                         break;
                     case BitBoard.ROOK:
-                        promotionPiece = "R";
+                        promotionPiece = "r";
                         break;
                     case BitBoard.BISHOP:
-                        promotionPiece = "B";
+                        promotionPiece = "b";
                         break;
                     case BitBoard.KNIGHT:
-                        promotionPiece = "N";
+                        promotionPiece = "n";
                         break;
                 }
             } 

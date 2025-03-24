@@ -1,9 +1,9 @@
-package com;
+package com.array;
 
 import java.util.ArrayDeque;
 import java.util.Arrays;
 
-import com.pieces.Piece;
+import com.array.pieces.Piece;
 
 /**
  * Chess Board Class

@@ -1,7 +1,7 @@
-package com;
+package com.array;
 
-import com.algorithms.ChessAlgorithm;
-import com.pieces.Piece;
+import com.array.algorithms.ChessAlgorithm;
+import com.array.pieces.Piece;
 
 /**
  * <h1>Engine</h1>

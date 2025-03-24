@@ -1,7 +1,7 @@
-package com;
+package com.array;
 
-import com.algorithms.AlphaBetaPruningAlgorithm;
-import com.algorithms.RandomAlgorithm;
+import com.array.algorithms.AlphaBetaPruningAlgorithm;
+import com.array.algorithms.RandomAlgorithm;
 
 public class Main {
     

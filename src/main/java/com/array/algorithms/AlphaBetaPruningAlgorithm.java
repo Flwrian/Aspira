@@ -1,6 +1,6 @@
-package com.algorithms;
+package com.array.algorithms;
 
-import com.Board;
+import com.array.Board;
 
 public class AlphaBetaPruningAlgorithm implements ChessAlgorithm {
 
