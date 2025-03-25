@@ -36,17 +36,28 @@ public class PackedMoveList {
     }
 
     public void sortByScore() {
-        Arrays.sort(moves, 0, size); // if score is part of the encoding
-    }
-
-    public void sortByScoreDescending() {
-        Arrays.sort(moves, 0, size); // Ascending by default
-    
-        // Reverse in-place
-        for (int i = 0; i < size / 2; i++) {
-            long tmp = moves[i];
-            moves[i] = moves[size - 1 - i];
-            moves[size - 1 - i] = tmp;
+        // Custom sorting implementation for primitive long array
+        for (int i = 0; i < size - 1; i++) {
+            for (int j = 0; j < size - i - 1; j++) {
+                int scoreA = PackedMove.getScore(moves[j]);
+                int scoreB = PackedMove.getScore(moves[j + 1]);
+                if (scoreA < scoreB) {
+                    // Swap
+                    long temp = moves[j];
+                    moves[j] = moves[j + 1];
+                    moves[j + 1] = temp;
+                }
+            }
         }
+    }
+    
+    @Override
+    public String toString() {
+        // Convert back into a MoveList
+        MoveList moveList = new MoveList(size);
+        for (int i = 0; i < size; i++) {
+            moveList.add(PackedMove.unpack(moves[i]));
+        }
+        return moveList.toString();
     }
 }

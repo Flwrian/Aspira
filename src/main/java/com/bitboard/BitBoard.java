@@ -1606,26 +1606,26 @@ public class BitBoard {
     
     
 
-    // public PackedMoveList getCaptureMoves() {
-    //     PackedMoveList moveList = MoveGenerator.generateCaptureMoves(this);
+    public PackedMoveList getCaptureMoves() {
+        PackedMoveList moveList = MoveGenerator.generateCaptureMoves(this);
 
         
-    //     // Pour chaque coup, vérifier si le roi est en échec après le coup
-    //     // Si le roi est en échec, le coup n'est pas légal
-    //     // Sinon, le coup est légal
-    //     for (int i = 0; i < moveList.size(); i++) {
-    //         long move = moveList.get(i);
-    //         makeMove(move);
-    //         if (isKingInCheck(!whiteTurn)) {
-    //             moveList.remove(i);
-    //             i--;
-    //         }
-    //         undoMove();
+        // Pour chaque coup, vérifier si le roi est en échec après le coup
+        // Si le roi est en échec, le coup n'est pas légal
+        // Sinon, le coup est légal
+        for (int i = 0; i < moveList.size(); i++) {
+            long move = moveList.get(i);
+            makeMove(move);
+            if (isKingInCheck(!whiteTurn)) {
+                moveList.remove(i);
+                i--;
+            }
+            undoMove();
             
-    //     }
+        }
         
-    //     return moveList;
-    // }
+        return moveList;
+    }
 
     
     

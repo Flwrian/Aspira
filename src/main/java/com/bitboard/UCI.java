@@ -56,6 +56,10 @@ public class UCI {
         engine.setAlgorithm(advancedChessAlgorithm);
 
         board.loadFromFen(STARTING_POSITION);
+
+        // init movegenerator
+        MoveGenerator.initSlidingAttacks();
+
         
         Scanner scanner = new Scanner(System.in);
         // Handle the UCI commands
