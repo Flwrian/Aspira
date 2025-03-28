@@ -5,6 +5,8 @@ import java.util.ArrayDeque;
 import java.util.Collections;
 import java.util.Stack;
 
+import com.bitboard.algorithms.Zobrist;
+
 public class BitBoard {
 
     public boolean whiteTurn;
@@ -35,7 +37,9 @@ public class BitBoard {
     
     public long enPassantSquare;
 
-    public int currentEvaluation;
+    public int currentEvalMG;
+    public int currentEvalEG;
+    public int phase;
 
     // valid
     public static final long RANK_1 = 0x00000000000000FFL;
@@ -303,7 +307,7 @@ public class BitBoard {
     };
 
 
-    private static final int[] PAWN_TABLE = {
+    private static final int[] PAWN_TABLE_MG = {
         0,   0,   0,   0,   0,   0,   0,   0,
      -11,  34, 126,  68,  95,  61, 134,  98,
      -20,  25,  56,  65,  31,  26,   7,  -6,
@@ -314,8 +318,18 @@ public class BitBoard {
         0,   0,   0,   0,   0,   0,   0,   0,
     };
 
+    private static final int[] PAWN_TABLE_EG = {
+        0,   0,   0,   0,   0,   0,   0,   0,
+      178, 173, 158, 134, 147, 132, 165, 187,
+       94, 100,  85,  67,  56,  53,  82,  84,
+       32,  24,  13,   5,  -2,   4,  17,  17,
+       13,   9,  -3,  -7,  -7,  -8,   3,  -1,
+        4,   7,  -6,   1,   0,  -5,  -1,  -8,
+       13,   8,   8,  10,  13,   0,   2,  -7,
+        0,   0,   0,   0,   0,   0,   0,   0,
+    };
 
-    private static final int[] KNIGHT_TABLE = {
+    private static final int[] KNIGHT_TABLE_MG = {
         -167, -89, -34, -49,  61, -97, -15, -107,
          -73, -41,  72,  36,  23,  62,   7,  -17,
          -47,  60,  37,  65,  84, 129,  73,   44,
@@ -326,8 +340,63 @@ public class BitBoard {
         -105, -21, -58, -33, -17, -28, -19,  -23,
     };
 
+    private static final int[] KNIGHT_TABLE_EG = {
+        -58, -38, -13, -28, -31, -27, -63, -99,
+        -25,  -8, -25,  -2,  -9, -25, -24, -52,
+        -24, -20,  10,   9,  -1,  -9, -19, -41,
+        -17,   3,  22,  22,  22,  11,   8, -18,
+        -18,  -6,  16,  25,  16,  17,   4, -18,
+        -23,  -3,  -1,  15,  10,  -3, -20, -22,
+        -42, -20, -10,  -5,  -2, -20, -23, -44,
+        -29, -51, -23, -15, -22, -18, -50, -64,
+    };
 
-    private static final int[] BISHOP_TABLE = {
+    private static final int[] BISHOP_TABLE_EG = {
+        -14, -21, -11,  -8, -7,  -9, -17, -24,
+         -8,  -4,   7, -12, -3, -13,  -4, -14,
+          2,  -8,   0,  -1, -2,   6,   0,   4,
+         -3,   9,  12,   9, 14,  10,   3,   2,
+         -6,   3,  13,  19,  7,  10,  -3,  -9,
+        -12,  -3,   8,  10, 13,   3,  -7, -15,
+        -14, -18,  -7,  -1,  4,  -9, -15, -27,
+        -23,  -9, -23,  -5, -9, -16,  -5, -17,
+    };
+
+    private static final int[] ROOK_TABLE_EG = {
+        13, 10, 18, 15, 12,  12,   8,   5,
+        11, 13, 13, 11, -3,   3,   8,   3,
+         7,  7,  7,  5,  4,  -3,  -5,  -3,
+         4,  3, 13,  1,  2,   1,  -1,   2,
+         3,  5,  8,  4, -5,  -6,  -8, -11,
+        -4,  0, -5, -1, -7, -12,  -8, -16,
+        -6, -6,  0,  2, -9,  -9, -11,  -3,
+        -9,  2,  3, -1, -5, -13,   4, -20,
+    };
+
+    private static final int[] QUEEN_TABLE_EG = {
+         -9,  22,  22,  27,  27,  19,  10,  20,
+        -17,  20,  32,  41,  58,  25,  30,   0,
+        -20,   6,   9,  49,  47,  35,  19,   9,
+          3,  22,  24,  45,  57,  40,  57,  36,
+        -18,  28,  19,  47,  31,  34,  39,  23,
+        -16, -27,  15,   6,   9,  17,  10,   5,
+        -22, -23, -30, -16, -16, -23, -36, -32,
+        -33, -28, -22, -43,  -5, -32, -20, -41,
+    };
+
+    private static final int[] KING_END_GAME_TABLE_EG = {
+        -74, -35, -18, -18, -11,  15,   4, -17,
+        -12,  17,  14,  17,  17,  38,  23,  11,
+         10,  17,  23,  15,  20,  45,  44,  13,
+         -8,  22,  24,  27,  26,  33,  26,   3,
+        -18,  -4,  21,  24,  27,  23,   9, -11,
+        -19,  -3,  11,  21,  23,  16,   7,  -9,
+        -27, -11,   4,  13,  14,   4,  -5, -17,
+        -53, -34, -21, -11, -28, -14, -24, -43
+    };
+
+
+    private static final int[] BISHOP_TABLE_MG = {
         -29,   4, -82, -37, -25, -42,   7,  -8,
         -26,  16, -18, -13,  30,  59,  18, -47,
         -16,  37,  43,  40,  35,  50,  37,  -2,
@@ -338,7 +407,7 @@ public class BitBoard {
         -33,  -3, -14, -21, -13, -12, -39, -21,
     };
 
-    private static final int[] ROOK_TABLE = {
+    private static final int[] ROOK_TABLE_MG = {
         32,  42,  32,  51, 63,  9,  31,  43,
         27,  32,  58,  62, 80, 67,  26,  44,
         -5,  19,  26,  36, 17, 45,  61,  16,
@@ -349,7 +418,7 @@ public class BitBoard {
         -19, -13,   1,  17, 16,  7, -37, -26,
     };
 
-    private static final int[] QUEEN_TABLE = {
+    private static final int[] QUEEN_TABLE_MG = {
         -28,   0,  29,  12,  59,  44,  43,  45,
         -24, -39,  -5,   1, -16,  57,  28,  54,
         -13, -17,   7,   8,  29,  56,  47,  57,
@@ -360,7 +429,7 @@ public class BitBoard {
          -1, -18,  -9,  10, -15, -25, -31, -50,
     };
 
-    private static final int[] KING_MIDDLE_GAME_TABLE = {
+    private static final int[] KING_MIDDLE_GAME_TABLE_MG = {
         -65,  23,  16, -15, -56, -34,   2,  13,
          29,  -1, -20,  -7,  -8,  -4, -38, -29,
          -9,  24,   2, -16, -20,   6,  22, -22,
@@ -472,7 +541,7 @@ public class BitBoard {
     }
 
     private void saveBoardHistory(long move) {
-        BoardHistory boardHistory = new BoardHistory(bitboard, move, whitePawns, whiteKnights, whiteBishops, whiteRooks, whiteQueens, whiteKing, blackPawns, blackKnights, blackBishops, blackRooks, blackQueens, blackKing, whiteCastleQueenSide, whiteCastleKingSide, blackCastleQueenSide, blackCastleKingSide, enPassantSquare, whiteTurn, currentEvaluation);
+        BoardHistory boardHistory = new BoardHistory(bitboard, move, whitePawns, whiteKnights, whiteBishops, whiteRooks, whiteQueens, whiteKing, blackPawns, blackKnights, blackBishops, blackRooks, blackQueens, blackKing, whiteCastleQueenSide, whiteCastleKingSide, blackCastleQueenSide, blackCastleKingSide, enPassantSquare, whiteTurn, currentEvalMG, currentEvalEG, phase);
         history.push(boardHistory);
     }
 
@@ -620,134 +689,184 @@ public class BitBoard {
 
         updateBitBoard();
 
-        // evaluation based on material and piece positions (PSQT)
-        currentEvaluation = 0;
+        // Reset
+        currentEvalMG = 0;
+        currentEvalEG = 0;
+        phase = 0;
+
+        // Blancs
+        currentEvalMG += Long.bitCount(whitePawns)   * 100;
+        currentEvalEG += Long.bitCount(whitePawns)   * 100;
+
+        currentEvalMG += Long.bitCount(whiteKnights) * 320;
+        currentEvalEG += Long.bitCount(whiteKnights) * 310;
+        phase += Long.bitCount(whiteKnights) * 1;
+
+        currentEvalMG += Long.bitCount(whiteBishops) * 330;
+        currentEvalEG += Long.bitCount(whiteBishops) * 320;
+        phase += Long.bitCount(whiteBishops) * 1;
+
+        currentEvalMG += Long.bitCount(whiteRooks)   * 500;
+        currentEvalEG += Long.bitCount(whiteRooks)   * 510;
+        phase += Long.bitCount(whiteRooks) * 2;
+
+        currentEvalMG += Long.bitCount(whiteQueens)  * 900;
+        currentEvalEG += Long.bitCount(whiteQueens)  * 950;
+        phase += Long.bitCount(whiteQueens) * 4;
+
+        // Noirs
+        currentEvalMG -= Long.bitCount(blackPawns)   * 100;
+        currentEvalEG -= Long.bitCount(blackPawns)   * 100;
+
+        currentEvalMG -= Long.bitCount(blackKnights) * 320;
+        currentEvalEG -= Long.bitCount(blackKnights) * 310;
+        phase += Long.bitCount(blackKnights) * 1;
+
+        currentEvalMG -= Long.bitCount(blackBishops) * 330;
+        currentEvalEG -= Long.bitCount(blackBishops) * 320;
+        phase += Long.bitCount(blackBishops) * 1;
+
+        currentEvalMG -= Long.bitCount(blackRooks)   * 500;
+        currentEvalEG -= Long.bitCount(blackRooks)   * 510;
+        phase += Long.bitCount(blackRooks) * 2;
+
+        currentEvalMG -= Long.bitCount(blackQueens)  * 900;
+        currentEvalEG -= Long.bitCount(blackQueens)  * 950;
+        phase += Long.bitCount(blackQueens) * 4;
+
+        // Clamp phase
+        phase = Math.min(phase, 24);
+
+        // PSQT
+        long wPawns = whitePawns;
+        long wKnights = whiteKnights;
+        long wBishops = whiteBishops;
+        long wRooks = whiteRooks;
+        long wQueens = whiteQueens;
+        long wKing = whiteKing;
+        long bPawns = blackPawns;
+        long bKnights = blackKnights;
+        long bBishops = blackBishops;
+        long bRooks = blackRooks;
+        long bQueens = blackQueens;
+        long bKing = blackKing;
+
+        // white pawns
+        while (wPawns != 0) {
+            int square = Long.numberOfTrailingZeros(wPawns);
+            currentEvalMG += PAWN_TABLE_MG[square ^ 56];
+            currentEvalEG += PAWN_TABLE_EG[square ^ 56];
+            wPawns &= wPawns - 1;
+        }
+        // black pawns
+        while (bPawns != 0) {
+            int square = Long.numberOfTrailingZeros(bPawns);
+            currentEvalMG -= PAWN_TABLE_MG[square];
+            currentEvalEG -= PAWN_TABLE_EG[square];
+            bPawns &= bPawns - 1;
+        }
+        // white knights
+        while (wKnights != 0) {
+            int square = Long.numberOfTrailingZeros(wKnights);
+            currentEvalMG += KNIGHT_TABLE_MG[square ^ 56];
+            currentEvalEG += KNIGHT_TABLE_EG[square ^ 56];
+            wKnights &= wKnights - 1;
+        }
+        // black knights
+
+        while (bKnights != 0) {
+            int square = Long.numberOfTrailingZeros(bKnights);
+            currentEvalMG -= KNIGHT_TABLE_MG[square];
+            currentEvalEG -= KNIGHT_TABLE_EG[square];
+            bKnights &= bKnights - 1;
+        }
+        // white bishops
+        while (wBishops != 0) {
+            int square = Long.numberOfTrailingZeros(wBishops);
+            currentEvalMG += BISHOP_TABLE_MG[square ^ 56];
+            currentEvalEG += BISHOP_TABLE_EG[square ^ 56];
+            wBishops &= wBishops - 1;
+        }
+        // black bishops
+        while (bBishops != 0) {
+            int square = Long.numberOfTrailingZeros(bBishops);
+            currentEvalMG -= BISHOP_TABLE_MG[square];
+            currentEvalEG -= BISHOP_TABLE_EG[square];
+            bBishops &= bBishops - 1;
+        }
+        // white rooks
+        while (wRooks != 0) {
+            int square = Long.numberOfTrailingZeros(wRooks);
+            currentEvalMG += ROOK_TABLE_MG[square ^ 56];
+            currentEvalEG += ROOK_TABLE_EG[square ^ 56];
+            wRooks &= wRooks - 1;
+        }
+        // black rooks
+        while (bRooks != 0) {
+            int square = Long.numberOfTrailingZeros(bRooks);
+            currentEvalMG -= ROOK_TABLE_MG[square];
+            currentEvalEG -= ROOK_TABLE_EG[square];
+            bRooks &= bRooks - 1;
+        }
+        // white queens
+        while (wQueens != 0) {
+            int square = Long.numberOfTrailingZeros(wQueens);
+            currentEvalMG += QUEEN_TABLE_MG[square ^ 56];
+            currentEvalEG += QUEEN_TABLE_EG[square ^ 56];
+            wQueens &= wQueens - 1;
+        }
+        // black queens
+        while (bQueens != 0) {
+            int square = Long.numberOfTrailingZeros(bQueens);
+            currentEvalMG -= QUEEN_TABLE_MG[square];
+            currentEvalEG -= QUEEN_TABLE_EG[square];
+            bQueens &= bQueens - 1;
+        }
+        // white king
+        while (wKing != 0) {
+            int square = Long.numberOfTrailingZeros(wKing);
+            currentEvalMG += KING_MIDDLE_GAME_TABLE_MG[square ^ 56];
+            currentEvalEG += KING_END_GAME_TABLE_EG[square ^ 56];
+            wKing &= wKing - 1;
+        }
+        // black king
+        while (bKing != 0) {
+            int square = Long.numberOfTrailingZeros(bKing);
+            currentEvalMG -= KING_MIDDLE_GAME_TABLE_MG[square];
+            currentEvalEG -= KING_END_GAME_TABLE_EG[square];
+            bKing &= bKing - 1;
+        }
         
-        // Material evaluation
+        System.out.println("currentEvalMG: " + currentEvalMG);
+        System.out.println("currentEvalEG: " + currentEvalEG);
+        System.out.println("phase: " + phase);
 
-        // Pawns
-        currentEvaluation += Long.bitCount(whitePawns) * 100;
-        currentEvaluation -= Long.bitCount(blackPawns) * 100;
-
-        // Knights
-        currentEvaluation += Long.bitCount(whiteKnights) * 320;
-        currentEvaluation -= Long.bitCount(blackKnights) * 320;
-
-        // Bishops
-        currentEvaluation += Long.bitCount(whiteBishops) * 330;
-        currentEvaluation -= Long.bitCount(blackBishops) * 330;
-
-        // Rooks
-        currentEvaluation += Long.bitCount(whiteRooks) * 500;
-        currentEvaluation -= Long.bitCount(blackRooks) * 500;
-
-        // Queens
-        currentEvaluation += Long.bitCount(whiteQueens) * 900;
-        currentEvaluation -= Long.bitCount(blackQueens) * 900;
-
-        // Kings
-        currentEvaluation += Long.bitCount(whiteKing) * 20000;
-        currentEvaluation -= Long.bitCount(blackKing) * 20000;
-
-        // PSQT evaluation
-        
-        // Pawns
-        long wp = whitePawns;
-        while (wp != 0) {
-            int square = Long.numberOfTrailingZeros(wp);
-            currentEvaluation += PAWN_TABLE[square ^ 56];
-            wp &= ~(1L << square);
-        }
-
-        long bp = blackPawns;
-        while (bp != 0) {
-            int square = Long.numberOfTrailingZeros(bp);
-            currentEvaluation -= PAWN_TABLE[square];
-            bp &= ~(1L << square);
-        }
-
-        // Knights
-
-        long wn = whiteKnights;
-        while (wn != 0) {
-            int square = Long.numberOfTrailingZeros(wn);
-            currentEvaluation += KNIGHT_TABLE[square ^ 56];
-            wn &= ~(1L << square);
-        }
-
-        long bn = blackKnights;
-        while (bn != 0) {
-            int square = Long.numberOfTrailingZeros(bn);
-            currentEvaluation -= KNIGHT_TABLE[square];
-            bn &= ~(1L << square);
-        }
-
-        // Bishops
-        long wb = whiteBishops;
-        while (wb != 0) {
-            int square = Long.numberOfTrailingZeros(wb);
-            currentEvaluation += BISHOP_TABLE[square ^ 56];
-            wb &= ~(1L << square);
-        }
-
-        long bb = blackBishops;
-        while (bb != 0) {
-            int square = Long.numberOfTrailingZeros(bb);
-            currentEvaluation -= BISHOP_TABLE[square];
-            bb &= ~(1L << square);
-        }
-
-        // Rooks
-
-        long wr = whiteRooks;
-        while (wr != 0) {
-            int square = Long.numberOfTrailingZeros(wr);
-            currentEvaluation += ROOK_TABLE[square ^ 56];
-            wr &= ~(1L << square);
-        }
-
-        long br = blackRooks;
-        while (br != 0) {
-            int square = Long.numberOfTrailingZeros(br);
-            currentEvaluation -= ROOK_TABLE[square];
-            br &= ~(1L << square);
-        }
-
-        // Queens
-        long wq = whiteQueens;
-        while (wq != 0) {
-            int square = Long.numberOfTrailingZeros(wq);
-            currentEvaluation += QUEEN_TABLE[square ^ 56];
-            wq &= ~(1L << square);
-        }
-
-        long bq = blackQueens;
-        while (bq != 0) {
-            int square = Long.numberOfTrailingZeros(bq);
-            currentEvaluation -= QUEEN_TABLE[square];
-            bq &= ~(1L << square);
-        }
-
-        // Kings
-
-        long wk = whiteKing;
-        while (wk != 0) {
-            int square = Long.numberOfTrailingZeros(wk);
-            currentEvaluation += KING_MIDDLE_GAME_TABLE[square ^ 56];
-            wk &= ~(1L << square);
-        }
-
-        long bk = blackKing;
-        while (bk != 0) {
-            int square = Long.numberOfTrailingZeros(bk);
-            currentEvaluation -= KING_MIDDLE_GAME_TABLE[square];
-            bk &= ~(1L << square);
-        }
-
-        System.out.println("Current evaluation: " + currentEvaluation);
-        
-
+        System.out.println("currentEval: " + evaluate());
     }
+
+    public int calculatePhase() {
+        int phase = 0;
+    
+        // Blancs
+        phase += Long.bitCount(whiteKnights) * 1;
+        phase += Long.bitCount(whiteBishops) * 1;
+        phase += Long.bitCount(whiteRooks)   * 2;
+        phase += Long.bitCount(whiteQueens)  * 4;
+    
+        // Noirs
+        phase += Long.bitCount(blackKnights) * 1;
+        phase += Long.bitCount(blackBishops) * 1;
+        phase += Long.bitCount(blackRooks)   * 2;
+        phase += Long.bitCount(blackQueens)  * 4;
+    
+        // Clamp entre 0 et 24
+        return Math.min(phase, 24);
+    }
+
+    public int evaluate() {
+        return (currentEvalMG * phase + currentEvalEG * (24 - phase)) / 24;
+    }
+    
 
     public String getFen() {
         StringBuilder fen = new StringBuilder();
@@ -1088,13 +1207,13 @@ public class BitBoard {
 
     public void undoNullMove() {
         whiteTurn = !whiteTurn;
-    }
+        }
 
-    public void makeMove(long move) {
+        public void makeMove(long move) {
         // Save the current board state
         saveBoardHistory(move);
         // saveBoardHistoryLONG();
-    
+        
         // Convert squares to bitboards
         final long fromBitboard = 1L << PackedMove.getFrom(move);
         final long toBitboard = 1L << PackedMove.getTo(move);
@@ -1106,263 +1225,303 @@ public class BitBoard {
             handleCaptureWhite(toBitboard);
             // Pions blancs
             if ((whitePawns & fromBitboard) != 0) {
-    
-                // Handle en passant capture
-                if (PackedMove.getFlags(move) == Move.EN_PASSENT) {
-                    final long capturedPawn = enPassantSquare >> 8;
-                    blackPawns &= ~capturedPawn;
+        
+            // Handle en passant capture
+            if (PackedMove.getFlags(move) == Move.EN_PASSENT) {
+                final long capturedPawn = enPassantSquare >> 8;
+                blackPawns &= ~capturedPawn;
 
-                    // Move pawn
-                    whitePawns &= ~fromBitboard;
-                    whitePawns |= toBitboard;
+                // Move pawn
+                whitePawns &= ~fromBitboard;
+                whitePawns |= toBitboard;
 
-                    // Update currentEvaluation : in case of en passant capture, we are white so we add the value of the black pawn to the evaluation, 
-                    currentEvaluation -= PAWN_TABLE[Long.numberOfTrailingZeros(toBitboard) ^ 56] - PAWN_TABLE[Long.numberOfTrailingZeros(fromBitboard) ^ 56]; // we remove the value PSQT of the pawn that has been moved and we add the value PSQT of the new position of the pawn
+                // Update evaluations for both phases
+                currentEvalMG += PAWN_TABLE_MG[Long.numberOfTrailingZeros(toBitboard) ^ 56] - PAWN_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
+                currentEvalEG += PAWN_TABLE_EG[Long.numberOfTrailingZeros(toBitboard) ^ 56] - PAWN_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
+            }
+        
+            // Handle double pawn push
+            if (PackedMove.getFlags(move) == Move.DOUBLE_PAWN_PUSH) {
+                enPassantSquare = toBitboard >> 8;
 
+                // Move pawn
+                whitePawns &= ~fromBitboard;
+                whitePawns |= toBitboard;
+
+                // Update evaluations for both phases
+                currentEvalMG += PAWN_TABLE_MG[Long.numberOfTrailingZeros(toBitboard) ^ 56] - PAWN_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
+                currentEvalEG += PAWN_TABLE_EG[Long.numberOfTrailingZeros(toBitboard) ^ 56] - PAWN_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
+            } else {
+                enPassantSquare = 0L; // Reset en passant square
+
+                // Handle promotion
+                if (PackedMove.getFlags(move) == Move.PROMOTION) {
+                switch (PackedMove.getPromotion(move)) {
+                    case KNIGHT:
+                    // Update evaluations for promotion to knight
+                    currentEvalMG += KNIGHT_SCORE + KNIGHT_TABLE_MG[Long.numberOfTrailingZeros(toBitboard) ^ 56] - PAWN_SCORE - PAWN_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
+                    currentEvalEG += KNIGHT_SCORE + KNIGHT_TABLE_EG[Long.numberOfTrailingZeros(toBitboard) ^ 56] - PAWN_SCORE - PAWN_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
+                    phase += 1; // Knights add 1 to phase
+                    whiteKnights |= toBitboard; 
+                    break;
+                    case BISHOP:
+                    // Update evaluations for promotion to bishop
+                    currentEvalMG += BISHOP_SCORE + BISHOP_TABLE_MG[Long.numberOfTrailingZeros(toBitboard) ^ 56] - PAWN_SCORE - PAWN_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
+                    currentEvalEG += BISHOP_SCORE + BISHOP_TABLE_EG[Long.numberOfTrailingZeros(toBitboard) ^ 56] - PAWN_SCORE - PAWN_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
+                    phase += 1; // Bishops add 1 to phase
+                    whiteBishops |= toBitboard; 
+                    break;
+                    case ROOK:
+                    // Update evaluations for promotion to rook
+                    currentEvalMG += ROOK_SCORE + ROOK_TABLE_MG[Long.numberOfTrailingZeros(toBitboard) ^ 56] - PAWN_SCORE - PAWN_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
+                    currentEvalEG += ROOK_SCORE + ROOK_TABLE_EG[Long.numberOfTrailingZeros(toBitboard) ^ 56] - PAWN_SCORE - PAWN_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
+                    phase += 2; // Rooks add 2 to phase
+                    whiteRooks |= toBitboard; 
+                    break;
+                    case QUEEN:
+                    // Update evaluations for promotion to queen
+                    currentEvalMG += QUEEN_SCORE + QUEEN_TABLE_MG[Long.numberOfTrailingZeros(toBitboard) ^ 56] - PAWN_SCORE - PAWN_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
+                    currentEvalEG += QUEEN_SCORE + QUEEN_TABLE_EG[Long.numberOfTrailingZeros(toBitboard) ^ 56] - PAWN_SCORE - PAWN_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
+                    phase += 4; // Queens add 4 to phase
+                    whiteQueens |= toBitboard; 
+                    break;
                 }
-    
-                // Handle double pawn push
-                if (PackedMove.getFlags(move) == Move.DOUBLE_PAWN_PUSH) {
-                    enPassantSquare = toBitboard >> 8;
 
-                    // Move pawn
-                    whitePawns &= ~fromBitboard;
-                    whitePawns |= toBitboard;
-
-                    // Update currentEvaluation : in case of double pawn push, we only change the PSQT value of the pawn that has been moved
-                    currentEvaluation += PAWN_TABLE[Long.numberOfTrailingZeros(toBitboard) ^ 56] - PAWN_TABLE[Long.numberOfTrailingZeros(fromBitboard) ^ 56]; // we remove the value PSQT of the pawn that has been moved and we add the value PSQT of the new position of the pawn
-                } else {
-                    enPassantSquare = 0L; // Reset en passant square
-
-                    // Handle promotion
-                    if (PackedMove.getFlags(move) == Move.PROMOTION) {
-                        switch (PackedMove.getPromotion(move)) {
-                            case KNIGHT:
-                                // Update currentEvaluation : in case of promotion, we remove the value of the pawn and we add the value of the new piece
-                                currentEvaluation += KNIGHT_SCORE + KNIGHT_TABLE[Long.numberOfTrailingZeros(toBitboard) ^ 56] - PAWN_SCORE - PAWN_TABLE[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
-                                whiteKnights |= toBitboard; break;
-                            case BISHOP:
-                                // Update currentEvaluation : in case of promotion, we remove the value of the pawn and we add the value of the new piece
-                                currentEvaluation += BISHOP_SCORE + BISHOP_TABLE[Long.numberOfTrailingZeros(toBitboard) ^ 56] - PAWN_SCORE - PAWN_TABLE[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
-                                whiteBishops |= toBitboard; break;
-                            case ROOK:
-                                // Update currentEvaluation : in case of promotion, we remove the value of the pawn and we add the value of the new piece
-                                currentEvaluation += ROOK_SCORE + ROOK_TABLE[Long.numberOfTrailingZeros(toBitboard) ^ 56] - PAWN_SCORE - PAWN_TABLE[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
-                                whiteRooks |= toBitboard; break;
-                            case QUEEN:
-                                // Update currentEvaluation : in case of promotion, we remove the value of the pawn and we add the value of the new piece
-                                currentEvaluation += QUEEN_SCORE + QUEEN_TABLE[Long.numberOfTrailingZeros(toBitboard) ^ 56] - PAWN_SCORE - PAWN_TABLE[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
-                                whiteQueens |= toBitboard; break;
-                        }
-
-                        // remove pawn
-                        whitePawns &= ~fromBitboard;
-    
-                    }
-                    else{
-                        // Move pawn
-                        whitePawns &= ~fromBitboard;
-                        whitePawns |= toBitboard;
-
-                        // Update currentEvaluation : in case of normal move, we only change the PSQT value of the pawn that has been moved
-                        currentEvaluation += PAWN_TABLE[Long.numberOfTrailingZeros(toBitboard) ^ 56] - PAWN_TABLE[Long.numberOfTrailingZeros(fromBitboard) ^ 56]; // we remove the value PSQT of the pawn that has been moved and we add the value PSQT of the new position of the pawn
-                    }
-
+                // remove pawn
+                whitePawns &= ~fromBitboard;
+        
                 }
-    
+                else{
+                // Move pawn
+                whitePawns &= ~fromBitboard;
+                whitePawns |= toBitboard;
+
+                // Update evaluations for both phases
+                currentEvalMG += PAWN_TABLE_MG[Long.numberOfTrailingZeros(toBitboard) ^ 56] - PAWN_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
+                currentEvalEG += PAWN_TABLE_EG[Long.numberOfTrailingZeros(toBitboard) ^ 56] - PAWN_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
+                }
+
+            }
+        
             // Cavaliers blancs
             } else if ((whiteKnights & fromBitboard) != 0) {
-                whiteKnights &= ~fromBitboard;
-                whiteKnights |= toBitboard;
+            whiteKnights &= ~fromBitboard;
+            whiteKnights |= toBitboard;
 
-                // Update currentEvaluation : in case of normal move, we only change the PSQT value of the knight that has been moved
-                currentEvaluation += KNIGHT_TABLE[Long.numberOfTrailingZeros(toBitboard) ^ 56] - KNIGHT_TABLE[Long.numberOfTrailingZeros(fromBitboard) ^ 56]; // we remove the value PSQT of the knight that has been moved and we add the value PSQT of the new position of the knight
-    
+            // Update evaluations for both phases
+            currentEvalMG += KNIGHT_TABLE_MG[Long.numberOfTrailingZeros(toBitboard) ^ 56] - KNIGHT_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
+            currentEvalEG += KNIGHT_TABLE_EG[Long.numberOfTrailingZeros(toBitboard) ^ 56] - KNIGHT_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
+        
             // Fous blancs
             } else if ((whiteBishops & fromBitboard) != 0) {
-                whiteBishops &= ~fromBitboard;
-                whiteBishops |= toBitboard;
+            whiteBishops &= ~fromBitboard;
+            whiteBishops |= toBitboard;
 
-                // Update currentEvaluation : in case of normal move, we only change the PSQT value of the bishop that has been moved
-                currentEvaluation += BISHOP_TABLE[Long.numberOfTrailingZeros(toBitboard) ^ 56] - BISHOP_TABLE[Long.numberOfTrailingZeros(fromBitboard) ^ 56]; // we remove the value PSQT of the bishop that has been moved and we add the value PSQT of the new position of the bishop
-    
+            // Update evaluations for both phases
+            currentEvalMG += BISHOP_TABLE_MG[Long.numberOfTrailingZeros(toBitboard) ^ 56] - BISHOP_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
+            currentEvalEG += BISHOP_TABLE_EG[Long.numberOfTrailingZeros(toBitboard) ^ 56] - BISHOP_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
+        
             // Tours blanches
             } else if ((whiteRooks & fromBitboard) != 0) {
-                if ((A1 & fromBitboard) != 0) whiteCastleQueenSide = 0L;
-                if ((H1 & fromBitboard) != 0) whiteCastleKingSide = 0L;
-                whiteRooks &= ~fromBitboard;
-                whiteRooks |= toBitboard;
+            if ((A1 & fromBitboard) != 0) whiteCastleQueenSide = 0L;
+            if ((H1 & fromBitboard) != 0) whiteCastleKingSide = 0L;
+            whiteRooks &= ~fromBitboard;
+            whiteRooks |= toBitboard;
 
-                // Update currentEvaluation : in case of normal move, we only change the PSQT value of the rook that has been moved
-                currentEvaluation += ROOK_TABLE[Long.numberOfTrailingZeros(toBitboard) ^ 56] - ROOK_TABLE[Long.numberOfTrailingZeros(fromBitboard) ^ 56]; // we remove the value PSQT of the rook that has been moved and we add the value PSQT of the new position of the rook
-    
+            // Update evaluations for both phases
+            currentEvalMG += ROOK_TABLE_MG[Long.numberOfTrailingZeros(toBitboard) ^ 56] - ROOK_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
+            currentEvalEG += ROOK_TABLE_EG[Long.numberOfTrailingZeros(toBitboard) ^ 56] - ROOK_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
+        
             // Dames blanches
             } else if ((whiteQueens & fromBitboard) != 0) {
-                whiteQueens &= ~fromBitboard;
-                whiteQueens |= toBitboard;
+            whiteQueens &= ~fromBitboard;
+            whiteQueens |= toBitboard;
 
-                // Update currentEvaluation : in case of normal move, we only change the PSQT value of the queen that has been moved
-                currentEvaluation += QUEEN_TABLE[Long.numberOfTrailingZeros(toBitboard) ^ 56] - QUEEN_TABLE[Long.numberOfTrailingZeros(fromBitboard) ^ 56]; // we remove the value PSQT of the queen that has been moved and we add the value PSQT of the new position of the queen
-    
+            // Update evaluations for both phases
+            currentEvalMG += QUEEN_TABLE_MG[Long.numberOfTrailingZeros(toBitboard) ^ 56] - QUEEN_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
+            currentEvalEG += QUEEN_TABLE_EG[Long.numberOfTrailingZeros(toBitboard) ^ 56] - QUEEN_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
+        
             // Roi blanc
             } else if ((whiteKing & fromBitboard) != 0) {
-                if (((whiteCastleQueenSide != 0) && (C1 & toBitboard) != 0) || ((whiteCastleKingSide != 0) && (G1 & toBitboard) != 0)) {
-                    // Handle castling for white
-                    if (toBitboard == 1L << 2) {
-                        processWhiteCastleQueenSide(fromBitboard);
-                    } else if (toBitboard == 1L << 6) {
-                        processWhiteCastleKingSide(fromBitboard);
-                    }
-                } else {
-                    whiteKing &= ~fromBitboard;
-                    whiteKing |= toBitboard;
-
-                    // Reset castling rights
-                    whiteCastleQueenSide = 0L;
-                    whiteCastleKingSide = 0L;
-
-                    // Update currentEvaluation : in case of normal move, we only change the PSQT value of the king that has been moved
-                    currentEvaluation += KING_MIDDLE_GAME_TABLE[Long.numberOfTrailingZeros(toBitboard) ^ 56] - KING_MIDDLE_GAME_TABLE[Long.numberOfTrailingZeros(fromBitboard) ^ 56]; // we remove the value PSQT of the king that has been moved and we add the value PSQT of the new position of the king
+            if (((whiteCastleQueenSide != 0) && (C1 & toBitboard) != 0) || ((whiteCastleKingSide != 0) && (G1 & toBitboard) != 0)) {
+                // Handle castling for white
+                if (toBitboard == 1L << 2) {
+                processWhiteCastleQueenSide(fromBitboard);
+                } else if (toBitboard == 1L << 6) {
+                processWhiteCastleKingSide(fromBitboard);
                 }
+            } else {
+                whiteKing &= ~fromBitboard;
+                whiteKing |= toBitboard;
+
+                // Reset castling rights
+                whiteCastleQueenSide = 0L;
+                whiteCastleKingSide = 0L;
+
+                // Update evaluations for both phases
+                currentEvalMG += KING_MIDDLE_GAME_TABLE_MG[Long.numberOfTrailingZeros(toBitboard) ^ 56] - KING_MIDDLE_GAME_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
+                currentEvalEG += KING_END_GAME_TABLE_EG[Long.numberOfTrailingZeros(toBitboard) ^ 56] - KING_END_GAME_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
+            }
             }
         } else {
             handleCaptureBlack(toBitboard);
             // Pions noirs
             if ((blackPawns & fromBitboard) != 0) {
-    
-                // Handle en passant capture
-                if (PackedMove.getFlags(move) == Move.EN_PASSENT) {
-                    final long capturedPawn = enPassantSquare << 8;
-                    whitePawns &= ~capturedPawn;
+        
+            // Handle en passant capture
+            if (PackedMove.getFlags(move) == Move.EN_PASSENT) {
+                final long capturedPawn = enPassantSquare << 8;
+                whitePawns &= ~capturedPawn;
 
-                    // Move pawn
-                    blackPawns &= ~fromBitboard;
-                    blackPawns |= toBitboard;
+                // Move pawn
+                blackPawns &= ~fromBitboard;
+                blackPawns |= toBitboard;
 
-                    // Update currentEvaluation : in case of en passant capture
-                    currentEvaluation -= PAWN_TABLE[Long.numberOfTrailingZeros(toBitboard)] - PAWN_TABLE[Long.numberOfTrailingZeros(fromBitboard)]; // we remove the value PSQT of the pawn that has been moved and we add the value PSQT of the new position of the pawn
+                // Update evaluations for both phases
+                currentEvalMG -= PAWN_TABLE_MG[Long.numberOfTrailingZeros(toBitboard)] - PAWN_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard)];
+                currentEvalEG -= PAWN_TABLE_EG[Long.numberOfTrailingZeros(toBitboard)] - PAWN_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard)];
+            }
+        
+            // Handle double pawn push
+            if (PackedMove.getFlags(move) == Move.DOUBLE_PAWN_PUSH) {
+                enPassantSquare = toBitboard << 8;
+
+                // Move pawn
+                blackPawns &= ~fromBitboard;
+                blackPawns |= toBitboard;
+
+                // Update evaluations for both phases
+                currentEvalMG -= PAWN_TABLE_MG[Long.numberOfTrailingZeros(toBitboard)] - PAWN_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard)];
+                currentEvalEG -= PAWN_TABLE_EG[Long.numberOfTrailingZeros(toBitboard)] - PAWN_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard)];
+            } else {
+                enPassantSquare = 0L; // Reset en passant square
+
+                
+                // Handle promotion
+                if (PackedMove.getFlags(move) == Move.PROMOTION) {
+                switch (PackedMove.getPromotion(move)) {
+                    case KNIGHT:
+                    // Update evaluations for both phases
+                    currentEvalMG -= KNIGHT_SCORE + KNIGHT_TABLE_MG[Long.numberOfTrailingZeros(toBitboard)] - PAWN_SCORE - PAWN_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard)];
+                    currentEvalEG -= KNIGHT_SCORE + KNIGHT_TABLE_EG[Long.numberOfTrailingZeros(toBitboard)] - PAWN_SCORE - PAWN_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard)];
+                    phase += 1; // Knights add 1 to phase
+                    blackKnights |= toBitboard; 
+                    break;
+                    case BISHOP:
+                    // Update evaluations for both phases
+                    currentEvalMG -= BISHOP_SCORE + BISHOP_TABLE_MG[Long.numberOfTrailingZeros(toBitboard)] - PAWN_SCORE - PAWN_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard)];
+                    currentEvalEG -= BISHOP_SCORE + BISHOP_TABLE_EG[Long.numberOfTrailingZeros(toBitboard)] - PAWN_SCORE - PAWN_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard)];
+                    phase += 1; // Bishops add 1 to phase
+                    blackBishops |= toBitboard; 
+                    break;
+                    case ROOK:
+                    // Update evaluations for both phases
+                    currentEvalMG -= ROOK_SCORE + ROOK_TABLE_MG[Long.numberOfTrailingZeros(toBitboard)] - PAWN_SCORE - PAWN_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard)];
+                    currentEvalEG -= ROOK_SCORE + ROOK_TABLE_EG[Long.numberOfTrailingZeros(toBitboard)] - PAWN_SCORE - PAWN_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard)];
+                    phase += 2; // Rooks add 2 to phase
+                    blackRooks |= toBitboard; 
+                    break;
+                    case QUEEN:
+                    // Update evaluations for both phases
+                    currentEvalMG -= QUEEN_SCORE + QUEEN_TABLE_MG[Long.numberOfTrailingZeros(toBitboard)] - PAWN_SCORE - PAWN_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard)];
+                    currentEvalEG -= QUEEN_SCORE + QUEEN_TABLE_EG[Long.numberOfTrailingZeros(toBitboard)] - PAWN_SCORE - PAWN_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard)];
+                    phase += 4; // Queens add 4 to phase
+                    blackQueens |= toBitboard; 
+                    break;
                 }
-    
-                // Handle double pawn push
-                if (PackedMove.getFlags(move) == Move.DOUBLE_PAWN_PUSH) {
-                    enPassantSquare = toBitboard << 8;
 
-                    // Move pawn
-                    blackPawns &= ~fromBitboard;
-                    blackPawns |= toBitboard;
-
-                    // Update currentEvaluation : in case of double pawn push, we only change the PSQT value of the pawn that has been moved
-                    currentEvaluation -= PAWN_TABLE[Long.numberOfTrailingZeros(toBitboard)] - PAWN_TABLE[Long.numberOfTrailingZeros(fromBitboard)]; // we remove the value PSQT of the pawn that has been moved and we add the value PSQT of the new position of the pawn
-                } else {
-                    enPassantSquare = 0L; // Reset en passant square
-
-                    
-                    // Handle promotion
-                    if (PackedMove.getFlags(move) == Move.PROMOTION) {
-                        switch (PackedMove.getPromotion(move)) {
-                            case KNIGHT:
-                                // Update currentEvaluation : in case of promotion, we remove the value of the pawn and we add the value of the new piece
-                                currentEvaluation -= KNIGHT_SCORE + KNIGHT_TABLE[Long.numberOfTrailingZeros(toBitboard)] - PAWN_SCORE - PAWN_TABLE[Long.numberOfTrailingZeros(fromBitboard)];
-                                blackKnights |= toBitboard; break;
-                            case BISHOP:
-                                // Update currentEvaluation : in case of promotion, we remove the value of the pawn and we add the value of the new piece
-                                currentEvaluation -= BISHOP_SCORE + BISHOP_TABLE[Long.numberOfTrailingZeros(toBitboard)] - PAWN_SCORE - PAWN_TABLE[Long.numberOfTrailingZeros(fromBitboard)];
-                                blackBishops |= toBitboard; break;
-                            case ROOK:
-                                // Update currentEvaluation : in case of promotion, we remove the value of the pawn and we add the value of the new piece
-                                currentEvaluation -= ROOK_SCORE + ROOK_TABLE[Long.numberOfTrailingZeros(toBitboard)] - PAWN_SCORE - PAWN_TABLE[Long.numberOfTrailingZeros(fromBitboard)];
-                                blackRooks |= toBitboard; break;
-                            case QUEEN:
-                                // Update currentEvaluation : in case of promotion, we remove the value of the pawn and we add the value of the new piece
-                                currentEvaluation -= QUEEN_SCORE + QUEEN_TABLE[Long.numberOfTrailingZeros(toBitboard)] - PAWN_SCORE - PAWN_TABLE[Long.numberOfTrailingZeros(fromBitboard)];
-                                blackQueens |= toBitboard; break;
-                        }
-
-                        // remove pawn
-                        blackPawns &= ~fromBitboard;
-    
-                    }
-                    else{
-                        // Move pawn
-                        blackPawns &= ~fromBitboard;
-                        blackPawns |= toBitboard;
-
-                        // Update currentEvaluation : in case of normal move, we only change the PSQT value of the pawn that has been moved
-                        currentEvaluation -= PAWN_TABLE[Long.numberOfTrailingZeros(toBitboard)] - PAWN_TABLE[Long.numberOfTrailingZeros(fromBitboard)]; // we remove the value PSQT of the pawn that has been moved and we add the value PSQT of the new position of the pawn
-                    }
+                // remove pawn
+                blackPawns &= ~fromBitboard;
+        
                 }
-    
-    
-            // Cavaliers noirs
-            } else if ((blackKnights & fromBitboard) != 0) {
-                blackKnights &= ~fromBitboard;
-                blackKnights |= toBitboard;
+                else{
+                // Move pawn
+                blackPawns &= ~fromBitboard;
+                blackPawns |= toBitboard;
 
-                // Update currentEvaluation : in case of normal move, we only change the PSQT value of the knight that has been moved
-                currentEvaluation -= KNIGHT_TABLE[Long.numberOfTrailingZeros(toBitboard)] - KNIGHT_TABLE[Long.numberOfTrailingZeros(fromBitboard)]; // we remove the value PSQT of the knight that has been moved and we add the value PSQT of the new position of the knight
-    
-            // Fous noirs
-            } else if ((blackBishops & fromBitboard) != 0) {
-                blackBishops &= ~fromBitboard;
-                blackBishops |= toBitboard;
-
-                // Update currentEvaluation : in case of normal move, we only change the PSQT value of the bishop that has been moved
-                currentEvaluation -= BISHOP_TABLE[Long.numberOfTrailingZeros(toBitboard)] - BISHOP_TABLE[Long.numberOfTrailingZeros(fromBitboard)]; // we remove the value PSQT of the bishop that has been moved and we add the value PSQT of the new position of the bishop
-    
-            // Tours noires
-            } else if ((blackRooks & fromBitboard) != 0) {
-                if ((A8 & fromBitboard) != 0) blackCastleQueenSide = 0L;
-                if ((H8 & fromBitboard) != 0) blackCastleKingSide = 0L;
-                blackRooks &= ~fromBitboard;
-                blackRooks |= toBitboard;
-
-                // Update currentEvaluation : in case of normal move, we only change the PSQT value of the rook that has been moved
-                currentEvaluation -= ROOK_TABLE[Long.numberOfTrailingZeros(toBitboard)] - ROOK_TABLE[Long.numberOfTrailingZeros(fromBitboard)]; // we remove the value PSQT of the rook that has been moved and we add the value PSQT of the new position of the rook
-    
-            // Dames noires
-            } else if ((blackQueens & fromBitboard) != 0) {
-                blackQueens &= ~fromBitboard;
-                blackQueens |= toBitboard;
-
-                // Update currentEvaluation : in case of normal move, we only change the PSQT value of the queen that has been moved
-                currentEvaluation -= QUEEN_TABLE[Long.numberOfTrailingZeros(toBitboard)] - QUEEN_TABLE[Long.numberOfTrailingZeros(fromBitboard)]; // we remove the value PSQT of the queen that has been moved and we add the value PSQT of the new position of the queen
-    
-            // Roi noir
-            } else if ((blackKing & fromBitboard) != 0) {
-                if (((blackCastleQueenSide != 0) && (C8 & toBitboard) != 0) || ((blackCastleKingSide != 0) && (G8 & toBitboard) != 0)) {
-                    // Handle castling for black
-                    if (toBitboard == 1L << 58) {
-                        processBlackCastleQueenSide(fromBitboard);
-                    } else if (toBitboard == 1L << 62) {
-                        processBlackCastleKingSide(fromBitboard);
-                    }
-                } else {
-                    blackKing &= ~fromBitboard;
-                    blackKing |= toBitboard;
-
-                    // Reset castling rights
-                    blackCastleQueenSide = 0L;
-                    blackCastleKingSide = 0L;
-
-                    // Update currentEvaluation : in case of normal move, we only change the PSQT value of the king that has been moved
-                    currentEvaluation -= KING_MIDDLE_GAME_TABLE[Long.numberOfTrailingZeros(toBitboard)] - KING_MIDDLE_GAME_TABLE[Long.numberOfTrailingZeros(fromBitboard)]; // we remove the value PSQT of the king that has been moved and we add the value PSQT of the new position of the king
+                // Update evaluations for both phases
+                currentEvalMG -= PAWN_TABLE_MG[Long.numberOfTrailingZeros(toBitboard)] - PAWN_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard)];
+                currentEvalEG -= PAWN_TABLE_EG[Long.numberOfTrailingZeros(toBitboard)] - PAWN_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard)];
                 }
             }
+        
+        
+            // Cavaliers noirs
+            } else if ((blackKnights & fromBitboard) != 0) {
+            blackKnights &= ~fromBitboard;
+            blackKnights |= toBitboard;
+
+            // Update evaluations for both phases
+            currentEvalMG -= KNIGHT_TABLE_MG[Long.numberOfTrailingZeros(toBitboard)] - KNIGHT_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard)];
+            currentEvalEG -= KNIGHT_TABLE_EG[Long.numberOfTrailingZeros(toBitboard)] - KNIGHT_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard)];
+        
+            // Fous noirs
+            } else if ((blackBishops & fromBitboard) != 0) {
+            blackBishops &= ~fromBitboard;
+            blackBishops |= toBitboard;
+
+            // Update evaluations for both phases
+            currentEvalMG -= BISHOP_TABLE_MG[Long.numberOfTrailingZeros(toBitboard)] - BISHOP_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard)];
+            currentEvalEG -= BISHOP_TABLE_EG[Long.numberOfTrailingZeros(toBitboard)] - BISHOP_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard)];
+        
+            // Tours noires
+            } else if ((blackRooks & fromBitboard) != 0) {
+            if ((A8 & fromBitboard) != 0) blackCastleQueenSide = 0L;
+            if ((H8 & fromBitboard) != 0) blackCastleKingSide = 0L;
+            blackRooks &= ~fromBitboard;
+            blackRooks |= toBitboard;
+
+            // Update evaluations for both phases
+            currentEvalMG -= ROOK_TABLE_MG[Long.numberOfTrailingZeros(toBitboard)] - ROOK_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard)];
+            currentEvalEG -= ROOK_TABLE_EG[Long.numberOfTrailingZeros(toBitboard)] - ROOK_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard)];
+        
+            // Dames noires
+            } else if ((blackQueens & fromBitboard) != 0) {
+            blackQueens &= ~fromBitboard;
+            blackQueens |= toBitboard;
+
+            // Update evaluations for both phases
+            currentEvalMG -= QUEEN_TABLE_MG[Long.numberOfTrailingZeros(toBitboard)] - QUEEN_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard)];
+            currentEvalEG -= QUEEN_TABLE_EG[Long.numberOfTrailingZeros(toBitboard)] - QUEEN_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard)];
+        
+            // Roi noir
+            } else if ((blackKing & fromBitboard) != 0) {
+            if (((blackCastleQueenSide != 0) && (C8 & toBitboard) != 0) || ((blackCastleKingSide != 0) && (G8 & toBitboard) != 0)) {
+                // Handle castling for black
+                if (toBitboard == 1L << 58) {
+                processBlackCastleQueenSide(fromBitboard);
+                } else if (toBitboard == 1L << 62) {
+                processBlackCastleKingSide(fromBitboard);
+                }
+            } else {
+                blackKing &= ~fromBitboard;
+                blackKing |= toBitboard;
+
+                // Reset castling rights
+                blackCastleQueenSide = 0L;
+                blackCastleKingSide = 0L;
+
+                // Update evaluations for both phases
+                currentEvalMG -= KING_MIDDLE_GAME_TABLE_MG[Long.numberOfTrailingZeros(toBitboard)] - KING_MIDDLE_GAME_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard)];
+                currentEvalEG -= KING_END_GAME_TABLE_EG[Long.numberOfTrailingZeros(toBitboard)] - KING_END_GAME_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard)];
+            }
+            }
         }
-    
+        
         // Update turn and reset en passant square if not a double pawn push
         whiteTurn = !whiteTurn;
         if (PackedMove.getFlags(move) != Move.DOUBLE_PAWN_PUSH) {
             enPassantSquare = 0L;
         }
-    
+        
         // Update the bitboard representation
         updateBitBoard();
 
+        // Ensure phase doesn't exceed 24
+        phase = Math.min(phase, 24);
+        }
 
-    }
-
-    public void undoMove() {
+        public void undoMove() {
         if (!history.isEmpty()) {
             BoardHistory boardHistory = history.pop();
             restoreBoardHistory(boardHistory);
@@ -1391,125 +1550,149 @@ public class BitBoard {
         enPassantSquare = boardHistory.enPassantSquare;
         whiteTurn = boardHistory.whiteTurn;
 
-        currentEvaluation = boardHistory.currentEvaluation;
+        currentEvalMG = boardHistory.currentEvalMG;
+        currentEvalEG = boardHistory.currentEvalEG;
+
+        phase = boardHistory.phase;
         
         whitePieces = whitePawns | whiteKnights | whiteBishops | whiteRooks | whiteQueens | whiteKing;
         blackPieces = blackPawns | blackKnights | blackBishops | blackRooks | blackQueens | blackKing;
-    }
-    
-
-    public void handleCaptureWhite(long toBitboard) {
-        if ((blackPawns & toBitboard) != 0) {
+        }
+        
+        public void handleCaptureWhite(long toBitboard) {
+            if ((blackPawns & toBitboard) != 0) {
             blackPawns &= ~toBitboard;
-            currentEvaluation += PAWN_SCORE + PAWN_TABLE[Long.numberOfTrailingZeros(toBitboard)]; // we add the value of the black pawn to the evaluation and the position of the black pawn
-        } else if ((blackKnights & toBitboard) != 0) {
+            currentEvalMG += PAWN_SCORE + PAWN_TABLE_MG[Long.numberOfTrailingZeros(toBitboard)]; 
+            currentEvalEG += PAWN_SCORE + PAWN_TABLE_EG[Long.numberOfTrailingZeros(toBitboard)];
+            // phase -= 0; // Pawns don't contribute to phase
+            } else if ((blackKnights & toBitboard) != 0) {
             blackKnights &= ~toBitboard;
-            currentEvaluation += KNIGHT_SCORE + KNIGHT_TABLE[Long.numberOfTrailingZeros(toBitboard)]; // we add the value of the black knight to the evaluation and the position of the black knight
-        } else if ((blackBishops & toBitboard) != 0) {
+            currentEvalMG += KNIGHT_SCORE + KNIGHT_TABLE_MG[Long.numberOfTrailingZeros(toBitboard)]; 
+            currentEvalEG += KNIGHT_SCORE + KNIGHT_TABLE_EG[Long.numberOfTrailingZeros(toBitboard)];
+            phase -= 1; // Knights contribute 1 to phase
+            } else if ((blackBishops & toBitboard) != 0) {
             blackBishops &= ~toBitboard;
-            currentEvaluation += BISHOP_SCORE + BISHOP_TABLE[Long.numberOfTrailingZeros(toBitboard)]; // we add the value of the black bishop to the evaluation and the position of the black bishop
-        } else if ((blackRooks & toBitboard) != 0) {
+            currentEvalMG += BISHOP_SCORE + BISHOP_TABLE_MG[Long.numberOfTrailingZeros(toBitboard)]; 
+            currentEvalEG += BISHOP_SCORE + BISHOP_TABLE_EG[Long.numberOfTrailingZeros(toBitboard)];
+            phase -= 1; // Bishops contribute 1 to phase
+            } else if ((blackRooks & toBitboard) != 0) {
             blackRooks &= ~toBitboard;
-            currentEvaluation += ROOK_SCORE + ROOK_TABLE[Long.numberOfTrailingZeros(toBitboard)]; // we add the value of the black rook to the evaluation and the position of the black rook
-        } else if ((blackQueens & toBitboard) != 0) {
+            currentEvalMG += ROOK_SCORE + ROOK_TABLE_MG[Long.numberOfTrailingZeros(toBitboard)]; 
+            currentEvalEG += ROOK_SCORE + ROOK_TABLE_EG[Long.numberOfTrailingZeros(toBitboard)];
+            phase -= 2; // Rooks contribute 2 to phase
+            } else if ((blackQueens & toBitboard) != 0) {
             blackQueens &= ~toBitboard;
-            currentEvaluation += QUEEN_SCORE + QUEEN_TABLE[Long.numberOfTrailingZeros(toBitboard)]; // we add the value of the black queen to the evaluation and the position of the black queen
-        } else if ((blackKing & toBitboard) != 0) {
-            blackKing &= ~toBitboard;
-            currentEvaluation += KING_SCORE + KING_MIDDLE_GAME_TABLE[Long.numberOfTrailingZeros(toBitboard)]; // we add the value of the black king to the evaluation and the position of the black king
+            currentEvalMG += QUEEN_SCORE + QUEEN_TABLE_MG[Long.numberOfTrailingZeros(toBitboard)]; 
+            currentEvalEG += QUEEN_SCORE + QUEEN_TABLE_EG[Long.numberOfTrailingZeros(toBitboard)];
+            phase -= 4; // Queens contribute 4 to phase
+            }
         }
-    }
 
-    public void handleCaptureBlack(long toBitboard) {
-        if ((whitePawns & toBitboard) != 0) {
+        public void handleCaptureBlack(long toBitboard) {
+            if ((whitePawns & toBitboard) != 0) {
             whitePawns &= ~toBitboard;
-            currentEvaluation -= PAWN_SCORE + PAWN_TABLE[Long.numberOfTrailingZeros(toBitboard) ^ 56]; // we add the value of the white pawn to the evaluation and the position of the white pawn
-        } else if ((whiteKnights & toBitboard) != 0) {
+            currentEvalMG -= PAWN_SCORE + PAWN_TABLE_MG[Long.numberOfTrailingZeros(toBitboard) ^ 56]; 
+            currentEvalEG -= PAWN_SCORE + PAWN_TABLE_EG[Long.numberOfTrailingZeros(toBitboard) ^ 56];
+            // phase -= 0; // Pawns don't contribute to phase
+            } else if ((whiteKnights & toBitboard) != 0) {
             whiteKnights &= ~toBitboard;
-            currentEvaluation -= KNIGHT_SCORE + KNIGHT_TABLE[Long.numberOfTrailingZeros(toBitboard) ^ 56]; // we add the value of the white knight to the evaluation and the position of the white knight
-        } else if ((whiteBishops & toBitboard) != 0) {
+            currentEvalMG -= KNIGHT_SCORE + KNIGHT_TABLE_MG[Long.numberOfTrailingZeros(toBitboard) ^ 56]; 
+            currentEvalEG -= KNIGHT_SCORE + KNIGHT_TABLE_EG[Long.numberOfTrailingZeros(toBitboard) ^ 56];
+            phase -= 1; // Knights contribute 1 to phase
+            } else if ((whiteBishops & toBitboard) != 0) {
             whiteBishops &= ~toBitboard;
-            currentEvaluation -= BISHOP_SCORE + BISHOP_TABLE[Long.numberOfTrailingZeros(toBitboard) ^ 56]; // we add the value of the white bishop to the evaluation and the position of the white bishop
-        } else if ((whiteRooks & toBitboard) != 0) {
+            currentEvalMG -= BISHOP_SCORE + BISHOP_TABLE_MG[Long.numberOfTrailingZeros(toBitboard) ^ 56]; 
+            currentEvalEG -= BISHOP_SCORE + BISHOP_TABLE_EG[Long.numberOfTrailingZeros(toBitboard) ^ 56];
+            phase -= 1; // Bishops contribute 1 to phase
+            } else if ((whiteRooks & toBitboard) != 0) {
             whiteRooks &= ~toBitboard;
-            currentEvaluation -= ROOK_SCORE + ROOK_TABLE[Long.numberOfTrailingZeros(toBitboard) ^ 56]; // we add the value of the white rook to the evaluation and the position of the white rook
-        } else if ((whiteQueens & toBitboard) != 0) {
+            currentEvalMG -= ROOK_SCORE + ROOK_TABLE_MG[Long.numberOfTrailingZeros(toBitboard) ^ 56]; 
+            currentEvalEG -= ROOK_SCORE + ROOK_TABLE_EG[Long.numberOfTrailingZeros(toBitboard) ^ 56];
+            phase -= 2; // Rooks contribute 2 to phase
+            } else if ((whiteQueens & toBitboard) != 0) {
             whiteQueens &= ~toBitboard;
-            currentEvaluation -= QUEEN_SCORE + QUEEN_TABLE[Long.numberOfTrailingZeros(toBitboard) ^ 56]; // we add the value of the white queen to the evaluation and the position of the white queen
-        } else if ((whiteKing & toBitboard) != 0) {
-            whiteKing &= ~toBitboard;
-            currentEvaluation -= KING_SCORE + KING_MIDDLE_GAME_TABLE[Long.numberOfTrailingZeros(toBitboard) ^ 56]; // we add the value of the white king to the evaluation and the position of the white king
+            currentEvalMG -= QUEEN_SCORE + QUEEN_TABLE_MG[Long.numberOfTrailingZeros(toBitboard) ^ 56]; 
+            currentEvalEG -= QUEEN_SCORE + QUEEN_TABLE_EG[Long.numberOfTrailingZeros(toBitboard) ^ 56];
+            phase -= 4; // Queens contribute 4 to phase
+            }
         }
-    }
 
-    
-    public void processWhiteCastleKingSide(long fromBitboard) {
-        // Roque du côté du roi
-        whiteKing &= ~fromBitboard;
-        whiteKing |= 1L << 6;
-        whiteRooks &= ~(1L << 7);
-        whiteRooks |= 1L << 5;
+            
+        public void processWhiteCastleKingSide(long fromBitboard) {
+            // Roque du côté du roi
+            whiteKing &= ~fromBitboard;
+            whiteKing |= 1L << 6;
+            whiteRooks &= ~(1L << 7);
+            whiteRooks |= 1L << 5;
 
-        whiteCastleKingSide = 0L;
-        whiteCastleQueenSide = 0L;
+            whiteCastleKingSide = 0L;
+            whiteCastleQueenSide = 0L;
 
-        // update currentEvaluation : in case of castling, we remove the value PSQT of the king that has been moved and we add the value PSQT of the new position of the king
-        currentEvaluation += KING_MIDDLE_GAME_TABLE[Long.numberOfTrailingZeros(whiteKing) ^ 56] - KING_MIDDLE_GAME_TABLE[Long.numberOfTrailingZeros(fromBitboard) ^ 56]; // we remove the value PSQT of the king that has been moved and we add the value PSQT of the new position of the king
+            // Update evaluations for both phases
+            currentEvalMG += KING_MIDDLE_GAME_TABLE_MG[Long.numberOfTrailingZeros(whiteKing) ^ 56] - KING_MIDDLE_GAME_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
+            currentEvalEG += KING_END_GAME_TABLE_EG[Long.numberOfTrailingZeros(whiteKing) ^ 56] - KING_END_GAME_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
 
-        // update currentEvaluation : in case of castling, we remove the value PSQT of the rook that has been moved and we add the value PSQT of the new position of the rook
-        currentEvaluation += ROOK_TABLE[Long.numberOfTrailingZeros(whiteRooks) ^ 56] - ROOK_TABLE[Long.numberOfTrailingZeros(fromBitboard) ^ 56]; // we remove the value PSQT of the rook that has been moved and we add the value PSQT of the new position of the rook
-    }
+            // Update evaluations for rook
+            currentEvalMG += ROOK_TABLE_MG[Long.numberOfTrailingZeros(whiteRooks & (1L << 5)) ^ 56] - ROOK_TABLE_MG[7 ^ 56];
+            currentEvalEG += ROOK_TABLE_EG[Long.numberOfTrailingZeros(whiteRooks & (1L << 5)) ^ 56] - ROOK_TABLE_EG[7 ^ 56];
+            }
 
-    public void processWhiteCastleQueenSide(long fromBitboard) {
-        // Roque du côté de la reine
-        whiteKing &= ~fromBitboard;
-        whiteKing |= 1L << 2;
-        whiteRooks &= ~(1L << 0);
-        whiteRooks |= 1L << 3;
+            public void processWhiteCastleQueenSide(long fromBitboard) {
+            // Roque du côté de la reine
+            whiteKing &= ~fromBitboard;
+            whiteKing |= 1L << 2;
+            whiteRooks &= ~(1L << 0);
+            whiteRooks |= 1L << 3;
 
-        whiteCastleKingSide = 0L;
-        whiteCastleQueenSide = 0L;
+            whiteCastleKingSide = 0L;
+            whiteCastleQueenSide = 0L;
 
-        // update currentEvaluation : in case of castling, we remove the value PSQT of the king that has been moved and we add the value PSQT of the new position of the king
-        currentEvaluation += KING_MIDDLE_GAME_TABLE[Long.numberOfTrailingZeros(whiteKing) ^ 56] - KING_MIDDLE_GAME_TABLE[Long.numberOfTrailingZeros(fromBitboard) ^ 56]; // we remove the value PSQT of the king that has been moved and we add the value PSQT of the new position of the king
+            // Update evaluations for both phases
+            currentEvalMG += KING_MIDDLE_GAME_TABLE_MG[Long.numberOfTrailingZeros(whiteKing) ^ 56] - KING_MIDDLE_GAME_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
+            currentEvalEG += KING_END_GAME_TABLE_EG[Long.numberOfTrailingZeros(whiteKing) ^ 56] - KING_END_GAME_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
 
-        // update currentEvaluation : in case of castling, we remove the value PSQT of the rook that has been moved and we add the value PSQT of the new position of the rook
-        currentEvaluation += ROOK_TABLE[Long.numberOfTrailingZeros(whiteRooks) ^ 56] - ROOK_TABLE[Long.numberOfTrailingZeros(fromBitboard) ^ 56]; // we remove the value PSQT of the rook that has been moved and we add the value PSQT of the new position of the rook
-    }
+            // Update evaluations for rook
+            currentEvalMG += ROOK_TABLE_MG[Long.numberOfTrailingZeros(whiteRooks & (1L << 3)) ^ 56] - ROOK_TABLE_MG[0 ^ 56];
+            currentEvalEG += ROOK_TABLE_EG[Long.numberOfTrailingZeros(whiteRooks & (1L << 3)) ^ 56] - ROOK_TABLE_EG[0 ^ 56];
+            }
 
-    public void processBlackCastleKingSide(long fromBitboard) {
-        // Roque du côté du roi
-        blackKing &= ~fromBitboard;
-        blackKing |= 1L << 62;
-        blackRooks &= ~(1L << 63);
-        blackRooks |= 1L << 61;
+            public void processBlackCastleKingSide(long fromBitboard) {
+            // Roque du côté du roi
+            blackKing &= ~fromBitboard;
+            blackKing |= 1L << 62;
+            blackRooks &= ~(1L << 63);
+            blackRooks |= 1L << 61;
 
-        blackCastleKingSide = 0L;
-        blackCastleQueenSide = 0L;
+            blackCastleKingSide = 0L;
+            blackCastleQueenSide = 0L;
 
-        // update currentEvaluation : in case of castling, we remove the value PSQT of the king that has been moved and we add the value PSQT of the new position of the king
-        currentEvaluation -= KING_MIDDLE_GAME_TABLE[Long.numberOfTrailingZeros(blackKing)] - KING_MIDDLE_GAME_TABLE[Long.numberOfTrailingZeros(fromBitboard)]; // we remove the value PSQT of the king that has been moved and we add the value PSQT of the new position of the king
+            // Update evaluations for both phases
+            currentEvalMG -= KING_MIDDLE_GAME_TABLE_MG[Long.numberOfTrailingZeros(blackKing)] - KING_MIDDLE_GAME_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard)];
+            currentEvalEG -= KING_END_GAME_TABLE_EG[Long.numberOfTrailingZeros(blackKing)] - KING_END_GAME_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard)];
 
-        // update currentEvaluation : in case of castling, we remove the value PSQT of the rook that has been moved and we add the value PSQT of the new position of the rook
-        currentEvaluation -= ROOK_TABLE[Long.numberOfTrailingZeros(blackRooks)] - ROOK_TABLE[Long.numberOfTrailingZeros(fromBitboard)]; // we remove the value PSQT of the rook that has been moved and we add the value PSQT of the new position of the rook
-    }
+            // Update evaluations for rook
+            currentEvalMG -= ROOK_TABLE_MG[Long.numberOfTrailingZeros(blackRooks & (1L << 61))] - ROOK_TABLE_MG[63];
+            currentEvalEG -= ROOK_TABLE_EG[Long.numberOfTrailingZeros(blackRooks & (1L << 61))] - ROOK_TABLE_EG[63];
+            }
 
-    public void processBlackCastleQueenSide(long fromBitboard) {
-        // Roque du côté de la reine
-        blackKing &= ~fromBitboard;
-        blackKing |= 1L << 58;
-        blackRooks &= ~(1L << 56);
-        blackRooks |= 1L << 59;
+            public void processBlackCastleQueenSide(long fromBitboard) {
+            // Roque du côté de la reine
+            blackKing &= ~fromBitboard;
+            blackKing |= 1L << 58;
+            blackRooks &= ~(1L << 56);
+            blackRooks |= 1L << 59;
 
-        blackCastleKingSide = 0L;
-        blackCastleQueenSide = 0L;
+            blackCastleKingSide = 0L;
+            blackCastleQueenSide = 0L;
 
-        // update currentEvaluation : in case of castling, we remove the value PSQT of the king that has been moved and we add the value PSQT of the new position of the king
-        currentEvaluation -= KING_MIDDLE_GAME_TABLE[Long.numberOfTrailingZeros(blackKing)] - KING_MIDDLE_GAME_TABLE[Long.numberOfTrailingZeros(fromBitboard)]; // we remove the value PSQT of the king that has been moved and we add the value PSQT of the new position of the king
+            // Update evaluations for both phases
+            currentEvalMG -= KING_MIDDLE_GAME_TABLE_MG[Long.numberOfTrailingZeros(blackKing)] - KING_MIDDLE_GAME_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard)];
+            currentEvalEG -= KING_END_GAME_TABLE_EG[Long.numberOfTrailingZeros(blackKing)] - KING_END_GAME_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard)];
 
-        // update currentEvaluation : in case of castling, we remove the value PSQT of the rook that has been moved and we add the value PSQT of the new position of the rook
-        currentEvaluation -= ROOK_TABLE[Long.numberOfTrailingZeros(blackRooks)] - ROOK_TABLE[Long.numberOfTrailingZeros(fromBitboard)]; // we remove the value PSQT of the rook that has been moved and we add the value PSQT of the new position of the rook
-    }
+            // Update evaluations for rook
+            currentEvalMG -= ROOK_TABLE_MG[Long.numberOfTrailingZeros(blackRooks & (1L << 59))] - ROOK_TABLE_MG[56];
+            currentEvalEG -= ROOK_TABLE_EG[Long.numberOfTrailingZeros(blackRooks & (1L << 59))] - ROOK_TABLE_EG[56];
+        }
 
     // public Move makeRandomMove() {
     //     MoveList moveList = getLegalMoves();
@@ -1563,6 +1746,7 @@ public class BitBoard {
             System.out.println("Move: " + moveLong);
             makeMove(moveLong);
         }
+
     }
 
     // pseudo legal
@@ -1888,7 +2072,59 @@ public class BitBoard {
         }
     }
 
-    
+    public long getZobristKey() {
+        long hash = 0;
+
+        for (int square = 0; square < 64; square++) {
+            int piece = getPieceAt(square); // 0-11 (ex: 0 = white pawn, 1 = white knight, ..., 11 = black king)
+            if (piece != -1) {
+                hash ^= Zobrist.PIECE_KEYS[piece][square];
+            }
+        }
+
+        // Trait (blanc ou noir)
+        if (!whiteTurn) {
+            hash ^= Zobrist.SIDE_TO_MOVE_KEY;
+        }
+
+        // Roque
+        int castlingRights = getCastlingRights(); // Ex: 0b1111 = tous les roques possibles
+        hash ^= Zobrist.CASTLING_KEYS[castlingRights];
+
+        // En passant
+        int epFile = getEnPassantFile(); // -1 si pas de case en passant
+        if (epFile >= 0) {
+            hash ^= Zobrist.EN_PASSANT_KEYS[epFile];
+        }
+
+        return hash;
+    }
+
+    public int getEnPassantFile() {
+        if (enPassantSquare == 0) {
+            return -1; // Pas de case en passant
+        } else {
+            return Long.numberOfTrailingZeros(enPassantSquare) % 8; // Ex: 0b
+        }
+    }
+
+    private int getCastlingRights() {
+        int rights = 0;
+        if (whiteCastleKingSide != 0) {
+            rights |= 1; // Droit de roque du côté du roi
+        }
+        if (whiteCastleQueenSide != 0) {
+            rights |= 2; // Droit de roque du côté de la reine
+        }
+        if (blackCastleKingSide != 0) {
+            rights |= 4; // Droit de roque du côté du roi
+        }
+        if (blackCastleQueenSide != 0) {
+            rights |= 8; // Droit de roque du côté de la reine
+        }
+        return rights;
+    }
+
 
 
 }

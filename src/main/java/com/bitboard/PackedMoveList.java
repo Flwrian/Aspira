@@ -50,6 +50,19 @@ public class PackedMoveList {
             }
         }
     }
+
+    // hash move
+    public void prioritize(long move) {
+        for (int i = 0; i < size; i++) {
+            if (moves[i] == move) {
+                // Swap avec le premier
+                long tmp = moves[0];
+                moves[0] = moves[i];
+                moves[i] = tmp;
+                return;
+            }
+        }
+    }
     
     @Override
     public String toString() {

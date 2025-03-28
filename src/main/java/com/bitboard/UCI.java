@@ -24,6 +24,7 @@ public class UCI {
     // private static Engine engine;
     static Engine engine = new Engine(board);
     
+    private static int nbCommands = 0;
 
     public static void main(String[] args) {
 
@@ -78,6 +79,8 @@ public class UCI {
                 System.out.println("An error occurred.");
                 e.printStackTrace();
             }
+            // System.out.println(input);
+            nbCommands++;
             switch(command){
                 case "uci":
                     uci();
@@ -240,12 +243,11 @@ public class UCI {
             
             // go wtime <> btime <> winc <> binc <> movestogo <>
             int depth = 11;
-            int time = 0;
             int wtime = 10000;
             int btime = 10000;
             int winc = 0;
             int binc = 0;
-            int movestogo = 0;
+            int movetime = 0;
 
             for(int i = 1; i < inputArray.length; i++){
                 if(inputArray[i].equals("depth")){
@@ -263,8 +265,8 @@ public class UCI {
                 else if(inputArray[i].equals("binc")){
                     binc = Integer.parseInt(inputArray[i + 1]);
                 }
-                else if(inputArray[i].equals("movestogo")){
-                    movestogo = Integer.parseInt(inputArray[i + 1]);
+                else if(inputArray[i].equals("movetime")){
+                    movetime = Integer.parseInt(inputArray[i + 1]);
                 }
             }
 
@@ -273,12 +275,12 @@ public class UCI {
             engine.setDepth(depth);
             // Start time 
             long startTime = System.currentTimeMillis();
-            Move move = engine.getAlgorithm().search(board, wtime, btime, winc, binc, movestogo, depth);
+            Move move = engine.getAlgorithm().search(board, wtime, btime, winc, binc, movetime, depth);
             long endTime = System.currentTimeMillis();
             long ftime = endTime - startTime;
             // Print the time taken
-            System.out.println("Time taken: " + ftime + "ms");
-            System.out.println("bestmove " + move.toString());
+            // System.out.println("Time taken: " + ftime + "ms");
+            // System.out.println("bestmove " + move.toString());
 
             
     
@@ -325,7 +327,9 @@ public class UCI {
             for(int i = 0; i < inputArray.length; i++){
                 if(inputArray[i].equals("moves")){
                     for(int j = i + 1; j < inputArray.length; j++){
-                        board.makeMove(inputArray[j]);
+                        // If en passant move, we set the flag
+                        Move move = new Move(inputArray[j], board);
+                        board.makeMove(PackedMove.encode(move));
                     }
                 }
             }

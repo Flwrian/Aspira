@@ -121,6 +121,20 @@ public final class Move {
         this.pieceTo = board.getPiece(to);
         this.isWhite = board.whiteTurn;
 
+        // check if double pawn push
+        if (pieceFrom == BitBoard.PAWN && Math.abs(from - to) == 16) {
+            this.type = DOUBLE_PAWN_PUSH;
+            return;
+        }
+
+        // check if the move is en passant
+        if ((pieceFrom == 1 || pieceFrom == 7) && pieceTo == 0) {
+            // check if the move is en passant
+            if (Long.numberOfTrailingZeros(board.enPassantSquare) == to) {
+                this.type = EN_PASSENT;
+                return;
+            }
+        }
 
         // if piece from is king and it tries to move two squares, it is a castling move
         //! ce code pue sa mere va falloir le changer

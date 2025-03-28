@@ -1,25 +1,23 @@
 package com.bitboard.algorithms;
 
-import com.bitboard.Move;
-
 import java.util.HashMap;
 
 public class TranspositionTable {
-    private final HashMap<Long, TranspositionTableEntry> table;
+    private final HashMap<Long, TranspositionTableEntry> table = new HashMap<>();
 
-    public TranspositionTable() {
-        table = new HashMap<>();
+    public void put(long key, TranspositionTableEntry entry) {
+        table.put(key, entry);
     }
 
-    public void store(long zobristHash, int depth, int score, byte nodeType, Move bestMove) {
-        table.put(zobristHash, new TranspositionTableEntry(zobristHash, depth, score, nodeType, bestMove));
+    public TranspositionTableEntry get(long key) {
+        return table.get(key);
     }
 
-    public TranspositionTableEntry probe(long zobristHash) {
-        return table.get(zobristHash);
+    public boolean contains(long key) {
+        return table.containsKey(key);
     }
 
-    public boolean contains(long zobristHash) {
-        return table.containsKey(zobristHash);
+    public void clear() {
+        table.clear();
     }
 }

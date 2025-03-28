@@ -3,7 +3,7 @@
   <dontWrapJar>false</dontWrapJar>
   <headerType>console</headerType>
   <jar>C:\Users\flofl\Desktop\Code\chess-java\JavaChessEngine\target\demo-1-jar-with-dependencies.jar</jar>
-  <outfile>C:\Users\flofl\Desktop\Code\chess-java\JavaChessEngine\Aspira2.exe</outfile>
+  <outfile>C:\Users\flofl\Desktop\Code\chess-java\JavaChessEngine\Aspira_dev.exe</outfile>
   <errTitle></errTitle>
   <cmdLine></cmdLine>
   <chdir>.</chdir>
