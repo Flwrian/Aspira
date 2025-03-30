@@ -336,6 +336,7 @@ public class UCI {
         } else if (inputArray[1].equals("startpos")) {
             // Load the starting position
             board = new BitBoard();
+            board.loadFromFen(STARTING_POSITION);
 
             // Make the moves
             for(int i = 0; i < inputArray.length; i++){

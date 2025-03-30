@@ -34,12 +34,16 @@ public class BitBoard {
     public long whiteCastleKingSide;
     public long blackCastleQueenSide;
     public long blackCastleKingSide;
-    
+
     public long enPassantSquare;
 
+    // === EVAL ===
     public int currentEvalMG;
     public int currentEvalEG;
     public int phase;
+
+    // === ZobristKey ===
+    public long zobristKey;
 
     // valid
     public static final long RANK_1 = 0x00000000000000FFL;
@@ -135,313 +139,308 @@ public class BitBoard {
 
     // map each square e.g A1 -> 0
     public static final long[] SQUARES_MAP = {
-        A1, B1, C1, D1, E1, F1, G1, H1,
-        A2, B2, C2, D2, E2, F2, G2, H2,
-        A3, B3, C3, D3, E3, F3, G3, H3,
-        A4, B4, C4, D4, E4, F4, G4, H4,
-        A5, B5, C5, D5, E5, F5, G5, H5,
-        A6, B6, C6, D6, E6, F6, G6, H6,
-        A7, B7, C7, D7, E7, F7, G7, H7,
-        A8, B8, C8, D8, E8, F8, G8, H8
+            A1, B1, C1, D1, E1, F1, G1, H1,
+            A2, B2, C2, D2, E2, F2, G2, H2,
+            A3, B3, C3, D3, E3, F3, G3, H3,
+            A4, B4, C4, D4, E4, F4, G4, H4,
+            A5, B5, C5, D5, E5, F5, G5, H5,
+            A6, B6, C6, D6, E6, F6, G6, H6,
+            A7, B7, C7, D7, E7, F7, G7, H7,
+            A8, B8, C8, D8, E8, F8, G8, H8
     };
 
     public static final int[] SQUARES_INDEX_MAP = {
-        0, 1, 2, 3, 4, 5, 6, 7,
-        8, 9, 10, 11, 12, 13, 14, 15,
-        16, 17, 18, 19, 20, 21, 22, 23,
-        24, 25, 26, 27, 28, 29, 30, 31,
-        32, 33, 34, 35, 36, 37, 38, 39,
-        40, 41, 42, 43, 44, 45, 46, 47,
-        48, 49, 50, 51, 52, 53, 54, 55,
-        56, 57, 58, 59, 60, 61, 62, 63
+            0, 1, 2, 3, 4, 5, 6, 7,
+            8, 9, 10, 11, 12, 13, 14, 15,
+            16, 17, 18, 19, 20, 21, 22, 23,
+            24, 25, 26, 27, 28, 29, 30, 31,
+            32, 33, 34, 35, 36, 37, 38, 39,
+            40, 41, 42, 43, 44, 45, 46, 47,
+            48, 49, 50, 51, 52, 53, 54, 55,
+            56, 57, 58, 59, 60, 61, 62, 63
     };
 
     // knight pre-encoded moves
     public static final long[] KNIGHT_MOVES = {
-        ( B3 | C2), // A1
-        ( C3 | D2 | A3), // B1 
-        ( D3 | E2 | A2 | B3), // C1
-        ( E3 | F2 | B2 | C3), // D1
-        ( F3 | G2 | C2 | D3), // E1
-        ( G3 | H2 | D2 | E3), // F1
-        ( H3 | E2 | F3), // G1
-        ( F2 | G3), // H1
+            (B3 | C2), // A1
+            (C3 | D2 | A3), // B1
+            (D3 | E2 | A2 | B3), // C1
+            (E3 | F2 | B2 | C3), // D1
+            (F3 | G2 | C2 | D3), // E1
+            (G3 | H2 | D2 | E3), // F1
+            (H3 | E2 | F3), // G1
+            (F2 | G3), // H1
 
-        ( B4 | C3 | C1),
-        ( C4 | D3 | D1 | A4),
-        ( D4 | E3 | E1 | A1 | A3 | B4),
-        ( E4 | F3 | F1 | B1 | B3 | C4),
-        ( F4 | G3 | G1 | C1 | C3 | D4),
-        ( G4 | H3 | H1 | D1 | D3 | E4),
-        ( H4 | E1 | E3 | F4),
-        ( F1 | F3 | G4),
+            (B4 | C3 | C1),
+            (C4 | D3 | D1 | A4),
+            (D4 | E3 | E1 | A1 | A3 | B4),
+            (E4 | F3 | F1 | B1 | B3 | C4),
+            (F4 | G3 | G1 | C1 | C3 | D4),
+            (G4 | H3 | H1 | D1 | D3 | E4),
+            (H4 | E1 | E3 | F4),
+            (F1 | F3 | G4),
 
-        ( B5 | C4 | C2 | B1),
-        ( C5 | D4 | D2 | C1 | A1 | A5),
-        ( D5 | E4 | E2 | D1 | B1 | A2 | A4 | B5),
-        ( E5 | F4 | F2 | E1 | C1 | B2 | B4 | C5),
-        ( F5 | G4 | G2 | F1 | D1 | C2 | C4 | D5),
-        ( G5 | H4 | H2 | G1 | E1 | D2 | D4 | E5),
-        ( H5 | H1 | F1 | E2 | E4 | F5),
-        ( G1 | F2 | F4 | G5),
+            (B5 | C4 | C2 | B1),
+            (C5 | D4 | D2 | C1 | A1 | A5),
+            (D5 | E4 | E2 | D1 | B1 | A2 | A4 | B5),
+            (E5 | F4 | F2 | E1 | C1 | B2 | B4 | C5),
+            (F5 | G4 | G2 | F1 | D1 | C2 | C4 | D5),
+            (G5 | H4 | H2 | G1 | E1 | D2 | D4 | E5),
+            (H5 | H1 | F1 | E2 | E4 | F5),
+            (G1 | F2 | F4 | G5),
 
-        ( B6 | C5 | C3 | B2),
-        ( C6 | D5 | D3 | C2 | A2 | A6),
-        ( D6 | E5 | E3 | D2 | B2 | A3 | A5 | B6),
-        ( E6 | F5 | F3 | E2 | C2 | B3 | B5 | C6),
-        ( F6 | G5 | G3 | F2 | D2 | C3 | C5 | D6),
-        ( G6 | H5 | H3 | G2 | E2 | D3 | D5 | E6),
-        ( H6 | H2 | F2 | E3 | E5 | F6),
-        ( G2 | F3 | F5 | G6),
+            (B6 | C5 | C3 | B2),
+            (C6 | D5 | D3 | C2 | A2 | A6),
+            (D6 | E5 | E3 | D2 | B2 | A3 | A5 | B6),
+            (E6 | F5 | F3 | E2 | C2 | B3 | B5 | C6),
+            (F6 | G5 | G3 | F2 | D2 | C3 | C5 | D6),
+            (G6 | H5 | H3 | G2 | E2 | D3 | D5 | E6),
+            (H6 | H2 | F2 | E3 | E5 | F6),
+            (G2 | F3 | F5 | G6),
 
-        ( B7 | C6 | C4 | B3),
-        ( C7 | D6 | D4 | C3 | A3 | A7),
-        ( D7 | E6 | E4 | D3 | B3 | A4 | A6 | B7),
-        ( E7 | F6 | F4 | E3 | C3 | B4 | B6 | C7),
-        ( F7 | G6 | G4 | F3 | D3 | C4 | C6 | D7),
-        ( G7 | H6 | H4 | G3 | E3 | D4 | D6 | E7),
-        ( H7 | H3 | F3 | E4 | E6 | F7),
-        ( G3 | F4 | F6 | G7),
+            (B7 | C6 | C4 | B3),
+            (C7 | D6 | D4 | C3 | A3 | A7),
+            (D7 | E6 | E4 | D3 | B3 | A4 | A6 | B7),
+            (E7 | F6 | F4 | E3 | C3 | B4 | B6 | C7),
+            (F7 | G6 | G4 | F3 | D3 | C4 | C6 | D7),
+            (G7 | H6 | H4 | G3 | E3 | D4 | D6 | E7),
+            (H7 | H3 | F3 | E4 | E6 | F7),
+            (G3 | F4 | F6 | G7),
 
-        ( B8 | C7 | C5 | B4),
-        ( C8 | D7 | D5 | C4 | A4 | A8),
-        ( D8 | E7 | E5 | D4 | B4 | A5 | A7 | B8),
-        ( E8 | F7 | F5 | E4 | C4 | B5 | B7 | C8),
-        ( F8 | G7 | G5 | F4 | D4 | C5 | C7 | D8),
-        ( G8 | H7 | H5 | G4 | E4 | D5 | D7 | E8),
-        ( H8 | H4 | F4 | E5 | E7 | F8),
-        ( G4 | F5 | F7 | G8),
+            (B8 | C7 | C5 | B4),
+            (C8 | D7 | D5 | C4 | A4 | A8),
+            (D8 | E7 | E5 | D4 | B4 | A5 | A7 | B8),
+            (E8 | F7 | F5 | E4 | C4 | B5 | B7 | C8),
+            (F8 | G7 | G5 | F4 | D4 | C5 | C7 | D8),
+            (G8 | H7 | H5 | G4 | E4 | D5 | D7 | E8),
+            (H8 | H4 | F4 | E5 | E7 | F8),
+            (G4 | F5 | F7 | G8),
 
-        ( C8 | C6 | B5),
-        ( D8 | D6 | C5 | A5),
-        ( E8 | E6 | D5 | B5 | A6 | A8),
-        ( F8 | F6 | E5 | C5 | B6 | B8),
-        ( G8 | G6 | F5 | D5 | C6 | C8),
-        ( H8 | H6 | G5 | E5 | D6 | D8),
-        ( H5 | F5 | E6 | E8), 
-        ( G5 | F6 | F8),
+            (C8 | C6 | B5),
+            (D8 | D6 | C5 | A5),
+            (E8 | E6 | D5 | B5 | A6 | A8),
+            (F8 | F6 | E5 | C5 | B6 | B8),
+            (G8 | G6 | F5 | D5 | C6 | C8),
+            (H8 | H6 | G5 | E5 | D6 | D8),
+            (H5 | F5 | E6 | E8),
+            (G5 | F6 | F8),
 
-        ( C7 | B6),
-        ( D7 | C6 | A6),
-        ( E7 | D6 | B6 | A7),
-        ( F7 | E6 | C6 | B7),
-        ( G7 | F6 | D6 | C7),
-        ( H7 | G6 | E6 | D7),
-        ( H6 | F6 | E7),
-        ( G6 | F7)
+            (C7 | B6),
+            (D7 | C6 | A6),
+            (E7 | D6 | B6 | A7),
+            (F7 | E6 | C6 | B7),
+            (G7 | F6 | D6 | C7),
+            (H7 | G6 | E6 | D7),
+            (H6 | F6 | E7),
+            (G6 | F7)
     };
 
     // king pre-encoded moves
     public static final long[] KING_MOVES = {
-        (B1 | B2 | A2), // A1
-        (A1 | C1 | C2 | A2 | B2), // B1
-        (B1 | D1 | D2 | B2 | C2), // C1
-        (C1 | E1 | E2 | C2 | D2), // D1
-        (D1 | F1 | F2 | D2 | E2), // E1
-        (E1 | G1 | G2 | E2 | F2), // F1
-        (F1 | H1 | H2 | F2 | G2), // G1
-        (G1 | G2 | H2), // H1
-        
-        (A1 | B1 | B3 | A3 | B2), // A2
-        (A2 | C2 | A1 | C1 | B1 | C3 | A3 | B3), // B2
-        (B2 | D2 | B1 | D1 | C1 | D3 | B3 | C3), // C2
-        (C2 | E2 | C1 | E1 | D1 | E3 | C3 | D3), // D2
-        (D2 | F2 | D1 | F1 | E1 | F3 | D3 | E3), // E2
-        (E2 | G2 | E1 | G1 | F1 | G3 | E3 | F3), // F2
-        (F2 | H2 | F1 | H1 | G1 | H3 | F3 | G3), // G2
-        (G2 | G1 | H1 | H3 | G3), // H2
-        
-        (A2 | B2 | B4 | A4 | B3), // A3
-        (A3 | C3 | A2 | C2 | B2 | C4 | A4 | B4), // B3
-        (B3 | D3 | B2 | D2 | C2 | D4 | B4 | C4), // C3
-        (C3 | E3 | C2 | E2 | D2 | E4 | C4 | D4), // D3
-        (D3 | F3 | D2 | F2 | E2 | F4 | D4 | E4), // E3
-        (E3 | G3 | E2 | G2 | F2 | G4 | E4 | F4), // F3
-        (F3 | H3 | F2 | H2 | G2 | H4 | F4 | G4), // G3
-        (G3 | G2 | H2 | H4 | G4), // H3
-        
-        (A3 | B3 | B5 | A5 | B4), // A4
-        (A4 | C4 | A3 | C3 | B3 | C5 | A5 | B5), // B4
-        (B4 | D4 | B3 | D3 | C3 | D5 | B5 | C5), // C4
-        (C4 | E4 | C3 | E3 | D3 | E5 | C5 | D5), // D4
-        (D4 | F4 | D3 | F3 | E3 | F5 | D5 | E5), // E4
-        (E4 | G4 | E3 | G3 | F3 | G5 | E5 | F5), // F4
-        (F4 | H4 | F3 | H3 | G3 | H5 | F5 | G5), // G4
-        (G4 | G3 | H3 | H5 | G5), // H4
-        
-        (A4 | B4 | B6 | A6 | B5), // A5
-        (A5 | C5 | A4 | C4 | B4 | C6 | A6 | B6), // B5
-        (B5 | D5 | B4 | D4 | C4 | D6 | B6 | C6), // C5
-        (C5 | E5 | C4 | E4 | D4 | E6 | C6 | D6), // D5
-        (D5 | F5 | D4 | F4 | E4 | F6 | D6 | E6), // E5
-        (E5 | G5 | E4 | G4 | F4 | G6 | E6 | F6), // F5
-        (F5 | H5 | F4 | H4 | G4 | H6 | F6 | G6), // G5
-        (G5 | G4 | H4 | H6 | G6), // H5
-        
-        (A5 | B5 | B7 | A7 | B6), // A6
-        (A6 | C6 | A5 | C5 | B5 | C7 | A7 | B7), // B6
-        (B6 | D6 | B5 | D5 | C5 | D7 | B7 | C7), // C6
-        (C6 | E6 | C5 | E5 | D5 | E7 | C7 | D7), // D6
-        (D6 | F6 | D5 | F5 | E5 | F7 | D7 | E7), // E6
-        (E6 | G6 | E5 | G5 | F5 | G7 | E7 | F7), // F6
-        (F6 | H6 | F5 | H5 | G5 | H7 | F7 | G7), // G6
-        (G6 | G5 | H5 | H7 | G7), // H6
-        
-        (A6 | B6 | B8 | A8 | B7), // A7
-        (A7 | C7 | A6 | C6 | B6 | C8 | A8 | B8), // B7
-        (B7 | D7 | B6 | D6 | C6 | D8 | B8 | C8), // C7
-        (C7 | E7 | C6 | E6 | D6 | E8 | C8 | D8), // D7
-        (D7 | F7 | D6 | F6 | E6 | F8 | D8 | E8), // E7
-        (E7 | G7 | E6 | G6 | F6 | G8 | E8 | F8), // F7
-        (F7 | H7 | F6 | H6 | G6 | H8 | F8 | G8), // G7
-        (G7 | G6 | H6 | H8 | G8), // H7
-        
-        (A7 | B7 | B8), // A8
-        (A8 | C8 | A7 | C7 | B7), // B8
-        (B8 | D8 | B7 | D7 | C7), // C8
-        (C8 | E8 | C7 | E7 | D7), // D8
-        (D8 | F8 | D7 | F7 | E7), // E8
-        (E8 | G8 | E7 | G7 | F7), // F8
-        (F8 | H8 | F7 | H7 | G7), // G8
-        (G8 | G7 | H7)  // H8
+            (B1 | B2 | A2), // A1
+            (A1 | C1 | C2 | A2 | B2), // B1
+            (B1 | D1 | D2 | B2 | C2), // C1
+            (C1 | E1 | E2 | C2 | D2), // D1
+            (D1 | F1 | F2 | D2 | E2), // E1
+            (E1 | G1 | G2 | E2 | F2), // F1
+            (F1 | H1 | H2 | F2 | G2), // G1
+            (G1 | G2 | H2), // H1
+
+            (A1 | B1 | B3 | A3 | B2), // A2
+            (A2 | C2 | A1 | C1 | B1 | C3 | A3 | B3), // B2
+            (B2 | D2 | B1 | D1 | C1 | D3 | B3 | C3), // C2
+            (C2 | E2 | C1 | E1 | D1 | E3 | C3 | D3), // D2
+            (D2 | F2 | D1 | F1 | E1 | F3 | D3 | E3), // E2
+            (E2 | G2 | E1 | G1 | F1 | G3 | E3 | F3), // F2
+            (F2 | H2 | F1 | H1 | G1 | H3 | F3 | G3), // G2
+            (G2 | G1 | H1 | H3 | G3), // H2
+
+            (A2 | B2 | B4 | A4 | B3), // A3
+            (A3 | C3 | A2 | C2 | B2 | C4 | A4 | B4), // B3
+            (B3 | D3 | B2 | D2 | C2 | D4 | B4 | C4), // C3
+            (C3 | E3 | C2 | E2 | D2 | E4 | C4 | D4), // D3
+            (D3 | F3 | D2 | F2 | E2 | F4 | D4 | E4), // E3
+            (E3 | G3 | E2 | G2 | F2 | G4 | E4 | F4), // F3
+            (F3 | H3 | F2 | H2 | G2 | H4 | F4 | G4), // G3
+            (G3 | G2 | H2 | H4 | G4), // H3
+
+            (A3 | B3 | B5 | A5 | B4), // A4
+            (A4 | C4 | A3 | C3 | B3 | C5 | A5 | B5), // B4
+            (B4 | D4 | B3 | D3 | C3 | D5 | B5 | C5), // C4
+            (C4 | E4 | C3 | E3 | D3 | E5 | C5 | D5), // D4
+            (D4 | F4 | D3 | F3 | E3 | F5 | D5 | E5), // E4
+            (E4 | G4 | E3 | G3 | F3 | G5 | E5 | F5), // F4
+            (F4 | H4 | F3 | H3 | G3 | H5 | F5 | G5), // G4
+            (G4 | G3 | H3 | H5 | G5), // H4
+
+            (A4 | B4 | B6 | A6 | B5), // A5
+            (A5 | C5 | A4 | C4 | B4 | C6 | A6 | B6), // B5
+            (B5 | D5 | B4 | D4 | C4 | D6 | B6 | C6), // C5
+            (C5 | E5 | C4 | E4 | D4 | E6 | C6 | D6), // D5
+            (D5 | F5 | D4 | F4 | E4 | F6 | D6 | E6), // E5
+            (E5 | G5 | E4 | G4 | F4 | G6 | E6 | F6), // F5
+            (F5 | H5 | F4 | H4 | G4 | H6 | F6 | G6), // G5
+            (G5 | G4 | H4 | H6 | G6), // H5
+
+            (A5 | B5 | B7 | A7 | B6), // A6
+            (A6 | C6 | A5 | C5 | B5 | C7 | A7 | B7), // B6
+            (B6 | D6 | B5 | D5 | C5 | D7 | B7 | C7), // C6
+            (C6 | E6 | C5 | E5 | D5 | E7 | C7 | D7), // D6
+            (D6 | F6 | D5 | F5 | E5 | F7 | D7 | E7), // E6
+            (E6 | G6 | E5 | G5 | F5 | G7 | E7 | F7), // F6
+            (F6 | H6 | F5 | H5 | G5 | H7 | F7 | G7), // G6
+            (G6 | G5 | H5 | H7 | G7), // H6
+
+            (A6 | B6 | B8 | A8 | B7), // A7
+            (A7 | C7 | A6 | C6 | B6 | C8 | A8 | B8), // B7
+            (B7 | D7 | B6 | D6 | C6 | D8 | B8 | C8), // C7
+            (C7 | E7 | C6 | E6 | D6 | E8 | C8 | D8), // D7
+            (D7 | F7 | D6 | F6 | E6 | F8 | D8 | E8), // E7
+            (E7 | G7 | E6 | G6 | F6 | G8 | E8 | F8), // F7
+            (F7 | H7 | F6 | H6 | G6 | H8 | F8 | G8), // G7
+            (G7 | G6 | H6 | H8 | G8), // H7
+
+            (A7 | B7 | B8), // A8
+            (A8 | C8 | A7 | C7 | B7), // B8
+            (B8 | D8 | B7 | D7 | C7), // C8
+            (C8 | E8 | C7 | E7 | D7), // D8
+            (D8 | F8 | D7 | F7 | E7), // E8
+            (E8 | G8 | E7 | G7 | F7), // F8
+            (F8 | H8 | F7 | H7 | G7), // G8
+            (G8 | G7 | H7) // H8
     };
 
-
     private static final int[] PAWN_TABLE_MG = {
-        0,   0,   0,   0,   0,   0,   0,   0,
-     -11,  34, 126,  68,  95,  61, 134,  98,
-     -20,  25,  56,  65,  31,  26,   7,  -6,
-     -23,  17,  12,  23,  21,   6,  13, -14,
-     -25,  10,   6,  17,  12,  -5,  -2, -27,
-     -12,  33,   3,   3, -10,  -4,  -4, -26,
-     -22,  38,  24, -15, -23, -20,  -1, -35,
-        0,   0,   0,   0,   0,   0,   0,   0,
+            0, 0, 0, 0, 0, 0, 0, 0,
+            -11, 34, 126, 68, 95, 61, 134, 98,
+            -20, 25, 56, 65, 31, 26, 7, -6,
+            -23, 17, 12, 23, 21, 6, 13, -14,
+            -25, 10, 6, 17, 12, -5, -2, -27,
+            -12, 33, 3, 3, -10, -4, -4, -26,
+            -22, 38, 24, -15, -23, -20, -1, -35,
+            0, 0, 0, 0, 0, 0, 0, 0,
     };
 
     private static final int[] PAWN_TABLE_EG = {
-        0,   0,   0,   0,   0,   0,   0,   0,
-      178, 173, 158, 134, 147, 132, 165, 187,
-       94, 100,  85,  67,  56,  53,  82,  84,
-       32,  24,  13,   5,  -2,   4,  17,  17,
-       13,   9,  -3,  -7,  -7,  -8,   3,  -1,
-        4,   7,  -6,   1,   0,  -5,  -1,  -8,
-       13,   8,   8,  10,  13,   0,   2,  -7,
-        0,   0,   0,   0,   0,   0,   0,   0,
+            0, 0, 0, 0, 0, 0, 0, 0,
+            178, 173, 158, 134, 147, 132, 165, 187,
+            94, 100, 85, 67, 56, 53, 82, 84,
+            32, 24, 13, 5, -2, 4, 17, 17,
+            13, 9, -3, -7, -7, -8, 3, -1,
+            4, 7, -6, 1, 0, -5, -1, -8,
+            13, 8, 8, 10, 13, 0, 2, -7,
+            0, 0, 0, 0, 0, 0, 0, 0,
     };
 
     private static final int[] KNIGHT_TABLE_MG = {
-        -167, -89, -34, -49,  61, -97, -15, -107,
-         -73, -41,  72,  36,  23,  62,   7,  -17,
-         -47,  60,  37,  65,  84, 129,  73,   44,
-          -9,  17,  19,  53,  37,  69,  18,   22,
-         -13,   4,  16,  13,  28,  19,  21,   -8,
-         -23,  -9,  12,  10,  19,  17,  25,  -16,
-         -29, -53, -12,  -3,  -1,  18, -14,  -19,
-        -105, -21, -58, -33, -17, -28, -19,  -23,
+            -167, -89, -34, -49, 61, -97, -15, -107,
+            -73, -41, 72, 36, 23, 62, 7, -17,
+            -47, 60, 37, 65, 84, 129, 73, 44,
+            -9, 17, 19, 53, 37, 69, 18, 22,
+            -13, 4, 16, 13, 28, 19, 21, -8,
+            -23, -9, 12, 10, 19, 17, 25, -16,
+            -29, -53, -12, -3, -1, 18, -14, -19,
+            -105, -21, -58, -33, -17, -28, -19, -23,
     };
 
     private static final int[] KNIGHT_TABLE_EG = {
-        -58, -38, -13, -28, -31, -27, -63, -99,
-        -25,  -8, -25,  -2,  -9, -25, -24, -52,
-        -24, -20,  10,   9,  -1,  -9, -19, -41,
-        -17,   3,  22,  22,  22,  11,   8, -18,
-        -18,  -6,  16,  25,  16,  17,   4, -18,
-        -23,  -3,  -1,  15,  10,  -3, -20, -22,
-        -42, -20, -10,  -5,  -2, -20, -23, -44,
-        -29, -51, -23, -15, -22, -18, -50, -64,
+            -58, -38, -13, -28, -31, -27, -63, -99,
+            -25, -8, -25, -2, -9, -25, -24, -52,
+            -24, -20, 10, 9, -1, -9, -19, -41,
+            -17, 3, 22, 22, 22, 11, 8, -18,
+            -18, -6, 16, 25, 16, 17, 4, -18,
+            -23, -3, -1, 15, 10, -3, -20, -22,
+            -42, -20, -10, -5, -2, -20, -23, -44,
+            -29, -51, -23, -15, -22, -18, -50, -64,
     };
 
     private static final int[] BISHOP_TABLE_EG = {
-        -14, -21, -11,  -8, -7,  -9, -17, -24,
-         -8,  -4,   7, -12, -3, -13,  -4, -14,
-          2,  -8,   0,  -1, -2,   6,   0,   4,
-         -3,   9,  12,   9, 14,  10,   3,   2,
-         -6,   3,  13,  19,  7,  10,  -3,  -9,
-        -12,  -3,   8,  10, 13,   3,  -7, -15,
-        -14, -18,  -7,  -1,  4,  -9, -15, -27,
-        -23,  -9, -23,  -5, -9, -16,  -5, -17,
+            -14, -21, -11, -8, -7, -9, -17, -24,
+            -8, -4, 7, -12, -3, -13, -4, -14,
+            2, -8, 0, -1, -2, 6, 0, 4,
+            -3, 9, 12, 9, 14, 10, 3, 2,
+            -6, 3, 13, 19, 7, 10, -3, -9,
+            -12, -3, 8, 10, 13, 3, -7, -15,
+            -14, -18, -7, -1, 4, -9, -15, -27,
+            -23, -9, -23, -5, -9, -16, -5, -17,
     };
 
     private static final int[] ROOK_TABLE_EG = {
-        13, 10, 18, 15, 12,  12,   8,   5,
-        11, 13, 13, 11, -3,   3,   8,   3,
-         7,  7,  7,  5,  4,  -3,  -5,  -3,
-         4,  3, 13,  1,  2,   1,  -1,   2,
-         3,  5,  8,  4, -5,  -6,  -8, -11,
-        -4,  0, -5, -1, -7, -12,  -8, -16,
-        -6, -6,  0,  2, -9,  -9, -11,  -3,
-        -9,  2,  3, -1, -5, -13,   4, -20,
+            13, 10, 18, 15, 12, 12, 8, 5,
+            11, 13, 13, 11, -3, 3, 8, 3,
+            7, 7, 7, 5, 4, -3, -5, -3,
+            4, 3, 13, 1, 2, 1, -1, 2,
+            3, 5, 8, 4, -5, -6, -8, -11,
+            -4, 0, -5, -1, -7, -12, -8, -16,
+            -6, -6, 0, 2, -9, -9, -11, -3,
+            -9, 2, 3, -1, -5, -13, 4, -20,
     };
 
     private static final int[] QUEEN_TABLE_EG = {
-         -9,  22,  22,  27,  27,  19,  10,  20,
-        -17,  20,  32,  41,  58,  25,  30,   0,
-        -20,   6,   9,  49,  47,  35,  19,   9,
-          3,  22,  24,  45,  57,  40,  57,  36,
-        -18,  28,  19,  47,  31,  34,  39,  23,
-        -16, -27,  15,   6,   9,  17,  10,   5,
-        -22, -23, -30, -16, -16, -23, -36, -32,
-        -33, -28, -22, -43,  -5, -32, -20, -41,
+            -9, 22, 22, 27, 27, 19, 10, 20,
+            -17, 20, 32, 41, 58, 25, 30, 0,
+            -20, 6, 9, 49, 47, 35, 19, 9,
+            3, 22, 24, 45, 57, 40, 57, 36,
+            -18, 28, 19, 47, 31, 34, 39, 23,
+            -16, -27, 15, 6, 9, 17, 10, 5,
+            -22, -23, -30, -16, -16, -23, -36, -32,
+            -33, -28, -22, -43, -5, -32, -20, -41,
     };
 
     private static final int[] KING_END_GAME_TABLE_EG = {
-        -74, -35, -18, -18, -11,  15,   4, -17,
-        -12,  17,  14,  17,  17,  38,  23,  11,
-         10,  17,  23,  15,  20,  45,  44,  13,
-         -8,  22,  24,  27,  26,  33,  26,   3,
-        -18,  -4,  21,  24,  27,  23,   9, -11,
-        -19,  -3,  11,  21,  23,  16,   7,  -9,
-        -27, -11,   4,  13,  14,   4,  -5, -17,
-        -53, -34, -21, -11, -28, -14, -24, -43
+            -74, -35, -18, -18, -11, 15, 4, -17,
+            -12, 17, 14, 17, 17, 38, 23, 11,
+            10, 17, 23, 15, 20, 45, 44, 13,
+            -8, 22, 24, 27, 26, 33, 26, 3,
+            -18, -4, 21, 24, 27, 23, 9, -11,
+            -19, -3, 11, 21, 23, 16, 7, -9,
+            -27, -11, 4, 13, 14, 4, -5, -17,
+            -53, -34, -21, -11, -28, -14, -24, -43
     };
 
-
     private static final int[] BISHOP_TABLE_MG = {
-        -29,   4, -82, -37, -25, -42,   7,  -8,
-        -26,  16, -18, -13,  30,  59,  18, -47,
-        -16,  37,  43,  40,  35,  50,  37,  -2,
-         -4,   5,  19,  50,  37,  37,   7,  -2,
-         -6,  13,  13,  26,  34,  12,  10,   4,
-          0,  15,  15,  15,  14,  27,  18,  10,
-          4,  15,  16,   0,   7,  21,  33,   1,
-        -33,  -3, -14, -21, -13, -12, -39, -21,
+            -29, 4, -82, -37, -25, -42, 7, -8,
+            -26, 16, -18, -13, 30, 59, 18, -47,
+            -16, 37, 43, 40, 35, 50, 37, -2,
+            -4, 5, 19, 50, 37, 37, 7, -2,
+            -6, 13, 13, 26, 34, 12, 10, 4,
+            0, 15, 15, 15, 14, 27, 18, 10,
+            4, 15, 16, 0, 7, 21, 33, 1,
+            -33, -3, -14, -21, -13, -12, -39, -21,
     };
 
     private static final int[] ROOK_TABLE_MG = {
-        32,  42,  32,  51, 63,  9,  31,  43,
-        27,  32,  58,  62, 80, 67,  26,  44,
-        -5,  19,  26,  36, 17, 45,  61,  16,
-        -24, -11,   7,  26, 24, 35,  -8, -20,
-        -36, -26, -12,  -1,  9, -7,   6, -23,
-        -45, -25, -16, -17,  3,  0,  -5, -33,
-        -44, -16, -20,  -9, -1, 11,  -6, -71,
-        -19, -13,   1,  17, 16,  7, -37, -26,
+            32, 42, 32, 51, 63, 9, 31, 43,
+            27, 32, 58, 62, 80, 67, 26, 44,
+            -5, 19, 26, 36, 17, 45, 61, 16,
+            -24, -11, 7, 26, 24, 35, -8, -20,
+            -36, -26, -12, -1, 9, -7, 6, -23,
+            -45, -25, -16, -17, 3, 0, -5, -33,
+            -44, -16, -20, -9, -1, 11, -6, -71,
+            -19, -13, 1, 17, 16, 7, -37, -26,
     };
 
     private static final int[] QUEEN_TABLE_MG = {
-        -28,   0,  29,  12,  59,  44,  43,  45,
-        -24, -39,  -5,   1, -16,  57,  28,  54,
-        -13, -17,   7,   8,  29,  56,  47,  57,
-        -27, -27, -16, -16,  -1,  17,  -2,   1,
-         -9, -26,  -9, -10,  -2,  -4,   3,  -3,
-        -14,   2, -11,  -2,  -5,   2,  14,   5,
-        -35,  -8,  11,   2,   8,  15,  -3,   1,
-         -1, -18,  -9,  10, -15, -25, -31, -50,
+            -28, 0, 29, 12, 59, 44, 43, 45,
+            -24, -39, -5, 1, -16, 57, 28, 54,
+            -13, -17, 7, 8, 29, 56, 47, 57,
+            -27, -27, -16, -16, -1, 17, -2, 1,
+            -9, -26, -9, -10, -2, -4, 3, -3,
+            -14, 2, -11, -2, -5, 2, 14, 5,
+            -35, -8, 11, 2, 8, 15, -3, 1,
+            -1, -18, -9, 10, -15, -25, -31, -50,
     };
 
     private static final int[] KING_MIDDLE_GAME_TABLE_MG = {
-        -65,  23,  16, -15, -56, -34,   2,  13,
-         29,  -1, -20,  -7,  -8,  -4, -38, -29,
-         -9,  24,   2, -16, -20,   6,  22, -22,
-        -17, -20, -12, -27, -30, -25, -14, -36,
-        -49,  -1, -27, -39, -46, -44, -33, -51,
-        -14, -14, -22, -46, -44, -30, -15, -27,
-          1,   7,  -8, -64, -43, -16,   9,   8,
-        -15,  36,  12, -54,   8, -28,  24,  14,
+            -65, 23, 16, -15, -56, -34, 2, 13,
+            29, -1, -20, -7, -8, -4, -38, -29,
+            -9, 24, 2, -16, -20, 6, 22, -22,
+            -17, -20, -12, -27, -30, -25, -14, -36,
+            -49, -1, -27, -39, -46, -44, -33, -51,
+            -14, -14, -22, -46, -44, -30, -15, -27,
+            1, 7, -8, -64, -43, -16, 9, 8,
+            -15, 36, 12, -54, 8, -28, 24, 14,
     };
-
-
-
 
     // valid
     public static final long WHITE_KING_SIDE_CASTLE_KING_SQUARE = G1;
@@ -472,7 +471,7 @@ public class BitBoard {
     public static final long WHITE_QUEEN_SIDE_CASTLE_NEED_TO_NOT_BE_ATTACKED_MASK = D1 | C1 | E1;
 
     // valid
-    public static final long BLACK_KING_SIDE_CASTLE_NEED_TO_NOT_BE_ATTACKED_MASK =  G8 | F8 | E8;
+    public static final long BLACK_KING_SIDE_CASTLE_NEED_TO_NOT_BE_ATTACKED_MASK = G8 | F8 | E8;
     public static final long BLACK_QUEEN_SIDE_CASTLE_NEED_TO_NOT_BE_ATTACKED_MASK = D8 | C8 | E8;
 
     public static final int EMPTY = 0;
@@ -492,9 +491,7 @@ public class BitBoard {
 
     private ArrayDeque<BoardHistory> history;
 
-
     public static final String INITIAL_STARTING_POSITION = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
-
 
     public BitBoard() {
 
@@ -537,16 +534,22 @@ public class BitBoard {
         history = new ArrayDeque<>();
         // bbHistory = new ArrayDeque<>();
 
-
     }
 
     private void saveBoardHistory(long move) {
-        BoardHistory boardHistory = new BoardHistory(bitboard, move, whitePawns, whiteKnights, whiteBishops, whiteRooks, whiteQueens, whiteKing, blackPawns, blackKnights, blackBishops, blackRooks, blackQueens, blackKing, whiteCastleQueenSide, whiteCastleKingSide, blackCastleQueenSide, blackCastleKingSide, enPassantSquare, whiteTurn, currentEvalMG, currentEvalEG, phase);
+        BoardHistory boardHistory = new BoardHistory(bitboard, move, whitePawns, whiteKnights, whiteBishops, whiteRooks,
+                whiteQueens, whiteKing, blackPawns, blackKnights, blackBishops, blackRooks, blackQueens, blackKing,
+                whiteCastleQueenSide, whiteCastleKingSide, blackCastleQueenSide, blackCastleKingSide, enPassantSquare,
+                whiteTurn, currentEvalMG, currentEvalEG, phase);
         history.push(boardHistory);
     }
 
     // private void saveBoardHistoryLONG() {
-    //     bbHistory.push(new long[]{whitePawns, whiteKnights, whiteBishops, whiteRooks, whiteQueens, whiteKing, blackPawns, blackKnights, blackBishops, blackRooks, blackQueens, blackKing, whiteCastleQueenSide, whiteCastleKingSide, blackCastleQueenSide, blackCastleKingSide, enPassantSquare, (whiteTurn ? 1L : 0L)});
+    // bbHistory.push(new long[]{whitePawns, whiteKnights, whiteBishops, whiteRooks,
+    // whiteQueens, whiteKing, blackPawns, blackKnights, blackBishops, blackRooks,
+    // blackQueens, blackKing, whiteCastleQueenSide, whiteCastleKingSide,
+    // blackCastleQueenSide, blackCastleKingSide, enPassantSquare, (whiteTurn ? 1L :
+    // 0L)});
     // }
 
     public void restoreBoardHistoryLONG(long[] boardHistory) {
@@ -608,18 +611,42 @@ public class BitBoard {
                 } else {
                     long bitboard = 1L << 63 - (row * 8 + (7 - col));
                     switch (c) {
-                        case 'P': whitePawns |= bitboard; break;
-                        case 'N': whiteKnights |= bitboard; break;
-                        case 'B': whiteBishops |= bitboard; break;
-                        case 'R': whiteRooks |= bitboard; break;
-                        case 'Q': whiteQueens |= bitboard; break;
-                        case 'K': whiteKing |= bitboard; break;
-                        case 'p': blackPawns |= bitboard; break;
-                        case 'n': blackKnights |= bitboard; break;
-                        case 'b': blackBishops |= bitboard; break;
-                        case 'r': blackRooks |= bitboard; break;
-                        case 'q': blackQueens |= bitboard; break;
-                        case 'k': blackKing |= bitboard; break;
+                        case 'P':
+                            whitePawns |= bitboard;
+                            break;
+                        case 'N':
+                            whiteKnights |= bitboard;
+                            break;
+                        case 'B':
+                            whiteBishops |= bitboard;
+                            break;
+                        case 'R':
+                            whiteRooks |= bitboard;
+                            break;
+                        case 'Q':
+                            whiteQueens |= bitboard;
+                            break;
+                        case 'K':
+                            whiteKing |= bitboard;
+                            break;
+                        case 'p':
+                            blackPawns |= bitboard;
+                            break;
+                        case 'n':
+                            blackKnights |= bitboard;
+                            break;
+                        case 'b':
+                            blackBishops |= bitboard;
+                            break;
+                        case 'r':
+                            blackRooks |= bitboard;
+                            break;
+                        case 'q':
+                            blackQueens |= bitboard;
+                            break;
+                        case 'k':
+                            blackKing |= bitboard;
+                            break;
                     }
                     col++;
                 }
@@ -685,9 +712,10 @@ public class BitBoard {
         } else {
             enPassantSquare = 0L;
         }
-        
 
         updateBitBoard();
+
+        // === EVAL ===
 
         // Reset
         currentEvalMG = 0;
@@ -695,8 +723,8 @@ public class BitBoard {
         phase = 0;
 
         // Blancs
-        currentEvalMG += Long.bitCount(whitePawns)   * 100;
-        currentEvalEG += Long.bitCount(whitePawns)   * 100;
+        currentEvalMG += Long.bitCount(whitePawns) * 100;
+        currentEvalEG += Long.bitCount(whitePawns) * 100;
 
         currentEvalMG += Long.bitCount(whiteKnights) * 320;
         currentEvalEG += Long.bitCount(whiteKnights) * 310;
@@ -706,17 +734,17 @@ public class BitBoard {
         currentEvalEG += Long.bitCount(whiteBishops) * 320;
         phase += Long.bitCount(whiteBishops) * 1;
 
-        currentEvalMG += Long.bitCount(whiteRooks)   * 500;
-        currentEvalEG += Long.bitCount(whiteRooks)   * 510;
+        currentEvalMG += Long.bitCount(whiteRooks) * 500;
+        currentEvalEG += Long.bitCount(whiteRooks) * 510;
         phase += Long.bitCount(whiteRooks) * 2;
 
-        currentEvalMG += Long.bitCount(whiteQueens)  * 900;
-        currentEvalEG += Long.bitCount(whiteQueens)  * 950;
+        currentEvalMG += Long.bitCount(whiteQueens) * 900;
+        currentEvalEG += Long.bitCount(whiteQueens) * 950;
         phase += Long.bitCount(whiteQueens) * 4;
 
         // Noirs
-        currentEvalMG -= Long.bitCount(blackPawns)   * 100;
-        currentEvalEG -= Long.bitCount(blackPawns)   * 100;
+        currentEvalMG -= Long.bitCount(blackPawns) * 100;
+        currentEvalEG -= Long.bitCount(blackPawns) * 100;
 
         currentEvalMG -= Long.bitCount(blackKnights) * 320;
         currentEvalEG -= Long.bitCount(blackKnights) * 310;
@@ -726,12 +754,12 @@ public class BitBoard {
         currentEvalEG -= Long.bitCount(blackBishops) * 320;
         phase += Long.bitCount(blackBishops) * 1;
 
-        currentEvalMG -= Long.bitCount(blackRooks)   * 500;
-        currentEvalEG -= Long.bitCount(blackRooks)   * 510;
+        currentEvalMG -= Long.bitCount(blackRooks) * 500;
+        currentEvalEG -= Long.bitCount(blackRooks) * 510;
         phase += Long.bitCount(blackRooks) * 2;
 
-        currentEvalMG -= Long.bitCount(blackQueens)  * 900;
-        currentEvalEG -= Long.bitCount(blackQueens)  * 950;
+        currentEvalMG -= Long.bitCount(blackQueens) * 900;
+        currentEvalEG -= Long.bitCount(blackQueens) * 950;
         phase += Long.bitCount(blackQueens) * 4;
 
         // Clamp phase
@@ -836,29 +864,52 @@ public class BitBoard {
             currentEvalEG -= KING_END_GAME_TABLE_EG[square];
             bKing &= bKing - 1;
         }
-        
-        System.out.println("currentEvalMG: " + currentEvalMG);
-        System.out.println("currentEvalEG: " + currentEvalEG);
-        System.out.println("phase: " + phase);
 
-        System.out.println("currentEval: " + evaluate());
+        // === Zobrist ===
+        this.zobristKey = generateZobristKey();
+    }
+
+    public long generateZobristKey() {
+        // On hash la position actuelle
+        long zobristKey = 0L;
+
+        // On commence par hash toutes les pieces et leur positions
+        for (int square = 0; square < 64; square++) {
+            int piece = getPiece(square);
+            if (piece != BitBoard.EMPTY) {
+                zobristKey ^= Zobrist.PIECE_KEYS[piece - 1][square]; // piece - 1 pour l'acces au tableau
+            }
+        }
+
+        // Side to move
+        zobristKey ^= Zobrist.SIDE_TO_MOVE_KEY;
+
+        // roque
+        zobristKey ^= Zobrist.CASTLING_KEYS[getCastlingRights()];
+
+        // en passant (hash only if there is en passant)
+        if (enPassantSquare != 0L) {
+            zobristKey ^= Zobrist.EN_PASSANT_KEYS[Long.numberOfTrailingZeros(this.enPassantSquare)];
+        }
+
+        return zobristKey;
     }
 
     public int calculatePhase() {
         int phase = 0;
-    
+
         // Blancs
         phase += Long.bitCount(whiteKnights) * 1;
         phase += Long.bitCount(whiteBishops) * 1;
-        phase += Long.bitCount(whiteRooks)   * 2;
-        phase += Long.bitCount(whiteQueens)  * 4;
-    
+        phase += Long.bitCount(whiteRooks) * 2;
+        phase += Long.bitCount(whiteQueens) * 4;
+
         // Noirs
         phase += Long.bitCount(blackKnights) * 1;
         phase += Long.bitCount(blackBishops) * 1;
-        phase += Long.bitCount(blackRooks)   * 2;
-        phase += Long.bitCount(blackQueens)  * 4;
-    
+        phase += Long.bitCount(blackRooks) * 2;
+        phase += Long.bitCount(blackQueens) * 4;
+
         // Clamp entre 0 et 24
         return Math.min(phase, 24);
     }
@@ -866,7 +917,6 @@ public class BitBoard {
     public int evaluate() {
         return (currentEvalMG * phase + currentEvalEG * (24 - phase)) / 24;
     }
-    
 
     public String getFen() {
         StringBuilder fen = new StringBuilder();
@@ -973,15 +1023,16 @@ public class BitBoard {
         if (blackCastleQueenSide == 1L) {
             fen.append("q");
         }
-        if (whiteCastleKingSide == 0L && whiteCastleQueenSide == 0L && blackCastleKingSide == 0L && blackCastleQueenSide == 0L) {
+        if (whiteCastleKingSide == 0L && whiteCastleQueenSide == 0L && blackCastleKingSide == 0L
+                && blackCastleQueenSide == 0L) {
             fen.append("-");
         }
         fen.append(" ");
         if (enPassantSquare != 0L) {
             for (int i = 0; i < 64; i++) {
                 if ((enPassantSquare == SQUARES_MAP[i])) {
-                    fen.append((char)('a' + (i % 8)));
-                    fen.append((char)('1' + (i / 8)));
+                    fen.append((char) ('a' + (i % 8)));
+                    fen.append((char) ('1' + (i / 8)));
                 }
             }
         } else {
@@ -997,57 +1048,54 @@ public class BitBoard {
 
     public void printBitBoard(long bitBoard) {
         PrintWriter writer = new PrintWriter(System.out);
-        
+
         // Bordure supérieure
         writer.println("   +-------------------------------+");
         writer.println("   | a   b   c   d   e   f   g   h |");
         writer.println("   +-------------------------------+");
-    
+
         // Parcourir les rangées de haut en bas
         for (int rank = 7; rank >= 0; rank--) {
             writer.print((rank + 1) + "  |"); // Numéro de rangée sur le côté gauche
-            
+
             // Parcourir chaque colonne de la rangée
             for (int file = 0; file < 8; file++) {
                 int squareIndex = rank * 8 + file;
 
                 long mask = 1L << squareIndex;
-                
+
                 if ((bitBoard & mask) != 0) {
                     writer.print(" 1 ");
                 } else {
                     writer.print("   ");
                 }
-    
+
                 // Ajouter un séparateur "|"
                 if (file != 7) {
                     writer.print("|");
                 }
             }
-            
+
             writer.println("| " + (rank + 1)); // Numéro de rangée sur le côté droit
-    
+
             // Ajouter des séparateurs entre les rangées sauf pour la dernière
             if (rank > 0) {
                 writer.println("   |---|---|---|---|---|---|---|---|");
             }
         }
-    
+
         // Bordure inférieure
         writer.println("   +-------------------------------+");
         writer.println("   | a   b   c   d   e   f   g   h |");
         writer.println("   +-------------------------------+");
-        
+
         writer.flush();
     }
-    
-    
-    
-    
+
     public void printChessBoard() {
-        String[] pieces = {"P", "N", "B", "R", "Q", "K", "p", "n", "b", "r", "q", "k"};
+        String[] pieces = { "P", "N", "B", "R", "Q", "K", "p", "n", "b", "r", "q", "k" };
         String[] board = new String[64];
-    
+
         // Remplir le tableau board avec les pièces ou des points pour les cases vides
         for (int i = 0; i < 64; i++) {
             long bitboard = 1L << i;
@@ -1079,36 +1127,36 @@ public class BitBoard {
                 board[i] = " ";
             }
         }
-    
+
         // Bordure supérieure
         System.out.println("   +-------------------------------+");
         System.out.println("   | a   b   c   d   e   f   g   h |");
         System.out.println("   +-------------------------------+");
-    
+
         // Parcourir les rangées de haut en bas
         for (int rank = 7; rank >= 0; rank--) {
             System.out.print((rank + 1) + "  |"); // Numéro de rangée sur le côté gauche
-            
+
             // Parcourir chaque colonne de la rangée
             for (int file = 7; file >= 0; file--) {
                 int squareIndex = rank * 8 + (7 - file);
                 System.out.print(" " + board[squareIndex] + " ");
-                
+
                 // Ajouter un séparateur "|"
                 if (file != 0) {
                     System.out.print("|");
                 }
             }
-    
+
             // Numéro de rangée sur le côté droit
             System.out.println("| " + (rank + 1));
-            
+
             // Ajouter des séparateurs entre les rangées sauf pour la dernière
             if (rank > 0) {
                 System.out.println("   |---|---|---|---|---|---|---|---|");
             }
         }
-    
+
         // Bordure inférieure
         System.out.println("   +-------------------------------+");
         System.out.println("   | a   b   c   d   e   f   g   h |");
@@ -1117,8 +1165,8 @@ public class BitBoard {
         System.out.println();
         System.out.println("     " + (whiteTurn ? "White" : "Black") + "'s turn");
         System.out.println("     " + getFen());
+        System.out.println("    Key: " + Long.toHexString(this.zobristKey));
     }
-    
 
     // Get bitboard for a square
     public long getSquareBitboard(String square) {
@@ -1207,321 +1255,392 @@ public class BitBoard {
 
     public void undoNullMove() {
         whiteTurn = !whiteTurn;
-        }
+    }
 
-        public void makeMove(long move) {
+    public void makeMove(long move) {
         // Save the current board state
         saveBoardHistory(move);
         // saveBoardHistoryLONG();
-        
+
         // Convert squares to bitboards
         final long fromBitboard = 1L << PackedMove.getFrom(move);
         final long toBitboard = 1L << PackedMove.getTo(move);
 
-        
         // Separate logic for white and black moves
         if (whiteTurn) {
 
             handleCaptureWhite(toBitboard);
             // Pions blancs
             if ((whitePawns & fromBitboard) != 0) {
-        
-            // Handle en passant capture
-            if (PackedMove.getFlags(move) == Move.EN_PASSENT) {
-                final long capturedPawn = enPassantSquare >> 8;
-                blackPawns &= ~capturedPawn;
 
-                // Move pawn
-                whitePawns &= ~fromBitboard;
-                whitePawns |= toBitboard;
+                // Handle en passant capture
+                if (PackedMove.getFlags(move) == Move.EN_PASSENT) {
+                    final long capturedPawn = enPassantSquare >> 8;
+                    blackPawns &= ~capturedPawn;
 
-                // Update evaluations for both phases
-                currentEvalMG += PAWN_TABLE_MG[Long.numberOfTrailingZeros(toBitboard) ^ 56] - PAWN_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
-                currentEvalEG += PAWN_TABLE_EG[Long.numberOfTrailingZeros(toBitboard) ^ 56] - PAWN_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
-            }
-        
-            // Handle double pawn push
-            if (PackedMove.getFlags(move) == Move.DOUBLE_PAWN_PUSH) {
-                enPassantSquare = toBitboard >> 8;
+                    // Move pawn
+                    whitePawns &= ~fromBitboard;
+                    whitePawns |= toBitboard;
 
-                // Move pawn
-                whitePawns &= ~fromBitboard;
-                whitePawns |= toBitboard;
+                    // Update evaluations for both phases
+                    currentEvalMG += PAWN_TABLE_MG[Long.numberOfTrailingZeros(toBitboard) ^ 56]
+                            - PAWN_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
+                    currentEvalEG += PAWN_TABLE_EG[Long.numberOfTrailingZeros(toBitboard) ^ 56]
+                            - PAWN_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
 
-                // Update evaluations for both phases
-                currentEvalMG += PAWN_TABLE_MG[Long.numberOfTrailingZeros(toBitboard) ^ 56] - PAWN_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
-                currentEvalEG += PAWN_TABLE_EG[Long.numberOfTrailingZeros(toBitboard) ^ 56] - PAWN_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
-            } else {
-                enPassantSquare = 0L; // Reset en passant square
-
-                // Handle promotion
-                if (PackedMove.getFlags(move) == Move.PROMOTION) {
-                switch (PackedMove.getPromotion(move)) {
-                    case KNIGHT:
-                    // Update evaluations for promotion to knight
-                    currentEvalMG += KNIGHT_SCORE + KNIGHT_TABLE_MG[Long.numberOfTrailingZeros(toBitboard) ^ 56] - PAWN_SCORE - PAWN_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
-                    currentEvalEG += KNIGHT_SCORE + KNIGHT_TABLE_EG[Long.numberOfTrailingZeros(toBitboard) ^ 56] - PAWN_SCORE - PAWN_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
-                    phase += 1; // Knights add 1 to phase
-                    whiteKnights |= toBitboard; 
-                    break;
-                    case BISHOP:
-                    // Update evaluations for promotion to bishop
-                    currentEvalMG += BISHOP_SCORE + BISHOP_TABLE_MG[Long.numberOfTrailingZeros(toBitboard) ^ 56] - PAWN_SCORE - PAWN_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
-                    currentEvalEG += BISHOP_SCORE + BISHOP_TABLE_EG[Long.numberOfTrailingZeros(toBitboard) ^ 56] - PAWN_SCORE - PAWN_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
-                    phase += 1; // Bishops add 1 to phase
-                    whiteBishops |= toBitboard; 
-                    break;
-                    case ROOK:
-                    // Update evaluations for promotion to rook
-                    currentEvalMG += ROOK_SCORE + ROOK_TABLE_MG[Long.numberOfTrailingZeros(toBitboard) ^ 56] - PAWN_SCORE - PAWN_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
-                    currentEvalEG += ROOK_SCORE + ROOK_TABLE_EG[Long.numberOfTrailingZeros(toBitboard) ^ 56] - PAWN_SCORE - PAWN_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
-                    phase += 2; // Rooks add 2 to phase
-                    whiteRooks |= toBitboard; 
-                    break;
-                    case QUEEN:
-                    // Update evaluations for promotion to queen
-                    currentEvalMG += QUEEN_SCORE + QUEEN_TABLE_MG[Long.numberOfTrailingZeros(toBitboard) ^ 56] - PAWN_SCORE - PAWN_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
-                    currentEvalEG += QUEEN_SCORE + QUEEN_TABLE_EG[Long.numberOfTrailingZeros(toBitboard) ^ 56] - PAWN_SCORE - PAWN_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
-                    phase += 4; // Queens add 4 to phase
-                    whiteQueens |= toBitboard; 
-                    break;
                 }
 
-                // remove pawn
-                whitePawns &= ~fromBitboard;
-        
-                }
-                else{
-                // Move pawn
-                whitePawns &= ~fromBitboard;
-                whitePawns |= toBitboard;
+                // Handle double pawn push
+                if (PackedMove.getFlags(move) == Move.DOUBLE_PAWN_PUSH) {
+                    this.enPassantSquare = toBitboard >> 8;
 
-                // Update evaluations for both phases
-                currentEvalMG += PAWN_TABLE_MG[Long.numberOfTrailingZeros(toBitboard) ^ 56] - PAWN_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
-                currentEvalEG += PAWN_TABLE_EG[Long.numberOfTrailingZeros(toBitboard) ^ 56] - PAWN_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
+                    // Move pawn
+                    whitePawns &= ~fromBitboard;
+                    whitePawns |= toBitboard;
+
+                    // Update evaluations for both phases
+                    currentEvalMG += PAWN_TABLE_MG[Long.numberOfTrailingZeros(toBitboard) ^ 56]
+                            - PAWN_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
+                    currentEvalEG += PAWN_TABLE_EG[Long.numberOfTrailingZeros(toBitboard) ^ 56]
+                            - PAWN_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
+
+                    // Update ZobristKey
+                    System.out.println("zb double pawn");
+                    System.out.println(this.zobristKey);
+                    this.zobristKey ^= Zobrist.EN_PASSANT_KEYS[Long.numberOfTrailingZeros(this.enPassantSquare)];
+                    System.out.println(this.zobristKey);
+                    
+                } else {
+                    enPassantSquare = 0L; // Reset en passant square
+
+                    // Handle promotion
+                    if (PackedMove.getFlags(move) == Move.PROMOTION) {
+                        switch (PackedMove.getPromotion(move)) {
+                            case KNIGHT:
+                                // Update evaluations for promotion to knight
+                                currentEvalMG += KNIGHT_SCORE
+                                        + KNIGHT_TABLE_MG[Long.numberOfTrailingZeros(toBitboard) ^ 56] - PAWN_SCORE
+                                        - PAWN_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
+                                currentEvalEG += KNIGHT_SCORE
+                                        + KNIGHT_TABLE_EG[Long.numberOfTrailingZeros(toBitboard) ^ 56] - PAWN_SCORE
+                                        - PAWN_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
+                                phase += 1; // Knights add 1 to phase
+                                whiteKnights |= toBitboard;
+                                break;
+                            case BISHOP:
+                                // Update evaluations for promotion to bishop
+                                currentEvalMG += BISHOP_SCORE
+                                        + BISHOP_TABLE_MG[Long.numberOfTrailingZeros(toBitboard) ^ 56] - PAWN_SCORE
+                                        - PAWN_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
+                                currentEvalEG += BISHOP_SCORE
+                                        + BISHOP_TABLE_EG[Long.numberOfTrailingZeros(toBitboard) ^ 56] - PAWN_SCORE
+                                        - PAWN_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
+                                phase += 1; // Bishops add 1 to phase
+                                whiteBishops |= toBitboard;
+                                break;
+                            case ROOK:
+                                // Update evaluations for promotion to rook
+                                currentEvalMG += ROOK_SCORE + ROOK_TABLE_MG[Long.numberOfTrailingZeros(toBitboard) ^ 56]
+                                        - PAWN_SCORE - PAWN_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
+                                currentEvalEG += ROOK_SCORE + ROOK_TABLE_EG[Long.numberOfTrailingZeros(toBitboard) ^ 56]
+                                        - PAWN_SCORE - PAWN_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
+                                phase += 2; // Rooks add 2 to phase
+                                whiteRooks |= toBitboard;
+                                break;
+                            case QUEEN:
+                                // Update evaluations for promotion to queen
+                                currentEvalMG += QUEEN_SCORE
+                                        + QUEEN_TABLE_MG[Long.numberOfTrailingZeros(toBitboard) ^ 56] - PAWN_SCORE
+                                        - PAWN_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
+                                currentEvalEG += QUEEN_SCORE
+                                        + QUEEN_TABLE_EG[Long.numberOfTrailingZeros(toBitboard) ^ 56] - PAWN_SCORE
+                                        - PAWN_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
+                                phase += 4; // Queens add 4 to phase
+                                whiteQueens |= toBitboard;
+                                break;
+                        }
+
+                        // remove pawn
+                        whitePawns &= ~fromBitboard;
+
+                    } else {
+                        // Move pawn
+                        whitePawns &= ~fromBitboard;
+                        whitePawns |= toBitboard;
+
+                        // Update evaluations for both phases
+                        currentEvalMG += PAWN_TABLE_MG[Long.numberOfTrailingZeros(toBitboard) ^ 56]
+                                - PAWN_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
+                        currentEvalEG += PAWN_TABLE_EG[Long.numberOfTrailingZeros(toBitboard) ^ 56]
+                                - PAWN_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
+                    }
+
                 }
 
-            }
-        
-            // Cavaliers blancs
+                // Cavaliers blancs
             } else if ((whiteKnights & fromBitboard) != 0) {
-            whiteKnights &= ~fromBitboard;
-            whiteKnights |= toBitboard;
-
-            // Update evaluations for both phases
-            currentEvalMG += KNIGHT_TABLE_MG[Long.numberOfTrailingZeros(toBitboard) ^ 56] - KNIGHT_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
-            currentEvalEG += KNIGHT_TABLE_EG[Long.numberOfTrailingZeros(toBitboard) ^ 56] - KNIGHT_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
-        
-            // Fous blancs
-            } else if ((whiteBishops & fromBitboard) != 0) {
-            whiteBishops &= ~fromBitboard;
-            whiteBishops |= toBitboard;
-
-            // Update evaluations for both phases
-            currentEvalMG += BISHOP_TABLE_MG[Long.numberOfTrailingZeros(toBitboard) ^ 56] - BISHOP_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
-            currentEvalEG += BISHOP_TABLE_EG[Long.numberOfTrailingZeros(toBitboard) ^ 56] - BISHOP_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
-        
-            // Tours blanches
-            } else if ((whiteRooks & fromBitboard) != 0) {
-            if ((A1 & fromBitboard) != 0) whiteCastleQueenSide = 0L;
-            if ((H1 & fromBitboard) != 0) whiteCastleKingSide = 0L;
-            whiteRooks &= ~fromBitboard;
-            whiteRooks |= toBitboard;
-
-            // Update evaluations for both phases
-            currentEvalMG += ROOK_TABLE_MG[Long.numberOfTrailingZeros(toBitboard) ^ 56] - ROOK_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
-            currentEvalEG += ROOK_TABLE_EG[Long.numberOfTrailingZeros(toBitboard) ^ 56] - ROOK_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
-        
-            // Dames blanches
-            } else if ((whiteQueens & fromBitboard) != 0) {
-            whiteQueens &= ~fromBitboard;
-            whiteQueens |= toBitboard;
-
-            // Update evaluations for both phases
-            currentEvalMG += QUEEN_TABLE_MG[Long.numberOfTrailingZeros(toBitboard) ^ 56] - QUEEN_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
-            currentEvalEG += QUEEN_TABLE_EG[Long.numberOfTrailingZeros(toBitboard) ^ 56] - QUEEN_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
-        
-            // Roi blanc
-            } else if ((whiteKing & fromBitboard) != 0) {
-            if (((whiteCastleQueenSide != 0) && (C1 & toBitboard) != 0) || ((whiteCastleKingSide != 0) && (G1 & toBitboard) != 0)) {
-                // Handle castling for white
-                if (toBitboard == 1L << 2) {
-                processWhiteCastleQueenSide(fromBitboard);
-                } else if (toBitboard == 1L << 6) {
-                processWhiteCastleKingSide(fromBitboard);
-                }
-            } else {
-                whiteKing &= ~fromBitboard;
-                whiteKing |= toBitboard;
-
-                // Reset castling rights
-                whiteCastleQueenSide = 0L;
-                whiteCastleKingSide = 0L;
+                whiteKnights &= ~fromBitboard;
+                whiteKnights |= toBitboard;
 
                 // Update evaluations for both phases
-                currentEvalMG += KING_MIDDLE_GAME_TABLE_MG[Long.numberOfTrailingZeros(toBitboard) ^ 56] - KING_MIDDLE_GAME_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
-                currentEvalEG += KING_END_GAME_TABLE_EG[Long.numberOfTrailingZeros(toBitboard) ^ 56] - KING_END_GAME_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
-            }
+                currentEvalMG += KNIGHT_TABLE_MG[Long.numberOfTrailingZeros(toBitboard) ^ 56]
+                        - KNIGHT_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
+                currentEvalEG += KNIGHT_TABLE_EG[Long.numberOfTrailingZeros(toBitboard) ^ 56]
+                        - KNIGHT_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
+
+                // Fous blancs
+            } else if ((whiteBishops & fromBitboard) != 0) {
+                whiteBishops &= ~fromBitboard;
+                whiteBishops |= toBitboard;
+
+                // Update evaluations for both phases
+                currentEvalMG += BISHOP_TABLE_MG[Long.numberOfTrailingZeros(toBitboard) ^ 56]
+                        - BISHOP_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
+                currentEvalEG += BISHOP_TABLE_EG[Long.numberOfTrailingZeros(toBitboard) ^ 56]
+                        - BISHOP_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
+
+                // Tours blanches
+            } else if ((whiteRooks & fromBitboard) != 0) {
+                if ((A1 & fromBitboard) != 0)
+                    whiteCastleQueenSide = 0L;
+                if ((H1 & fromBitboard) != 0)
+                    whiteCastleKingSide = 0L;
+                whiteRooks &= ~fromBitboard;
+                whiteRooks |= toBitboard;
+
+                // Update evaluations for both phases
+                currentEvalMG += ROOK_TABLE_MG[Long.numberOfTrailingZeros(toBitboard) ^ 56]
+                        - ROOK_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
+                currentEvalEG += ROOK_TABLE_EG[Long.numberOfTrailingZeros(toBitboard) ^ 56]
+                        - ROOK_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
+
+                // Dames blanches
+            } else if ((whiteQueens & fromBitboard) != 0) {
+                whiteQueens &= ~fromBitboard;
+                whiteQueens |= toBitboard;
+
+                // Update evaluations for both phases
+                currentEvalMG += QUEEN_TABLE_MG[Long.numberOfTrailingZeros(toBitboard) ^ 56]
+                        - QUEEN_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
+                currentEvalEG += QUEEN_TABLE_EG[Long.numberOfTrailingZeros(toBitboard) ^ 56]
+                        - QUEEN_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
+
+                // Roi blanc
+            } else if ((whiteKing & fromBitboard) != 0) {
+                if (((whiteCastleQueenSide != 0) && (C1 & toBitboard) != 0)
+                        || ((whiteCastleKingSide != 0) && (G1 & toBitboard) != 0)) {
+                    // Handle castling for white
+                    if (toBitboard == 1L << 2) {
+                        processWhiteCastleQueenSide(fromBitboard);
+                    } else if (toBitboard == 1L << 6) {
+                        processWhiteCastleKingSide(fromBitboard);
+                    }
+                } else {
+                    whiteKing &= ~fromBitboard;
+                    whiteKing |= toBitboard;
+
+                    // Reset castling rights
+                    whiteCastleQueenSide = 0L;
+                    whiteCastleKingSide = 0L;
+
+                    // Update evaluations for both phases
+                    currentEvalMG += KING_MIDDLE_GAME_TABLE_MG[Long.numberOfTrailingZeros(toBitboard) ^ 56]
+                            - KING_MIDDLE_GAME_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
+                    currentEvalEG += KING_END_GAME_TABLE_EG[Long.numberOfTrailingZeros(toBitboard) ^ 56]
+                            - KING_END_GAME_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
+                }
             }
         } else {
             handleCaptureBlack(toBitboard);
             // Pions noirs
             if ((blackPawns & fromBitboard) != 0) {
-        
-            // Handle en passant capture
-            if (PackedMove.getFlags(move) == Move.EN_PASSENT) {
-                final long capturedPawn = enPassantSquare << 8;
-                whitePawns &= ~capturedPawn;
 
-                // Move pawn
-                blackPawns &= ~fromBitboard;
-                blackPawns |= toBitboard;
+                // Handle en passant capture
+                if (PackedMove.getFlags(move) == Move.EN_PASSENT) {
+                    final long capturedPawn = enPassantSquare << 8;
+                    whitePawns &= ~capturedPawn;
 
-                // Update evaluations for both phases
-                currentEvalMG -= PAWN_TABLE_MG[Long.numberOfTrailingZeros(toBitboard)] - PAWN_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard)];
-                currentEvalEG -= PAWN_TABLE_EG[Long.numberOfTrailingZeros(toBitboard)] - PAWN_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard)];
-            }
-        
-            // Handle double pawn push
-            if (PackedMove.getFlags(move) == Move.DOUBLE_PAWN_PUSH) {
-                enPassantSquare = toBitboard << 8;
+                    // Move pawn
+                    blackPawns &= ~fromBitboard;
+                    blackPawns |= toBitboard;
 
-                // Move pawn
-                blackPawns &= ~fromBitboard;
-                blackPawns |= toBitboard;
-
-                // Update evaluations for both phases
-                currentEvalMG -= PAWN_TABLE_MG[Long.numberOfTrailingZeros(toBitboard)] - PAWN_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard)];
-                currentEvalEG -= PAWN_TABLE_EG[Long.numberOfTrailingZeros(toBitboard)] - PAWN_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard)];
-            } else {
-                enPassantSquare = 0L; // Reset en passant square
-
-                
-                // Handle promotion
-                if (PackedMove.getFlags(move) == Move.PROMOTION) {
-                switch (PackedMove.getPromotion(move)) {
-                    case KNIGHT:
                     // Update evaluations for both phases
-                    currentEvalMG -= KNIGHT_SCORE + KNIGHT_TABLE_MG[Long.numberOfTrailingZeros(toBitboard)] - PAWN_SCORE - PAWN_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard)];
-                    currentEvalEG -= KNIGHT_SCORE + KNIGHT_TABLE_EG[Long.numberOfTrailingZeros(toBitboard)] - PAWN_SCORE - PAWN_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard)];
-                    phase += 1; // Knights add 1 to phase
-                    blackKnights |= toBitboard; 
-                    break;
-                    case BISHOP:
-                    // Update evaluations for both phases
-                    currentEvalMG -= BISHOP_SCORE + BISHOP_TABLE_MG[Long.numberOfTrailingZeros(toBitboard)] - PAWN_SCORE - PAWN_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard)];
-                    currentEvalEG -= BISHOP_SCORE + BISHOP_TABLE_EG[Long.numberOfTrailingZeros(toBitboard)] - PAWN_SCORE - PAWN_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard)];
-                    phase += 1; // Bishops add 1 to phase
-                    blackBishops |= toBitboard; 
-                    break;
-                    case ROOK:
-                    // Update evaluations for both phases
-                    currentEvalMG -= ROOK_SCORE + ROOK_TABLE_MG[Long.numberOfTrailingZeros(toBitboard)] - PAWN_SCORE - PAWN_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard)];
-                    currentEvalEG -= ROOK_SCORE + ROOK_TABLE_EG[Long.numberOfTrailingZeros(toBitboard)] - PAWN_SCORE - PAWN_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard)];
-                    phase += 2; // Rooks add 2 to phase
-                    blackRooks |= toBitboard; 
-                    break;
-                    case QUEEN:
-                    // Update evaluations for both phases
-                    currentEvalMG -= QUEEN_SCORE + QUEEN_TABLE_MG[Long.numberOfTrailingZeros(toBitboard)] - PAWN_SCORE - PAWN_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard)];
-                    currentEvalEG -= QUEEN_SCORE + QUEEN_TABLE_EG[Long.numberOfTrailingZeros(toBitboard)] - PAWN_SCORE - PAWN_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard)];
-                    phase += 4; // Queens add 4 to phase
-                    blackQueens |= toBitboard; 
-                    break;
+                    currentEvalMG -= PAWN_TABLE_MG[Long.numberOfTrailingZeros(toBitboard)]
+                            - PAWN_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard)];
+                    currentEvalEG -= PAWN_TABLE_EG[Long.numberOfTrailingZeros(toBitboard)]
+                            - PAWN_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard)];
                 }
 
-                // remove pawn
-                blackPawns &= ~fromBitboard;
-        
-                }
-                else{
-                // Move pawn
-                blackPawns &= ~fromBitboard;
-                blackPawns |= toBitboard;
+                // Handle double pawn push
+                if (PackedMove.getFlags(move) == Move.DOUBLE_PAWN_PUSH) {
+                    enPassantSquare = toBitboard << 8;
 
-                // Update evaluations for both phases
-                currentEvalMG -= PAWN_TABLE_MG[Long.numberOfTrailingZeros(toBitboard)] - PAWN_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard)];
-                currentEvalEG -= PAWN_TABLE_EG[Long.numberOfTrailingZeros(toBitboard)] - PAWN_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard)];
+                    // Move pawn
+                    blackPawns &= ~fromBitboard;
+                    blackPawns |= toBitboard;
+
+                    // Update evaluations for both phases
+                    currentEvalMG -= PAWN_TABLE_MG[Long.numberOfTrailingZeros(toBitboard)]
+                            - PAWN_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard)];
+                    currentEvalEG -= PAWN_TABLE_EG[Long.numberOfTrailingZeros(toBitboard)]
+                            - PAWN_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard)];
+
+
+                    // Update ZobirstKey
+                    this.zobristKey ^= Zobrist.EN_PASSANT_KEYS[Long.numberOfTrailingZeros(enPassantSquare)];
+                } else {
+                    enPassantSquare = 0L; // Reset en passant square
+
+                    // Handle promotion
+                    if (PackedMove.getFlags(move) == Move.PROMOTION) {
+                        switch (PackedMove.getPromotion(move)) {
+                            case KNIGHT:
+                                // Update evaluations for both phases
+                                currentEvalMG -= KNIGHT_SCORE + KNIGHT_TABLE_MG[Long.numberOfTrailingZeros(toBitboard)]
+                                        - PAWN_SCORE - PAWN_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard)];
+                                currentEvalEG -= KNIGHT_SCORE + KNIGHT_TABLE_EG[Long.numberOfTrailingZeros(toBitboard)]
+                                        - PAWN_SCORE - PAWN_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard)];
+                                phase += 1; // Knights add 1 to phase
+                                blackKnights |= toBitboard;
+                                break;
+                            case BISHOP:
+                                // Update evaluations for both phases
+                                currentEvalMG -= BISHOP_SCORE + BISHOP_TABLE_MG[Long.numberOfTrailingZeros(toBitboard)]
+                                        - PAWN_SCORE - PAWN_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard)];
+                                currentEvalEG -= BISHOP_SCORE + BISHOP_TABLE_EG[Long.numberOfTrailingZeros(toBitboard)]
+                                        - PAWN_SCORE - PAWN_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard)];
+                                phase += 1; // Bishops add 1 to phase
+                                blackBishops |= toBitboard;
+                                break;
+                            case ROOK:
+                                // Update evaluations for both phases
+                                currentEvalMG -= ROOK_SCORE + ROOK_TABLE_MG[Long.numberOfTrailingZeros(toBitboard)]
+                                        - PAWN_SCORE - PAWN_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard)];
+                                currentEvalEG -= ROOK_SCORE + ROOK_TABLE_EG[Long.numberOfTrailingZeros(toBitboard)]
+                                        - PAWN_SCORE - PAWN_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard)];
+                                phase += 2; // Rooks add 2 to phase
+                                blackRooks |= toBitboard;
+                                break;
+                            case QUEEN:
+                                // Update evaluations for both phases
+                                currentEvalMG -= QUEEN_SCORE + QUEEN_TABLE_MG[Long.numberOfTrailingZeros(toBitboard)]
+                                        - PAWN_SCORE - PAWN_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard)];
+                                currentEvalEG -= QUEEN_SCORE + QUEEN_TABLE_EG[Long.numberOfTrailingZeros(toBitboard)]
+                                        - PAWN_SCORE - PAWN_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard)];
+                                phase += 4; // Queens add 4 to phase
+                                blackQueens |= toBitboard;
+                                break;
+                        }
+
+                        // remove pawn
+                        blackPawns &= ~fromBitboard;
+
+                    } else {
+                        // Move pawn
+                        blackPawns &= ~fromBitboard;
+                        blackPawns |= toBitboard;
+
+                        // Update evaluations for both phases
+                        currentEvalMG -= PAWN_TABLE_MG[Long.numberOfTrailingZeros(toBitboard)]
+                                - PAWN_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard)];
+                        currentEvalEG -= PAWN_TABLE_EG[Long.numberOfTrailingZeros(toBitboard)]
+                                - PAWN_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard)];
+                    }
                 }
-            }
-        
-        
-            // Cavaliers noirs
+
+                // Cavaliers noirs
             } else if ((blackKnights & fromBitboard) != 0) {
-            blackKnights &= ~fromBitboard;
-            blackKnights |= toBitboard;
-
-            // Update evaluations for both phases
-            currentEvalMG -= KNIGHT_TABLE_MG[Long.numberOfTrailingZeros(toBitboard)] - KNIGHT_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard)];
-            currentEvalEG -= KNIGHT_TABLE_EG[Long.numberOfTrailingZeros(toBitboard)] - KNIGHT_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard)];
-        
-            // Fous noirs
-            } else if ((blackBishops & fromBitboard) != 0) {
-            blackBishops &= ~fromBitboard;
-            blackBishops |= toBitboard;
-
-            // Update evaluations for both phases
-            currentEvalMG -= BISHOP_TABLE_MG[Long.numberOfTrailingZeros(toBitboard)] - BISHOP_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard)];
-            currentEvalEG -= BISHOP_TABLE_EG[Long.numberOfTrailingZeros(toBitboard)] - BISHOP_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard)];
-        
-            // Tours noires
-            } else if ((blackRooks & fromBitboard) != 0) {
-            if ((A8 & fromBitboard) != 0) blackCastleQueenSide = 0L;
-            if ((H8 & fromBitboard) != 0) blackCastleKingSide = 0L;
-            blackRooks &= ~fromBitboard;
-            blackRooks |= toBitboard;
-
-            // Update evaluations for both phases
-            currentEvalMG -= ROOK_TABLE_MG[Long.numberOfTrailingZeros(toBitboard)] - ROOK_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard)];
-            currentEvalEG -= ROOK_TABLE_EG[Long.numberOfTrailingZeros(toBitboard)] - ROOK_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard)];
-        
-            // Dames noires
-            } else if ((blackQueens & fromBitboard) != 0) {
-            blackQueens &= ~fromBitboard;
-            blackQueens |= toBitboard;
-
-            // Update evaluations for both phases
-            currentEvalMG -= QUEEN_TABLE_MG[Long.numberOfTrailingZeros(toBitboard)] - QUEEN_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard)];
-            currentEvalEG -= QUEEN_TABLE_EG[Long.numberOfTrailingZeros(toBitboard)] - QUEEN_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard)];
-        
-            // Roi noir
-            } else if ((blackKing & fromBitboard) != 0) {
-            if (((blackCastleQueenSide != 0) && (C8 & toBitboard) != 0) || ((blackCastleKingSide != 0) && (G8 & toBitboard) != 0)) {
-                // Handle castling for black
-                if (toBitboard == 1L << 58) {
-                processBlackCastleQueenSide(fromBitboard);
-                } else if (toBitboard == 1L << 62) {
-                processBlackCastleKingSide(fromBitboard);
-                }
-            } else {
-                blackKing &= ~fromBitboard;
-                blackKing |= toBitboard;
-
-                // Reset castling rights
-                blackCastleQueenSide = 0L;
-                blackCastleKingSide = 0L;
+                blackKnights &= ~fromBitboard;
+                blackKnights |= toBitboard;
 
                 // Update evaluations for both phases
-                currentEvalMG -= KING_MIDDLE_GAME_TABLE_MG[Long.numberOfTrailingZeros(toBitboard)] - KING_MIDDLE_GAME_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard)];
-                currentEvalEG -= KING_END_GAME_TABLE_EG[Long.numberOfTrailingZeros(toBitboard)] - KING_END_GAME_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard)];
-            }
+                currentEvalMG -= KNIGHT_TABLE_MG[Long.numberOfTrailingZeros(toBitboard)]
+                        - KNIGHT_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard)];
+                currentEvalEG -= KNIGHT_TABLE_EG[Long.numberOfTrailingZeros(toBitboard)]
+                        - KNIGHT_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard)];
+
+                // Fous noirs
+            } else if ((blackBishops & fromBitboard) != 0) {
+                blackBishops &= ~fromBitboard;
+                blackBishops |= toBitboard;
+
+                // Update evaluations for both phases
+                currentEvalMG -= BISHOP_TABLE_MG[Long.numberOfTrailingZeros(toBitboard)]
+                        - BISHOP_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard)];
+                currentEvalEG -= BISHOP_TABLE_EG[Long.numberOfTrailingZeros(toBitboard)]
+                        - BISHOP_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard)];
+
+                // Tours noires
+            } else if ((blackRooks & fromBitboard) != 0) {
+                if ((A8 & fromBitboard) != 0)
+                    blackCastleQueenSide = 0L;
+                if ((H8 & fromBitboard) != 0)
+                    blackCastleKingSide = 0L;
+                blackRooks &= ~fromBitboard;
+                blackRooks |= toBitboard;
+
+                // Update evaluations for both phases
+                currentEvalMG -= ROOK_TABLE_MG[Long.numberOfTrailingZeros(toBitboard)]
+                        - ROOK_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard)];
+                currentEvalEG -= ROOK_TABLE_EG[Long.numberOfTrailingZeros(toBitboard)]
+                        - ROOK_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard)];
+
+                // Dames noires
+            } else if ((blackQueens & fromBitboard) != 0) {
+                blackQueens &= ~fromBitboard;
+                blackQueens |= toBitboard;
+
+                // Update evaluations for both phases
+                currentEvalMG -= QUEEN_TABLE_MG[Long.numberOfTrailingZeros(toBitboard)]
+                        - QUEEN_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard)];
+                currentEvalEG -= QUEEN_TABLE_EG[Long.numberOfTrailingZeros(toBitboard)]
+                        - QUEEN_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard)];
+
+                // Roi noir
+            } else if ((blackKing & fromBitboard) != 0) {
+                if (((blackCastleQueenSide != 0) && (C8 & toBitboard) != 0)
+                        || ((blackCastleKingSide != 0) && (G8 & toBitboard) != 0)) {
+                    // Handle castling for black
+                    if (toBitboard == 1L << 58) {
+                        processBlackCastleQueenSide(fromBitboard);
+                    } else if (toBitboard == 1L << 62) {
+                        processBlackCastleKingSide(fromBitboard);
+                    }
+                } else {
+                    blackKing &= ~fromBitboard;
+                    blackKing |= toBitboard;
+
+                    // Reset castling rights
+                    blackCastleQueenSide = 0L;
+                    blackCastleKingSide = 0L;
+
+                    // Update evaluations for both phases
+                    currentEvalMG -= KING_MIDDLE_GAME_TABLE_MG[Long.numberOfTrailingZeros(toBitboard)]
+                            - KING_MIDDLE_GAME_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard)];
+                    currentEvalEG -= KING_END_GAME_TABLE_EG[Long.numberOfTrailingZeros(toBitboard)]
+                            - KING_END_GAME_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard)];
+                }
             }
         }
-        
+
         // Update turn and reset en passant square if not a double pawn push
         whiteTurn = !whiteTurn;
         if (PackedMove.getFlags(move) != Move.DOUBLE_PAWN_PUSH) {
             enPassantSquare = 0L;
         }
-        
+
         // Update the bitboard representation
         updateBitBoard();
 
+        // Update ZobristKey
+        this.zobristKey ^= Zobrist.PIECE_KEYS[getPieceAt(PackedMove.getPieceFrom(move))][getSquare(PackedMove.getFrom(move))];
+        this.zobristKey ^= Zobrist.SIDE_TO_MOVE_KEY;
+
         // Ensure phase doesn't exceed 24
         phase = Math.min(phase, 24);
-        }
+    }
 
-        public void undoMove() {
+    public void undoMove() {
         if (!history.isEmpty()) {
             BoardHistory boardHistory = history.pop();
             restoreBoardHistory(boardHistory);
@@ -1554,158 +1673,152 @@ public class BitBoard {
         currentEvalEG = boardHistory.currentEvalEG;
 
         phase = boardHistory.phase;
-        
+
         whitePieces = whitePawns | whiteKnights | whiteBishops | whiteRooks | whiteQueens | whiteKing;
         blackPieces = blackPawns | blackKnights | blackBishops | blackRooks | blackQueens | blackKing;
-        }
-        
-        public void handleCaptureWhite(long toBitboard) {
-            if ((blackPawns & toBitboard) != 0) {
+    }
+
+    public void handleCaptureWhite(long toBitboard) {
+        if ((blackPawns & toBitboard) != 0) {
             blackPawns &= ~toBitboard;
-            currentEvalMG += PAWN_SCORE + PAWN_TABLE_MG[Long.numberOfTrailingZeros(toBitboard)]; 
+            currentEvalMG += PAWN_SCORE + PAWN_TABLE_MG[Long.numberOfTrailingZeros(toBitboard)];
             currentEvalEG += PAWN_SCORE + PAWN_TABLE_EG[Long.numberOfTrailingZeros(toBitboard)];
             // phase -= 0; // Pawns don't contribute to phase
-            } else if ((blackKnights & toBitboard) != 0) {
+        } else if ((blackKnights & toBitboard) != 0) {
             blackKnights &= ~toBitboard;
-            currentEvalMG += KNIGHT_SCORE + KNIGHT_TABLE_MG[Long.numberOfTrailingZeros(toBitboard)]; 
+            currentEvalMG += KNIGHT_SCORE + KNIGHT_TABLE_MG[Long.numberOfTrailingZeros(toBitboard)];
             currentEvalEG += KNIGHT_SCORE + KNIGHT_TABLE_EG[Long.numberOfTrailingZeros(toBitboard)];
             phase -= 1; // Knights contribute 1 to phase
-            } else if ((blackBishops & toBitboard) != 0) {
+        } else if ((blackBishops & toBitboard) != 0) {
             blackBishops &= ~toBitboard;
-            currentEvalMG += BISHOP_SCORE + BISHOP_TABLE_MG[Long.numberOfTrailingZeros(toBitboard)]; 
+            currentEvalMG += BISHOP_SCORE + BISHOP_TABLE_MG[Long.numberOfTrailingZeros(toBitboard)];
             currentEvalEG += BISHOP_SCORE + BISHOP_TABLE_EG[Long.numberOfTrailingZeros(toBitboard)];
             phase -= 1; // Bishops contribute 1 to phase
-            } else if ((blackRooks & toBitboard) != 0) {
+        } else if ((blackRooks & toBitboard) != 0) {
             blackRooks &= ~toBitboard;
-            currentEvalMG += ROOK_SCORE + ROOK_TABLE_MG[Long.numberOfTrailingZeros(toBitboard)]; 
+            currentEvalMG += ROOK_SCORE + ROOK_TABLE_MG[Long.numberOfTrailingZeros(toBitboard)];
             currentEvalEG += ROOK_SCORE + ROOK_TABLE_EG[Long.numberOfTrailingZeros(toBitboard)];
             phase -= 2; // Rooks contribute 2 to phase
-            } else if ((blackQueens & toBitboard) != 0) {
+        } else if ((blackQueens & toBitboard) != 0) {
             blackQueens &= ~toBitboard;
-            currentEvalMG += QUEEN_SCORE + QUEEN_TABLE_MG[Long.numberOfTrailingZeros(toBitboard)]; 
+            currentEvalMG += QUEEN_SCORE + QUEEN_TABLE_MG[Long.numberOfTrailingZeros(toBitboard)];
             currentEvalEG += QUEEN_SCORE + QUEEN_TABLE_EG[Long.numberOfTrailingZeros(toBitboard)];
             phase -= 4; // Queens contribute 4 to phase
-            }
         }
+    }
 
-        public void handleCaptureBlack(long toBitboard) {
-            if ((whitePawns & toBitboard) != 0) {
+    public void handleCaptureBlack(long toBitboard) {
+        if ((whitePawns & toBitboard) != 0) {
             whitePawns &= ~toBitboard;
-            currentEvalMG -= PAWN_SCORE + PAWN_TABLE_MG[Long.numberOfTrailingZeros(toBitboard) ^ 56]; 
+            currentEvalMG -= PAWN_SCORE + PAWN_TABLE_MG[Long.numberOfTrailingZeros(toBitboard) ^ 56];
             currentEvalEG -= PAWN_SCORE + PAWN_TABLE_EG[Long.numberOfTrailingZeros(toBitboard) ^ 56];
             // phase -= 0; // Pawns don't contribute to phase
-            } else if ((whiteKnights & toBitboard) != 0) {
+        } else if ((whiteKnights & toBitboard) != 0) {
             whiteKnights &= ~toBitboard;
-            currentEvalMG -= KNIGHT_SCORE + KNIGHT_TABLE_MG[Long.numberOfTrailingZeros(toBitboard) ^ 56]; 
+            currentEvalMG -= KNIGHT_SCORE + KNIGHT_TABLE_MG[Long.numberOfTrailingZeros(toBitboard) ^ 56];
             currentEvalEG -= KNIGHT_SCORE + KNIGHT_TABLE_EG[Long.numberOfTrailingZeros(toBitboard) ^ 56];
             phase -= 1; // Knights contribute 1 to phase
-            } else if ((whiteBishops & toBitboard) != 0) {
+        } else if ((whiteBishops & toBitboard) != 0) {
             whiteBishops &= ~toBitboard;
-            currentEvalMG -= BISHOP_SCORE + BISHOP_TABLE_MG[Long.numberOfTrailingZeros(toBitboard) ^ 56]; 
+            currentEvalMG -= BISHOP_SCORE + BISHOP_TABLE_MG[Long.numberOfTrailingZeros(toBitboard) ^ 56];
             currentEvalEG -= BISHOP_SCORE + BISHOP_TABLE_EG[Long.numberOfTrailingZeros(toBitboard) ^ 56];
             phase -= 1; // Bishops contribute 1 to phase
-            } else if ((whiteRooks & toBitboard) != 0) {
+        } else if ((whiteRooks & toBitboard) != 0) {
             whiteRooks &= ~toBitboard;
-            currentEvalMG -= ROOK_SCORE + ROOK_TABLE_MG[Long.numberOfTrailingZeros(toBitboard) ^ 56]; 
+            currentEvalMG -= ROOK_SCORE + ROOK_TABLE_MG[Long.numberOfTrailingZeros(toBitboard) ^ 56];
             currentEvalEG -= ROOK_SCORE + ROOK_TABLE_EG[Long.numberOfTrailingZeros(toBitboard) ^ 56];
             phase -= 2; // Rooks contribute 2 to phase
-            } else if ((whiteQueens & toBitboard) != 0) {
+        } else if ((whiteQueens & toBitboard) != 0) {
             whiteQueens &= ~toBitboard;
-            currentEvalMG -= QUEEN_SCORE + QUEEN_TABLE_MG[Long.numberOfTrailingZeros(toBitboard) ^ 56]; 
+            currentEvalMG -= QUEEN_SCORE + QUEEN_TABLE_MG[Long.numberOfTrailingZeros(toBitboard) ^ 56];
             currentEvalEG -= QUEEN_SCORE + QUEEN_TABLE_EG[Long.numberOfTrailingZeros(toBitboard) ^ 56];
             phase -= 4; // Queens contribute 4 to phase
-            }
         }
+    }
 
-            
-        public void processWhiteCastleKingSide(long fromBitboard) {
-            // Roque du côté du roi
-            whiteKing &= ~fromBitboard;
-            whiteKing |= 1L << 6;
-            whiteRooks &= ~(1L << 7);
-            whiteRooks |= 1L << 5;
+    public void processWhiteCastleKingSide(long fromBitboard) {
+        // Roque du côté du roi
+        whiteKing &= ~fromBitboard;
+        whiteKing |= 1L << 6;
+        whiteRooks &= ~(1L << 7);
+        whiteRooks |= 1L << 5;
 
-            whiteCastleKingSide = 0L;
-            whiteCastleQueenSide = 0L;
+        whiteCastleKingSide = 0L;
+        whiteCastleQueenSide = 0L;
 
-            // Update evaluations for both phases
-            currentEvalMG += KING_MIDDLE_GAME_TABLE_MG[Long.numberOfTrailingZeros(whiteKing) ^ 56] - KING_MIDDLE_GAME_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
-            currentEvalEG += KING_END_GAME_TABLE_EG[Long.numberOfTrailingZeros(whiteKing) ^ 56] - KING_END_GAME_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
+        // Update evaluations for both phases
+        currentEvalMG += KING_MIDDLE_GAME_TABLE_MG[Long.numberOfTrailingZeros(whiteKing) ^ 56]
+                - KING_MIDDLE_GAME_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
+        currentEvalEG += KING_END_GAME_TABLE_EG[Long.numberOfTrailingZeros(whiteKing) ^ 56]
+                - KING_END_GAME_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
 
-            // Update evaluations for rook
-            currentEvalMG += ROOK_TABLE_MG[Long.numberOfTrailingZeros(whiteRooks & (1L << 5)) ^ 56] - ROOK_TABLE_MG[7 ^ 56];
-            currentEvalEG += ROOK_TABLE_EG[Long.numberOfTrailingZeros(whiteRooks & (1L << 5)) ^ 56] - ROOK_TABLE_EG[7 ^ 56];
-            }
+        // Update evaluations for rook
+        currentEvalMG += ROOK_TABLE_MG[Long.numberOfTrailingZeros(whiteRooks & (1L << 5)) ^ 56] - ROOK_TABLE_MG[7 ^ 56];
+        currentEvalEG += ROOK_TABLE_EG[Long.numberOfTrailingZeros(whiteRooks & (1L << 5)) ^ 56] - ROOK_TABLE_EG[7 ^ 56];
+    }
 
-            public void processWhiteCastleQueenSide(long fromBitboard) {
-            // Roque du côté de la reine
-            whiteKing &= ~fromBitboard;
-            whiteKing |= 1L << 2;
-            whiteRooks &= ~(1L << 0);
-            whiteRooks |= 1L << 3;
+    public void processWhiteCastleQueenSide(long fromBitboard) {
+        // Roque du côté de la reine
+        whiteKing &= ~fromBitboard;
+        whiteKing |= 1L << 2;
+        whiteRooks &= ~(1L << 0);
+        whiteRooks |= 1L << 3;
 
-            whiteCastleKingSide = 0L;
-            whiteCastleQueenSide = 0L;
+        whiteCastleKingSide = 0L;
+        whiteCastleQueenSide = 0L;
 
-            // Update evaluations for both phases
-            currentEvalMG += KING_MIDDLE_GAME_TABLE_MG[Long.numberOfTrailingZeros(whiteKing) ^ 56] - KING_MIDDLE_GAME_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
-            currentEvalEG += KING_END_GAME_TABLE_EG[Long.numberOfTrailingZeros(whiteKing) ^ 56] - KING_END_GAME_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
+        // Update evaluations for both phases
+        currentEvalMG += KING_MIDDLE_GAME_TABLE_MG[Long.numberOfTrailingZeros(whiteKing) ^ 56]
+                - KING_MIDDLE_GAME_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
+        currentEvalEG += KING_END_GAME_TABLE_EG[Long.numberOfTrailingZeros(whiteKing) ^ 56]
+                - KING_END_GAME_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
 
-            // Update evaluations for rook
-            currentEvalMG += ROOK_TABLE_MG[Long.numberOfTrailingZeros(whiteRooks & (1L << 3)) ^ 56] - ROOK_TABLE_MG[0 ^ 56];
-            currentEvalEG += ROOK_TABLE_EG[Long.numberOfTrailingZeros(whiteRooks & (1L << 3)) ^ 56] - ROOK_TABLE_EG[0 ^ 56];
-            }
+        // Update evaluations for rook
+        currentEvalMG += ROOK_TABLE_MG[Long.numberOfTrailingZeros(whiteRooks & (1L << 3)) ^ 56] - ROOK_TABLE_MG[0 ^ 56];
+        currentEvalEG += ROOK_TABLE_EG[Long.numberOfTrailingZeros(whiteRooks & (1L << 3)) ^ 56] - ROOK_TABLE_EG[0 ^ 56];
+    }
 
-            public void processBlackCastleKingSide(long fromBitboard) {
-            // Roque du côté du roi
-            blackKing &= ~fromBitboard;
-            blackKing |= 1L << 62;
-            blackRooks &= ~(1L << 63);
-            blackRooks |= 1L << 61;
+    public void processBlackCastleKingSide(long fromBitboard) {
+        // Roque du côté du roi
+        blackKing &= ~fromBitboard;
+        blackKing |= 1L << 62;
+        blackRooks &= ~(1L << 63);
+        blackRooks |= 1L << 61;
 
-            blackCastleKingSide = 0L;
-            blackCastleQueenSide = 0L;
+        blackCastleKingSide = 0L;
+        blackCastleQueenSide = 0L;
 
-            // Update evaluations for both phases
-            currentEvalMG -= KING_MIDDLE_GAME_TABLE_MG[Long.numberOfTrailingZeros(blackKing)] - KING_MIDDLE_GAME_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard)];
-            currentEvalEG -= KING_END_GAME_TABLE_EG[Long.numberOfTrailingZeros(blackKing)] - KING_END_GAME_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard)];
+        // Update evaluations for both phases
+        currentEvalMG -= KING_MIDDLE_GAME_TABLE_MG[Long.numberOfTrailingZeros(blackKing)]
+                - KING_MIDDLE_GAME_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard)];
+        currentEvalEG -= KING_END_GAME_TABLE_EG[Long.numberOfTrailingZeros(blackKing)]
+                - KING_END_GAME_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard)];
 
-            // Update evaluations for rook
-            currentEvalMG -= ROOK_TABLE_MG[Long.numberOfTrailingZeros(blackRooks & (1L << 61))] - ROOK_TABLE_MG[63];
-            currentEvalEG -= ROOK_TABLE_EG[Long.numberOfTrailingZeros(blackRooks & (1L << 61))] - ROOK_TABLE_EG[63];
-            }
+        // Update evaluations for rook
+        currentEvalMG -= ROOK_TABLE_MG[Long.numberOfTrailingZeros(blackRooks & (1L << 61))] - ROOK_TABLE_MG[63];
+        currentEvalEG -= ROOK_TABLE_EG[Long.numberOfTrailingZeros(blackRooks & (1L << 61))] - ROOK_TABLE_EG[63];
+    }
 
-            public void processBlackCastleQueenSide(long fromBitboard) {
-            // Roque du côté de la reine
-            blackKing &= ~fromBitboard;
-            blackKing |= 1L << 58;
-            blackRooks &= ~(1L << 56);
-            blackRooks |= 1L << 59;
+    public void processBlackCastleQueenSide(long fromBitboard) {
+        // Roque du côté de la reine
+        blackKing &= ~fromBitboard;
+        blackKing |= 1L << 58;
+        blackRooks &= ~(1L << 56);
+        blackRooks |= 1L << 59;
 
-            blackCastleKingSide = 0L;
-            blackCastleQueenSide = 0L;
+        blackCastleKingSide = 0L;
+        blackCastleQueenSide = 0L;
 
-            // Update evaluations for both phases
-            currentEvalMG -= KING_MIDDLE_GAME_TABLE_MG[Long.numberOfTrailingZeros(blackKing)] - KING_MIDDLE_GAME_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard)];
-            currentEvalEG -= KING_END_GAME_TABLE_EG[Long.numberOfTrailingZeros(blackKing)] - KING_END_GAME_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard)];
+        // Update evaluations for both phases
+        currentEvalMG -= KING_MIDDLE_GAME_TABLE_MG[Long.numberOfTrailingZeros(blackKing)]
+                - KING_MIDDLE_GAME_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard)];
+        currentEvalEG -= KING_END_GAME_TABLE_EG[Long.numberOfTrailingZeros(blackKing)]
+                - KING_END_GAME_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard)];
 
-            // Update evaluations for rook
-            currentEvalMG -= ROOK_TABLE_MG[Long.numberOfTrailingZeros(blackRooks & (1L << 59))] - ROOK_TABLE_MG[56];
-            currentEvalEG -= ROOK_TABLE_EG[Long.numberOfTrailingZeros(blackRooks & (1L << 59))] - ROOK_TABLE_EG[56];
-        }
-
-    // public Move makeRandomMove() {
-    //     MoveList moveList = getLegalMoves();
-    //     int randomIndex = (int) (Math.random() * moveList.size());
-    //     Move move = moveList.get(randomIndex);
-    //     return move;
-    // }
-
-    // public boolean isLegalMove(Move move) {
-    //     MoveList moveList = getLegalMoves();
-    //     // System.out.println("legal moves: " + moveList);
-    //     return moveList.contains(move);
-    // }
+        // Update evaluations for rook
+        currentEvalMG -= ROOK_TABLE_MG[Long.numberOfTrailingZeros(blackRooks & (1L << 59))] - ROOK_TABLE_MG[56];
+        currentEvalEG -= ROOK_TABLE_EG[Long.numberOfTrailingZeros(blackRooks & (1L << 59))] - ROOK_TABLE_EG[56];
+    }
 
     public void makeMove(String move) {
         int fromSquare = getSquare(move.substring(0, 2));
@@ -1754,11 +1867,8 @@ public class BitBoard {
         return MoveGenerator.generatePseudoLegalMoves(this);
     }
 
-    
-
-
     // legal moves
-    public PackedMoveList getLegalMoves(){
+    public PackedMoveList getLegalMoves() {
         PackedMoveList moveList = MoveGenerator.generatePseudoLegalMoves(this);
 
         // Pour chaque coup, vérifier si le roi est en échec après le coup
@@ -1772,10 +1882,8 @@ public class BitBoard {
                 i--;
             }
             undoMove();
-            
-        }
 
-        // System.out.println("Legal moves: " + moveList);
+        }
 
         return moveList;
     }
@@ -1787,13 +1895,10 @@ public class BitBoard {
         return (opponentAttacks & king) != 0;
 
     }
-    
-    
 
     public PackedMoveList getCaptureMoves() {
         PackedMoveList moveList = MoveGenerator.generateCaptureMoves(this);
 
-        
         // Pour chaque coup, vérifier si le roi est en échec après le coup
         // Si le roi est en échec, le coup n'est pas légal
         // Sinon, le coup est légal
@@ -1805,26 +1910,22 @@ public class BitBoard {
                 i--;
             }
             undoMove();
-            
+
         }
-        
+
         return moveList;
     }
 
-    
-    
     // public boolean isStaleMate() {
-    //     MoveList moveList = getLegalMoves();
-    //     return moveList.size() == 0 && !isKingInCheck(whiteTurn);
+    // MoveList moveList = getLegalMoves();
+    // return moveList.size() == 0 && !isKingInCheck(whiteTurn);
     // }
 
     // // pseudo legal
     // public boolean isCheckMate() {
-    //     MoveList moveList = getLegalMoves();
-    //     return moveList.size() == 0 && isKingInCheck(whiteTurn);
+    // MoveList moveList = getLegalMoves();
+    // return moveList.size() == 0 && isKingInCheck(whiteTurn);
     // }
-
-
 
     private void updateBitBoard() {
         whitePieces = whitePawns | whiteKnights | whiteBishops | whiteRooks | whiteQueens | whiteKing;
@@ -1891,19 +1992,9 @@ public class BitBoard {
         }
     }
 
-    public void printBitBoardRaw(){
+    public void printBitBoardRaw() {
         System.out.println(Long.toBinaryString(bitboard));
     }
-
-    // public static int getSquare(long bitboard) {
-    //     // use the square map
-    //     for (int i = 0; i < 64; i++) {
-    //         if ((SQUARES_MAP[i] & bitboard) != 0) {
-    //             return i;
-    //         }
-    //     }
-    //     return -1;
-    // }
 
     public static int getSquare(long bitboard) {
         return Long.numberOfTrailingZeros(bitboard);
@@ -1911,8 +2002,8 @@ public class BitBoard {
 
     private int getSquare(String position) {
         // Convertit une position comme "e2" en un index 0-63
-        int file = position.charAt(0) - 'a';  // 'e' -> 4
-        int rank = position.charAt(1) - '1';  // '2' -> 1
+        int file = position.charAt(0) - 'a'; // 'e' -> 4
+        int rank = position.charAt(1) - '1'; // '2' -> 1
         int result = 8 * rank + file;
 
         return result;
@@ -1923,7 +2014,7 @@ public class BitBoard {
     }
 
     public static String getSquareIndexNotation(int square) {
-        String[] files = {"a", "b", "c", "d", "e", "f", "g", "h"};
+        String[] files = { "a", "b", "c", "d", "e", "f", "g", "h" };
         int rank = square / 8;
         int file = square % 8;
         return files[file] + (rank + 1);
@@ -1937,7 +2028,6 @@ public class BitBoard {
             }
         }
     }
-
 
     @Override
     public String toString() {
@@ -1965,8 +2055,6 @@ public class BitBoard {
                 ", whiteTurn=" + whiteTurn +
                 '}';
     }
-
-    
 
     public boolean isCaptureMove(Move move) {
         int toSquare = move.to;
@@ -2042,7 +2130,7 @@ public class BitBoard {
         }
     }
 
-    public int getPieceAt(long to){
+    public int getPieceAt(long to) {
         if ((whitePawns & to) != 0) {
             return PAWN;
         } else if ((whiteKnights & to) != 0) {
@@ -2072,42 +2160,6 @@ public class BitBoard {
         }
     }
 
-    public long getZobristKey() {
-        long hash = 0;
-
-        for (int square = 0; square < 64; square++) {
-            int piece = getPieceAt(square); // 0-11 (ex: 0 = white pawn, 1 = white knight, ..., 11 = black king)
-            if (piece != -1) {
-                hash ^= Zobrist.PIECE_KEYS[piece][square];
-            }
-        }
-
-        // Trait (blanc ou noir)
-        if (!whiteTurn) {
-            hash ^= Zobrist.SIDE_TO_MOVE_KEY;
-        }
-
-        // Roque
-        int castlingRights = getCastlingRights(); // Ex: 0b1111 = tous les roques possibles
-        hash ^= Zobrist.CASTLING_KEYS[castlingRights];
-
-        // En passant
-        int epFile = getEnPassantFile(); // -1 si pas de case en passant
-        if (epFile >= 0) {
-            hash ^= Zobrist.EN_PASSANT_KEYS[epFile];
-        }
-
-        return hash;
-    }
-
-    public int getEnPassantFile() {
-        if (enPassantSquare == 0) {
-            return -1; // Pas de case en passant
-        } else {
-            return Long.numberOfTrailingZeros(enPassantSquare) % 8; // Ex: 0b
-        }
-    }
-
     private int getCastlingRights() {
         int rights = 0;
         if (whiteCastleKingSide != 0) {
@@ -2124,7 +2176,5 @@ public class BitBoard {
         }
         return rights;
     }
-
-
 
 }

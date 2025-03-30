@@ -269,9 +269,9 @@ public class MoveGenerator {
             return board.getPieceAt(to);
         }
         return 0;
-        }
+    }
 
-        public static PackedMoveList generatePseudoLegalMoves(BitBoard board) {
+    public static PackedMoveList generatePseudoLegalMoves(BitBoard board) {
         PackedMoveList moves = new PackedMoveList(218);
 
         // PAWNS
@@ -284,55 +284,55 @@ public class MoveGenerator {
             long pawnMoves = generatePawnMoves(pawn, board);
 
             while (pawnMoves != 0L) {
-            long move = BitBoard.getLSB(pawnMoves);
-            pawnMoves &= pawnMoves - 1;
+                long move = BitBoard.getLSB(pawnMoves);
+                pawnMoves &= pawnMoves - 1;
 
-            int to = BitBoard.getSquare(move);
-            int capturedPiece = board.getPiece(to);
+                int to = BitBoard.getSquare(move);
+                int capturedPiece = board.getPiece(to);
 
-            // Double pawn push
-            if ((pawn << 16) == move || (pawn >> 16) == move) {
-                long packed = PackedMove.encode(from, to, BitBoard.PAWN, capturedPiece, 0, Move.DOUBLE_PAWN_PUSH,
-                    Move.DOUBLE_PAWN_PUSH_SCORE);
-                moves.add(packed);
-                continue;
-            }
-
-            // Promotions
-            if (to >= 56 || to <= 7) {
-                int[] promoPieces = { BitBoard.QUEEN, BitBoard.ROOK, BitBoard.BISHOP, BitBoard.KNIGHT };
-                for (int promoPiece : promoPieces) {
-                long packed = PackedMove.encode(from, to, BitBoard.PAWN, capturedPiece, promoPiece,
-                    Move.PROMOTION, Move.PROMOTION_SCORE + promoPiece + capturedPiece);
-                moves.add(packed);
+                // Double pawn push
+                if ((pawn << 16) == move || (pawn >> 16) == move) {
+                    long packed = PackedMove.encode(from, to, BitBoard.PAWN, capturedPiece, 0, Move.DOUBLE_PAWN_PUSH,
+                            Move.DOUBLE_PAWN_PUSH_SCORE);
+                    moves.add(packed);
+                    continue;
                 }
-                continue;
-            }
 
-            // En Passant
-            if (to == BitBoard.getSquare(board.enPassantSquare)) {
-                // System.out.println("En Passant: " + from + " -> " + to);
-                long packed = PackedMove.encode(from, to, BitBoard.PAWN, capturedPiece, 0, Move.EN_PASSENT,
-                    Move.EN_PASSENT);
+                // Promotions
+                if (to >= 56 || to <= 7) {
+                    int[] promoPieces = { BitBoard.QUEEN, BitBoard.ROOK, BitBoard.BISHOP, BitBoard.KNIGHT };
+                    for (int promoPiece : promoPieces) {
+                        long packed = PackedMove.encode(from, to, BitBoard.PAWN, capturedPiece, promoPiece,
+                                Move.PROMOTION, Move.PROMOTION_SCORE + promoPiece + capturedPiece);
+                        moves.add(packed);
+                    }
+                    continue;
+                }
+
+                // En Passant
+                if (to == BitBoard.getSquare(board.enPassantSquare)) {
+                    // System.out.println("En Passant: " + from + " -> " + to);
+                    long packed = PackedMove.encode(from, to, BitBoard.PAWN, capturedPiece, 0, Move.EN_PASSENT,
+                            Move.EN_PASSENT);
+                    moves.add(packed);
+                    continue;
+                }
+
+                // Normal move or capture
+                int flag = (capturedPiece != BitBoard.EMPTY) ? Move.CAPTURE : Move.DEFAULT;
+                int score;
+
+                if (capturedPiece != BitBoard.EMPTY) {
+                    // MVV-LVA calculation
+                    int attackerType = BitBoard.getPieceType(BitBoard.PAWN) - 1;
+                    int capturedType = BitBoard.getPieceType(capturedPiece) - 1;
+                    score = mvvLva[attackerType][capturedType];
+                } else {
+                    score = 0;
+                }
+
+                long packed = PackedMove.encode(from, to, BitBoard.PAWN, capturedPiece, 0, flag, score);
                 moves.add(packed);
-                continue;
-            }
-
-            // Normal move or capture
-            int flag = (capturedPiece != BitBoard.EMPTY) ? Move.CAPTURE : Move.DEFAULT;
-            int score;
-            
-            if (capturedPiece != BitBoard.EMPTY) {
-                // MVV-LVA calculation
-                int attackerType = BitBoard.getPieceType(BitBoard.PAWN) - 1;
-                int capturedType = BitBoard.getPieceType(capturedPiece) - 1;
-                score = mvvLva[attackerType][capturedType];
-            } else {
-                score = 0;
-            }
-            
-            long packed = PackedMove.encode(from, to, BitBoard.PAWN, capturedPiece, 0, flag, score);
-            moves.add(packed);
             }
         }
 
@@ -344,28 +344,28 @@ public class MoveGenerator {
 
             int from = BitBoard.getSquare(knight);
             long knightMoves = board.whiteTurn ? generateWhiteKnightMoves(knight, board)
-                : generateBlackKnightMoves(knight, board);
+                    : generateBlackKnightMoves(knight, board);
 
             while (knightMoves != 0L) {
-            long move = BitBoard.getLSB(knightMoves);
-            knightMoves &= knightMoves - 1;
+                long move = BitBoard.getLSB(knightMoves);
+                knightMoves &= knightMoves - 1;
 
-            int to = BitBoard.getSquare(move);
-            int captured = board.getPiece(to);
-            int flag = (captured != BitBoard.EMPTY) ? Move.CAPTURE : Move.DEFAULT;
-            int score;
-            
-            if (captured != BitBoard.EMPTY) {
-                // MVV-LVA calculation
-                int attackerType = BitBoard.getPieceType(BitBoard.KNIGHT) - 1;
-                int capturedType = BitBoard.getPieceType(captured) - 1;
-                score = mvvLva[attackerType][capturedType];
-            } else {
-                score = 0;
-            }
+                int to = BitBoard.getSquare(move);
+                int captured = board.getPiece(to);
+                int flag = (captured != BitBoard.EMPTY) ? Move.CAPTURE : Move.DEFAULT;
+                int score;
 
-            long packed = PackedMove.encode(from, to, BitBoard.KNIGHT, captured, 0, flag, score);
-            moves.add(packed);
+                if (captured != BitBoard.EMPTY) {
+                    // MVV-LVA calculation
+                    int attackerType = BitBoard.getPieceType(BitBoard.KNIGHT) - 1;
+                    int capturedType = BitBoard.getPieceType(captured) - 1;
+                    score = mvvLva[attackerType][capturedType];
+                } else {
+                    score = 0;
+                }
+
+                long packed = PackedMove.encode(from, to, BitBoard.KNIGHT, captured, 0, flag, score);
+                moves.add(packed);
             }
         }
 
@@ -377,28 +377,28 @@ public class MoveGenerator {
 
             int from = BitBoard.getSquare(bishop);
             long bishopMoves = board.whiteTurn ? generateWhiteBishopMoves(bishop, board)
-                : generateBlackBishopMoves(bishop, board);
+                    : generateBlackBishopMoves(bishop, board);
 
             while (bishopMoves != 0L) {
-            long move = BitBoard.getLSB(bishopMoves);
-            bishopMoves &= bishopMoves - 1;
+                long move = BitBoard.getLSB(bishopMoves);
+                bishopMoves &= bishopMoves - 1;
 
-            int to = BitBoard.getSquare(move);
-            int captured = board.getPiece(to);
-            int flag = (captured != BitBoard.EMPTY) ? Move.CAPTURE : Move.DEFAULT;
-            int score;
-            
-            if (captured != BitBoard.EMPTY) {
-                // MVV-LVA calculation
-                int attackerType = BitBoard.getPieceType(BitBoard.BISHOP) - 1;
-                int capturedType = BitBoard.getPieceType(captured) - 1;
-                score = mvvLva[attackerType][capturedType];
-            } else {
-                score = 0;
-            }
+                int to = BitBoard.getSquare(move);
+                int captured = board.getPiece(to);
+                int flag = (captured != BitBoard.EMPTY) ? Move.CAPTURE : Move.DEFAULT;
+                int score;
 
-            long packed = PackedMove.encode(from, to, BitBoard.BISHOP, captured, 0, flag, score);
-            moves.add(packed);
+                if (captured != BitBoard.EMPTY) {
+                    // MVV-LVA calculation
+                    int attackerType = BitBoard.getPieceType(BitBoard.BISHOP) - 1;
+                    int capturedType = BitBoard.getPieceType(captured) - 1;
+                    score = mvvLva[attackerType][capturedType];
+                } else {
+                    score = 0;
+                }
+
+                long packed = PackedMove.encode(from, to, BitBoard.BISHOP, captured, 0, flag, score);
+                moves.add(packed);
             }
         }
 
@@ -410,28 +410,28 @@ public class MoveGenerator {
 
             int from = BitBoard.getSquare(rook);
             long rookMoves = board.whiteTurn ? generateWhiteRookMoves(rook, board)
-                : generateBlackRookMoves(rook, board);
+                    : generateBlackRookMoves(rook, board);
 
             while (rookMoves != 0L) {
-            long move = BitBoard.getLSB(rookMoves);
-            rookMoves &= rookMoves - 1;
+                long move = BitBoard.getLSB(rookMoves);
+                rookMoves &= rookMoves - 1;
 
-            int to = BitBoard.getSquare(move);
-            int captured = board.getPiece(to);
-            int flag = (captured != BitBoard.EMPTY) ? Move.CAPTURE : Move.DEFAULT;
-            int score;
-            
-            if (captured != BitBoard.EMPTY) {
-                // MVV-LVA calculation
-                int attackerType = BitBoard.getPieceType(BitBoard.ROOK) - 1;
-                int capturedType = BitBoard.getPieceType(captured) - 1;
-                score = mvvLva[attackerType][capturedType];
-            } else {
-                score = 0;
-            }
+                int to = BitBoard.getSquare(move);
+                int captured = board.getPiece(to);
+                int flag = (captured != BitBoard.EMPTY) ? Move.CAPTURE : Move.DEFAULT;
+                int score;
 
-            long packed = PackedMove.encode(from, to, BitBoard.ROOK, captured, 0, flag, score);
-            moves.add(packed);
+                if (captured != BitBoard.EMPTY) {
+                    // MVV-LVA calculation
+                    int attackerType = BitBoard.getPieceType(BitBoard.ROOK) - 1;
+                    int capturedType = BitBoard.getPieceType(captured) - 1;
+                    score = mvvLva[attackerType][capturedType];
+                } else {
+                    score = 0;
+                }
+
+                long packed = PackedMove.encode(from, to, BitBoard.ROOK, captured, 0, flag, score);
+                moves.add(packed);
             }
         }
 
@@ -443,28 +443,28 @@ public class MoveGenerator {
 
             int from = BitBoard.getSquare(queen);
             long queenMoves = board.whiteTurn ? generateWhiteQueenMoves(queen, board)
-                : generateBlackQueenMoves(queen, board);
+                    : generateBlackQueenMoves(queen, board);
 
             while (queenMoves != 0L) {
-            long move = BitBoard.getLSB(queenMoves);
-            queenMoves &= queenMoves - 1;
+                long move = BitBoard.getLSB(queenMoves);
+                queenMoves &= queenMoves - 1;
 
-            int to = BitBoard.getSquare(move);
-            int captured = board.getPiece(to);
-            int flag = (captured != BitBoard.EMPTY) ? Move.CAPTURE : Move.DEFAULT;
-            int score;
-            
-            if (captured != BitBoard.EMPTY) {
-                // MVV-LVA calculation
-                int attackerType = BitBoard.getPieceType(BitBoard.QUEEN) - 1;
-                int capturedType = BitBoard.getPieceType(captured) - 1;
-                score = mvvLva[attackerType][capturedType];
-            } else {
-                score = 0;
-            }
+                int to = BitBoard.getSquare(move);
+                int captured = board.getPiece(to);
+                int flag = (captured != BitBoard.EMPTY) ? Move.CAPTURE : Move.DEFAULT;
+                int score;
 
-            long packed = PackedMove.encode(from, to, BitBoard.QUEEN, captured, 0, flag, score);
-            moves.add(packed);
+                if (captured != BitBoard.EMPTY) {
+                    // MVV-LVA calculation
+                    int attackerType = BitBoard.getPieceType(BitBoard.QUEEN) - 1;
+                    int capturedType = BitBoard.getPieceType(captured) - 1;
+                    score = mvvLva[attackerType][capturedType];
+                } else {
+                    score = 0;
+                }
+
+                long packed = PackedMove.encode(from, to, BitBoard.QUEEN, captured, 0, flag, score);
+                moves.add(packed);
             }
         }
 
@@ -481,18 +481,18 @@ public class MoveGenerator {
             int to = BitBoard.getSquare(move);
             int captured = board.getPiece(to);
             int flag = (Math.abs(from - to) == 2) ? Move.CASTLING
-                : (captured != BitBoard.EMPTY ? Move.CAPTURE : Move.DEFAULT);
+                    : (captured != BitBoard.EMPTY ? Move.CAPTURE : Move.DEFAULT);
             int score;
-            
+
             if (flag == Move.CASTLING) {
-            score = Move.CASTLING_SCORE;
+                score = Move.CASTLING_SCORE;
             } else if (captured != BitBoard.EMPTY) {
-            // MVV-LVA calculation
-            int attackerType = BitBoard.getPieceType(BitBoard.KING) - 1;
-            int capturedType = BitBoard.getPieceType(captured) - 1;
-            score = mvvLva[attackerType][capturedType];
+                // MVV-LVA calculation
+                int attackerType = BitBoard.getPieceType(BitBoard.KING) - 1;
+                int capturedType = BitBoard.getPieceType(captured) - 1;
+                score = mvvLva[attackerType][capturedType];
             } else {
-            score = 0;
+                score = 0;
             }
 
             long packed = PackedMove.encode(from, to, BitBoard.KING, captured, 0, flag, score);
@@ -501,9 +501,9 @@ public class MoveGenerator {
 
         // System.out.println("Generated " + moves.size() + " moves");
         return moves;
-        }
+    }
 
-        public static PackedMoveList generateCaptureMoves(BitBoard board) {
+    public static PackedMoveList generateCaptureMoves(BitBoard board) {
         // maximum number of capture moves is 218
         PackedMoveList moves = new PackedMoveList(218);
 
