@@ -21,9 +21,7 @@ The goal isn't just to make a strong engine, but to learn deeply by building eve
 
 ## Still to do
 
-- GUI (visual board, mouse input, move highlighting)  
-- Timer and clock management  
-- Promote to non-queen pieces via GUI  
+- GUI (visual board, mouse input, move highlighting)    
 - More tests for edge cases and deep search validation  
 
 ---
@@ -68,6 +66,8 @@ This reduced GC pressure and heap allocations significantly. When combined with 
 **24/03/2025** – Implemented magic bitboards  
 Aspira now uses magic bitboards for sliding piece move generation.  
 This change further solidified the ~70% gain in movegen performance and laid the foundation for deeper and faster search.
+
+**27/03/2025** – Implemented time control inside the search so the engine can now play and manage it's own time.
 
 ---
 
