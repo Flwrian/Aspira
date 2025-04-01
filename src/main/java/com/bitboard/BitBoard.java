@@ -882,13 +882,14 @@ public class BitBoard {
         }
 
         // Side to move
-        zobristKey ^= Zobrist.SIDE_TO_MOVE_KEY;
+        if(whiteTurn) zobristKey ^= Zobrist.SIDE_TO_MOVE_KEY;
 
         // roque
         zobristKey ^= Zobrist.CASTLING_KEYS[getCastlingRights()];
 
         // en passant (hash only if there is en passant)
         if (enPassantSquare != 0L) {
+            System.out.println("en passant square: " + Long.toBinaryString(enPassantSquare));
             zobristKey ^= Zobrist.EN_PASSANT_KEYS[Long.numberOfTrailingZeros(this.enPassantSquare)];
         }
 
@@ -1166,6 +1167,7 @@ public class BitBoard {
         System.out.println("     " + (whiteTurn ? "White" : "Black") + "'s turn");
         System.out.println("     " + getFen());
         System.out.println("    Key: " + Long.toHexString(this.zobristKey));
+        System.out.println("    Key generated: " + Long.toHexString(generateZobristKey()));
     }
 
     // Get bitboard for a square
@@ -1266,8 +1268,18 @@ public class BitBoard {
         final long fromBitboard = 1L << PackedMove.getFrom(move);
         final long toBitboard = 1L << PackedMove.getTo(move);
 
+        final int pieceFrom;
+        final int pieceTo;
+        final int squareFrom;
+        final int squareTo;
+
         // Separate logic for white and black moves
         if (whiteTurn) {
+
+            pieceFrom = PackedMove.getPieceFrom(move) - 1;
+            pieceTo = PackedMove.getPieceFrom(move) - 1;
+            squareFrom = PackedMove.getFrom(move);
+            squareTo = PackedMove.getTo(move);
 
             handleCaptureWhite(toBitboard);
             // Pions blancs
@@ -1292,6 +1304,9 @@ public class BitBoard {
 
                 // Handle double pawn push
                 if (PackedMove.getFlags(move) == Move.DOUBLE_PAWN_PUSH) {
+                    if (enPassantSquare != 0) {
+                        this.zobristKey ^= Zobrist.EN_PASSANT_KEYS[Long.numberOfTrailingZeros(enPassantSquare)];
+                    }
                     this.enPassantSquare = toBitboard >> 8;
 
                     // Move pawn
@@ -1305,12 +1320,12 @@ public class BitBoard {
                             - PAWN_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
 
                     // Update ZobristKey
-                    System.out.println("zb double pawn");
-                    System.out.println(this.zobristKey);
                     this.zobristKey ^= Zobrist.EN_PASSANT_KEYS[Long.numberOfTrailingZeros(this.enPassantSquare)];
-                    System.out.println(this.zobristKey);
                     
                 } else {
+                    if (enPassantSquare != 0) {
+                        this.zobristKey ^= Zobrist.EN_PASSANT_KEYS[Long.numberOfTrailingZeros(enPassantSquare)];
+                    }
                     enPassantSquare = 0L; // Reset en passant square
 
                     // Handle promotion
@@ -1451,6 +1466,12 @@ public class BitBoard {
                 }
             }
         } else {
+
+            pieceFrom = PackedMove.getPieceFrom(move) - 1;
+            pieceTo = PackedMove.getPieceFrom(move) - 1;
+            squareFrom = PackedMove.getFrom(move);
+            squareTo = PackedMove.getTo(move);
+
             handleCaptureBlack(toBitboard);
             // Pions noirs
             if ((blackPawns & fromBitboard) != 0) {
@@ -1473,6 +1494,9 @@ public class BitBoard {
 
                 // Handle double pawn push
                 if (PackedMove.getFlags(move) == Move.DOUBLE_PAWN_PUSH) {
+                    if (enPassantSquare != 0) {
+                        this.zobristKey ^= Zobrist.EN_PASSANT_KEYS[Long.numberOfTrailingZeros(enPassantSquare)];
+                    }
                     enPassantSquare = toBitboard << 8;
 
                     // Move pawn
@@ -1489,6 +1513,9 @@ public class BitBoard {
                     // Update ZobirstKey
                     this.zobristKey ^= Zobrist.EN_PASSANT_KEYS[Long.numberOfTrailingZeros(enPassantSquare)];
                 } else {
+                    if (enPassantSquare != 0) {
+                        this.zobristKey ^= Zobrist.EN_PASSANT_KEYS[Long.numberOfTrailingZeros(enPassantSquare)];
+                    }
                     enPassantSquare = 0L; // Reset en passant square
 
                     // Handle promotion
@@ -1626,15 +1653,23 @@ public class BitBoard {
         // Update turn and reset en passant square if not a double pawn push
         whiteTurn = !whiteTurn;
         if (PackedMove.getFlags(move) != Move.DOUBLE_PAWN_PUSH) {
+            if (enPassantSquare != 0) {
+                this.zobristKey ^= Zobrist.EN_PASSANT_KEYS[Long.numberOfTrailingZeros(enPassantSquare)];
+            }
             enPassantSquare = 0L;
         }
 
+        
+        // === Update ZobristKey ===
+        // Remove
+        this.zobristKey ^= Zobrist.PIECE_KEYS[pieceFrom][squareFrom];
+        // Add
+        this.zobristKey ^= Zobrist.PIECE_KEYS[pieceTo][squareTo];
+        
+        this.zobristKey ^= Zobrist.SIDE_TO_MOVE_KEY;
+        
         // Update the bitboard representation
         updateBitBoard();
-
-        // Update ZobristKey
-        this.zobristKey ^= Zobrist.PIECE_KEYS[getPieceAt(PackedMove.getPieceFrom(move))][getSquare(PackedMove.getFrom(move))];
-        this.zobristKey ^= Zobrist.SIDE_TO_MOVE_KEY;
 
         // Ensure phase doesn't exceed 24
         phase = Math.min(phase, 24);
@@ -1684,6 +1719,7 @@ public class BitBoard {
             currentEvalMG += PAWN_SCORE + PAWN_TABLE_MG[Long.numberOfTrailingZeros(toBitboard)];
             currentEvalEG += PAWN_SCORE + PAWN_TABLE_EG[Long.numberOfTrailingZeros(toBitboard)];
             // phase -= 0; // Pawns don't contribute to phase
+            this.zobristKey ^= Zobrist.PIECE_KEYS[6][Long.numberOfTrailingZeros(toBitboard)];
         } else if ((blackKnights & toBitboard) != 0) {
             blackKnights &= ~toBitboard;
             currentEvalMG += KNIGHT_SCORE + KNIGHT_TABLE_MG[Long.numberOfTrailingZeros(toBitboard)];
@@ -1713,6 +1749,7 @@ public class BitBoard {
             currentEvalMG -= PAWN_SCORE + PAWN_TABLE_MG[Long.numberOfTrailingZeros(toBitboard) ^ 56];
             currentEvalEG -= PAWN_SCORE + PAWN_TABLE_EG[Long.numberOfTrailingZeros(toBitboard) ^ 56];
             // phase -= 0; // Pawns don't contribute to phase
+            this.zobristKey ^= Zobrist.PIECE_KEYS[0][Long.numberOfTrailingZeros(toBitboard)];
         } else if ((whiteKnights & toBitboard) != 0) {
             whiteKnights &= ~toBitboard;
             currentEvalMG -= KNIGHT_SCORE + KNIGHT_TABLE_MG[Long.numberOfTrailingZeros(toBitboard) ^ 56];

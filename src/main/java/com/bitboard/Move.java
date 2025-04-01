@@ -122,7 +122,7 @@ public final class Move {
         this.isWhite = board.whiteTurn;
 
         // check if double pawn push
-        if (pieceFrom == BitBoard.PAWN && Math.abs(from - to) == 16) {
+        if ((pieceFrom == 1 || pieceFrom == 7) && Math.abs(from - to) == 16) {
             this.type = DOUBLE_PAWN_PUSH;
             return;
         }

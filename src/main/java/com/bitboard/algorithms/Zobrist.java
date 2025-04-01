@@ -9,7 +9,7 @@ public class Zobrist {
     public static final long SIDE_TO_MOVE_KEY;
 
     static {
-        Random rand = new Random(2025); // seed fixe = déterministe pour debug
+        Random rand = new Random(20255); // seed fixe = déterministe pour debug
         for (int piece = 0; piece < 12; piece++) {
             for (int square = 0; square < 64; square++) {
                 PIECE_KEYS[piece][square] = rand.nextLong();
