@@ -26,3 +26,6 @@ hs_err_pid*
 *.lst
 
 engines/
+fastchess-windows-latest/
+
+*.exe
