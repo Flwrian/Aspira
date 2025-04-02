@@ -3,6 +3,10 @@ package com.bitboard;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 
 public class Perft {
 
@@ -14,9 +18,19 @@ public class Perft {
 
         PackedMoveList moveList = bitBoard.getLegalMoves();
         long nodes = 0;
-
+        
         for (int i = 0; i < moveList.size(); i++) {
             bitBoard.makeMove(moveList.get(i));
+            // Compare hash key
+            // if (bitBoard.generateZobristKey() != bitBoard.zobristKey) {
+            //     // le soucis c'est le pieceType dans la movegen qui n'est pas le bon (Bitboard.PAWN au lieu de WHITEPAWN ou BLACKPAWN)
+            //     System.out.println("Hash key mismatch!");
+            //     System.out.println("Expected: " + Long.toHexString(bitBoard.zobristKey) + " Found: "
+            //             + Long.toHexString(bitBoard.generateZobristKey()));
+            //     System.out.println("Depth: " + depth);
+            //     System.out.println("FEN: " + bitBoard.getFen());
+            //     System.out.println("move: " + i);
+            // }
             nodes += perft(bitBoard, depth - 1);
             bitBoard.undoMove();
         }
@@ -39,7 +53,17 @@ public class Perft {
         for (int i = 0; i < moveList.size(); i++) {
             long move = moveList.get(i);
             bitBoard.makeMove(move);
-
+            // Compare hash key
+            // if (bitBoard.generateZobristKey() != bitBoard.zobristKey) {
+            //     System.out.println("Hash key mismatch!");
+            //     System.out.println("Expected: " + Long.toHexString(bitBoard.zobristKey) + " Found: "
+            //             + Long.toHexString(bitBoard.generateZobristKey()));
+            //     System.out.println("Depth: " + depth);
+            //     System.out.println("FEN: " + bitBoard.getFen());
+            //     System.out.println("move: " + i);
+            //     bitBoard.printChessBoard();
+            //     System.exit(1);
+            // }
             long moveNodes = perft(bitBoard, depth - 1);
             bitBoard.undoMove();
 
@@ -51,99 +75,209 @@ public class Perft {
         }
         long time2 = System.currentTimeMillis();
 
-
         result += "|--------------------------------------------|\n";
         result += "| Time: " + (time2 - time) + "ms\n";
         result += "| Nodes: " + totalNodes + "\n";
-        result += "| Nodes/second (M): " + (float)(totalNodes * 1000) / (time2 - time) / 1000000 + "\n";
+        result += "| Nodes/second (M): " + (float) (totalNodes * 1000) / (time2 - time) / 1000000 + "\n";
         result += "|--------------------------------------------|\n";
         return result;
     }
-    
 
-    public static void perftSuiteTest(String fileName) {
+    public static void perftSuiteTest(String fileName, int cores) {
         // Open the file
         String line;
-
         int numberOfTests = 0;
-        // Read each line of the file
+
+        System.out.println("╔══════════════════════════════════════════════════════╗");
+        System.out.println("║             PERFORMANCE TEST SUITE RUNNER            ║");
+        System.out.println("╚══════════════════════════════════════════════════════╝");
+        System.out.println("► File: " + fileName);
+        System.out.println("► Cores: " + cores);
+
+        // Read each line of the file to count tests
         try (BufferedReader br = new BufferedReader(new FileReader(fileName))) {
-            // Count the number of lines in the file
             while ((line = br.readLine()) != null) {
                 numberOfTests++;
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            System.out.println("❌ Error reading file: " + e.getMessage());
+            return;
         }
+
+        System.out.println("► Total positions to test: " + numberOfTests);
+        System.out.println();
+
+        long startingTime = System.currentTimeMillis();
+
         try (BufferedReader br = new BufferedReader(new FileReader(fileName))) {
+            ExecutorService executor = java.util.concurrent.Executors.newFixedThreadPool(cores);
+            List<Future<TestResult>> futures = new ArrayList<>();
+
+            int testsDone = 0;
             int passedTests = 0;
             int failedTests = 0;
             long totalExpectedNodes = 0;
             long totalActualNodes = 0;
             long totalTime = 0;
-            int testsDone = 0;
 
+            // Submit all tests to the executor
             while ((line = br.readLine()) != null) {
+                final String testLine = line;
+                Future<TestResult> future = executor.submit(() -> {
+                    TestResult result = new TestResult();
+                    StringBuilder outputBuilder = new StringBuilder();
 
-                // Split the line into FEN and depth results
-                String[] parts = line.split(";");
-                String fen = parts[0].trim();
-                BitBoard bitBoard = new BitBoard();
-                bitBoard.loadFromFen(fen);
+                    // Split the line into FEN and depth results
+                    String[] parts = testLine.split(";");
+                    String fen = parts[0].trim();
+                    BitBoard bitBoard = new BitBoard();
+                    bitBoard.loadFromFen(fen);
 
-                System.out.println("Testing FEN: " + fen);
+                    outputBuilder.append("┌────────────────────────────────────────────────────────┐\n");
+                    outputBuilder.append("│ FEN: ").append(formatFen(fen)).append("\n");
+                    outputBuilder.append("├─────────┬────────────────┬────────────────┬────────────┤\n");
+                    outputBuilder.append("│  Depth  │    Expected    │     Actual     │    Time    │\n");
+                    outputBuilder.append("├─────────┼────────────────┼────────────────┼────────────┤\n");
 
-                for (int i = 1; i < parts.length; i++) {
-                    String[] depthResult = parts[i].trim().split(" ");
-                    int depth = Integer.parseInt(depthResult[0].substring(1));
-                    long expectedNodes = Long.parseLong(depthResult[1]);
+                    for (int i = 1; i < parts.length; i++) {
+                        String[] depthResult = parts[i].trim().split(" ");
+                        int depth = Integer.parseInt(depthResult[0].substring(1));
+                        long expectedNodes = Long.parseLong(depthResult[1]);
 
-                    long startTime = System.currentTimeMillis();
-                    long actualNodes = perft(bitBoard, depth);
-                    long endTime = System.currentTimeMillis();
-                    double duration = (endTime - startTime) / 1000.0;
+                        long startTime = System.currentTimeMillis();
+                        long actualNodes = perft(bitBoard, depth);
+                        long endTime = System.currentTimeMillis();
+                        double duration = (endTime - startTime) / 1000.0;
 
-                    System.out.println("| Depth: " + depth + "   | Expected: " + expectedNodes + " | Actual: "
-                            + actualNodes + " | Time: " + duration + "s");
+                        String status = (actualNodes == expectedNodes) ? "✓" : "✗";
+                        outputBuilder.append(String.format("│   %2d    │ %,14d │ %,14d │%8.3fs %s │%n",
+                                depth, expectedNodes, actualNodes, duration, status));
 
-                    totalExpectedNodes += expectedNodes;
-                    totalActualNodes += actualNodes;
-                    totalTime += (endTime - startTime);
+                        result.expectedNodes += expectedNodes;
+                        result.actualNodes += actualNodes;
+                        result.time += (endTime - startTime);
 
-                    if (actualNodes == expectedNodes) {
-                        passedTests++;
-                    } else {
-                        failedTests++;
-                        System.out.println("Test failed for FEN: " + fen + " at depth " + depth);
-                        System.out.println("Mismatch at depth " + depth + ": expected " + expectedNodes + " but got "
-                                + actualNodes);
+                        if (actualNodes == expectedNodes) {
+                            result.passedTests++;
+                        } else {
+                            result.failedTests++;
+                            outputBuilder.append("├─────────┴────────────────┴────────────────┴────────────┤\n");
+                            outputBuilder.append("│ ❌ ERROR: Mismatch at depth ").append(depth).append("\n");
+                            outputBuilder.append("│ Expected: ").append(expectedNodes).append(", Actual: ")
+                                    .append(actualNodes).append("\n");
+                            outputBuilder.append("└─────────────────────────────────────────────────────────┘\n");
+                        }
                     }
-                }
-                testsDone++;
-                // overall progress
-                System.out.println("[--------------------------------------------]");
-                System.out.println(" | Overall Progress: " + ((testsDone * 100) / numberOfTests) + "%");
-                System.out.println(" | Total Tests: " + numberOfTests);
-                System.out.println(" | Failed Tests: " + failedTests);
-                System.out.println(" | Passed Tests (each depth): " + passedTests);
-                System.out.println(" | Total Expected Nodes: " + totalExpectedNodes);
-                System.out.println(" | Total Actual Nodes: " + totalActualNodes);
-                System.out.println(" | Total Time: " + (totalTime / 1000.0) + "s");
-                System.out.println("[--------------------------------------------]");
+
+                    if (result.failedTests == 0) {
+                        outputBuilder.append("└─────────┴────────────────┴────────────────┴────────────┘\n");
+                    }
+
+                    // Print the complete output at once
+                    synchronized (System.out) {
+                        System.out.print(outputBuilder.toString());
+                    }
+
+                    return result;
+                });
+
+                futures.add(future);
             }
 
-            System.out.println("\nPerft Suite Test Summary:");
-            System.out.println("Total Tests: " + numberOfTests);
-            System.out.println("Passed Tests: " + passedTests);
-            System.out.println("Failed Tests: " + failedTests);
-            System.out.println("Total Expected Nodes: " + totalExpectedNodes);
-            System.out.println("Total Actual Nodes: " + totalActualNodes);
-            System.out.println("Total Time: " + (totalTime / 1000.0) + "s");
-            System.out.println("Overall Progress: " + ((testsDone * 100) / numberOfTests) + "%");
+            // Wait for all tests to complete
+            for (Future<TestResult> future : futures) {
+                try {
+                    TestResult result = future.get();
+                    testsDone++;
+                    passedTests += result.passedTests;
+                    failedTests += result.failedTests;
+                    totalExpectedNodes += result.expectedNodes;
+                    totalActualNodes += result.actualNodes;
+                    totalTime += result.time;
+
+                    // Display progress
+                    int progressPercent = (testsDone * 100) / numberOfTests;
+                    String progressBar = createProgressBar(progressPercent);
+
+                    System.out.println("\n╔══════════════════════════════════════════════════════╗");
+                    System.out.println("║                   PROGRESS UPDATE                    ║");
+                    System.out.println("╠══════════════════════════════════════════════════════╣");
+                    System.out.println("║         " + progressBar + " " + progressPercent + "%          ║");
+                    System.out.println("╠═══════════════════════════╦══════════════════════════╣");
+                    System.out.printf("║ Positions: %3d/%-3d        ║ Pass Rate: %3d%%          ║%n",
+                            testsDone, numberOfTests, (passedTests * 100) / (passedTests + failedTests));
+                    System.out.printf("║ Tests Passed: %-10d  ║ Tests Failed: %-9d  ║%n",
+                            passedTests, failedTests);
+                    System.out.println("╠═══════════════════════════╩═════════════════════════╣");
+                    System.out.printf("║ Elapsed: %-8.2fs          Speed: %,.2f MN/s        ║%n",
+                            (System.currentTimeMillis() - startingTime) / 1000.0,
+                            (totalActualNodes / 1000000.0) / (totalTime / 1000.0));
+                    System.out.println("╚══════════════════════════════════════════════════════╝\n");
+                } catch (Exception e) {
+                    System.out.println("❌ Error in test execution: " + e.getMessage());
+                    e.printStackTrace();
+                }
+            }
+
+            executor.shutdown();
+
+            // Final summary
+            double totalRealTime = (System.currentTimeMillis() - startingTime) / 1000.0;
+            double nodesPerSecond = (totalActualNodes / 1000000.0) / totalRealTime;
+
+            System.out.println("\n╔══════════════════════════════════════════════════════╗");
+            System.out.println("║                 PERFORMANCE SUMMARY                  ║");
+            System.out.println("╚══════════════════════════════════════════════════════╝");
+            System.out.printf("► Total Positions Tested: %d%n", numberOfTests);
+            System.out.printf("► Tests Passed: %d (%d%%)%n", passedTests,
+                    (passedTests * 100) / (passedTests + failedTests));
+            System.out.printf("► Tests Failed: %d%n", failedTests);
+            System.out.printf("► Total Time: %.2fs%n", totalRealTime);
+            System.out.printf("► Total Nodes: %,d%n", totalActualNodes);
+            System.out.printf("► Nodes/Second: %.2fM%n", nodesPerSecond);
+            System.out.printf("► Expected Nodes: %,d%n", totalExpectedNodes);
+            System.out.printf("► Actual Nodes: %,d%n", totalActualNodes);
+            System.out.printf("► Time per Test: %.2fs%n", totalRealTime / numberOfTests);
+            System.out.printf("► Speed: %.2f MN/s%n", nodesPerSecond);
+            System.out.printf("► Parallel Speed: %.2f MN/s%n", (totalActualNodes / 1000000.0) / (totalTime / 1000.0));
+            System.out.printf("► Parallel Efficiency: %.2f%%%n", (totalTime / 1000.0) / (totalRealTime * cores) * 100);
+            System.out.printf("► Cores Used: %d%n", cores);
 
         } catch (IOException e) {
+            System.out.println("❌ Error processing file: " + e.getMessage());
             e.printStackTrace();
         }
+    }
+
+    private static String formatFen(String fen) {
+        if (fen.length() > 45) {
+            return fen.substring(0, 42) + "...";
+        }
+        return fen;
+    }
+
+    private static String createProgressBar(int percent) {
+        int width = 30;
+        int completed = width * percent / 100;
+
+        StringBuilder sb = new StringBuilder("[");
+        for (int i = 0; i < width; i++) {
+            if (i < completed) {
+                sb.append("#");
+            } else {
+                sb.append("-");
+            }
+        }
+        sb.append("]");
+        return sb.toString();
+    }
+
+    private static class TestResult {
+        int passedTests = 0;
+        int failedTests = 0;
+        long expectedNodes = 0;
+        long actualNodes = 0;
+        long time = 0;
     }
     // // Version pour afficher les nœuds de chaque coup de départ
     // public static void perftDivide(BitBoard bitBoard, int depth) {
@@ -186,7 +320,6 @@ public class Perft {
     // System.out.println();
     // System.out.println("Nodes searched: " + totalNodes);
     // }
-
 
     public static String calculateNPS(BitBoard bitBoard, long time) {
         // Search new nodes until time is up

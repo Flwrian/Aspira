@@ -14,7 +14,7 @@ public class NewChessAlgorithm implements ChessAlgorithm {
 
     private long nodes = 0;
     private long cutoffs = 0;
-    private final boolean DEBUG_FLAG = false;
+    private final boolean DEBUG_FLAG = true;
 
     // === Timeout Control ===
     private long searchStartTime;
@@ -124,7 +124,7 @@ public class NewChessAlgorithm implements ChessAlgorithm {
 
         nodes++;
 
-        long zobristKey = board.getZobristKey();
+        long zobristKey = board.generateZobristKey();
         TranspositionTableEntry ttEntry = transpositionTable.get(zobristKey);
 
         if (ttEntry != null && ttEntry.depth >= depth) {
@@ -207,7 +207,7 @@ public class NewChessAlgorithm implements ChessAlgorithm {
     
         nodes++;
     
-        long zobristKey = board.getZobristKey();
+        long zobristKey = board.generateZobristKey();
         TranspositionTableEntry ttEntry = transpositionTable.get(zobristKey);
     
         if (ttEntry != null && ttEntry.depth == 0) {
