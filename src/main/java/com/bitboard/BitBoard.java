@@ -2396,7 +2396,6 @@ public class BitBoard {
         try {
             BitBoard copy = (BitBoard) super.clone();
 
-            // === Copie manuelle des champs (exemples) ===
             copy.whitePawns = this.whitePawns;
             copy.whiteKnights = this.whiteKnights;
             copy.whiteBishops = this.whiteBishops;
@@ -2425,10 +2424,6 @@ public class BitBoard {
 
             copy.zobristKey = this.zobristKey;
 
-            // Copie les historiques si nécessaire (shallow ou deep selon ton implémentation)
-            // copy.history = new ArrayList<>(this.history); ← si tu enregistres des états
-
-            // Mets à jour les bitboards dérivés si nécessaire
             copy.updateBitBoard();
 
             return copy;
