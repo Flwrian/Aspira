@@ -2,8 +2,6 @@ package com.bitboard;
 
 import java.io.PrintWriter;
 import java.util.ArrayDeque;
-import java.util.Collections;
-import java.util.Stack;
 
 import com.bitboard.algorithms.Zobrist;
 
@@ -502,7 +500,7 @@ public class BitBoard {
     public static final int QUEEN_SCORE = 900;
     public static final int KING_SCORE = 20000;
 
-    private ArrayDeque<BoardHistory> history;
+    private BoardHistoryStack history = new BoardHistoryStack(256); // profondeur max
 
     public static final String INITIAL_STARTING_POSITION = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
@@ -544,18 +542,15 @@ public class BitBoard {
 
         enPassantSquare = 0L;
 
-        history = new ArrayDeque<>();
+        history = new BoardHistoryStack(256);
         // bbHistory = new ArrayDeque<>();
 
     }
 
     private void saveBoardHistory(long move) {
-        BoardHistory boardHistory = new BoardHistory(bitboard, move, whitePawns, whiteKnights, whiteBishops, whiteRooks,
-                whiteQueens, whiteKing, blackPawns, blackKnights, blackBishops, blackRooks, blackQueens, blackKing,
-                whiteCastleQueenSide, whiteCastleKingSide, blackCastleQueenSide, blackCastleKingSide, enPassantSquare,
-                whiteTurn, currentEvalMG, currentEvalEG, phase, zobristKey);
-        history.push(boardHistory);
+        history.push(this, move);
     }
+    
 
     // private void saveBoardHistoryLONG() {
     // bbHistory.push(new long[]{whitePawns, whiteKnights, whiteBishops, whiteRooks,
@@ -882,7 +877,7 @@ public class BitBoard {
         this.zobristKey = generateZobristKey();
     }
 
-    public long generateZobristKey() {
+    public final long generateZobristKey() {
         // On hash la position actuelle
         long zobristKey = 0L;
 
@@ -908,7 +903,7 @@ public class BitBoard {
         return zobristKey;
     }
 
-    public int calculatePhase() {
+    public final int calculatePhase() {
         int phase = 0;
 
         // Blancs
@@ -927,7 +922,7 @@ public class BitBoard {
         return Math.min(phase, 24);
     }
 
-    public int evaluate() {
+    public final int evaluate() {
         return (currentEvalMG * phase + currentEvalEG * (24 - phase)) / 24;
     }
 
@@ -1271,7 +1266,7 @@ public class BitBoard {
         whiteTurn = !whiteTurn;
     }
 
-    public void makeMove(long move) {
+    public final void makeMove(long move) {
         // Save the current board state
         saveBoardHistory(move);
         // saveBoardHistoryLONG();
@@ -1797,13 +1792,14 @@ public class BitBoard {
 
     public void undoMove() {
         if (!history.isEmpty()) {
-            BoardHistory boardHistory = history.pop();
-            restoreBoardHistory(boardHistory);
-            // restoreBoardHistoryLONG(bbHistory.pop());
+            BoardHistory last = history.pop();
+            last.restoreTo(this);
+        } else {
+            throw new IllegalStateException("No move to undo");
         }
-    }
+    }    
 
-    public void restoreBoardHistory(BoardHistory boardHistory) {
+    public final void restoreBoardHistory(BoardHistory boardHistory) {
         bitboard = boardHistory.bitboard;
         whitePawns = boardHistory.whitePawns;
         whiteKnights = boardHistory.whiteKnights;
@@ -1824,8 +1820,8 @@ public class BitBoard {
         enPassantSquare = boardHistory.enPassantSquare;
         whiteTurn = boardHistory.whiteTurn;
 
-        currentEvalMG = boardHistory.currentEvalMG;
-        currentEvalEG = boardHistory.currentEvalEG;
+        currentEvalMG = boardHistory.evalMG;
+        currentEvalEG = boardHistory.evalEG;
 
         phase = boardHistory.phase;
         zobristKey = boardHistory.zobristKey;
@@ -2432,5 +2428,40 @@ public class BitBoard {
             throw new AssertionError("BitBoard should be cloneable", e);
         }
     }
+
+    public void copyFrom(BitBoard other) {
+        this.whiteTurn = other.whiteTurn;
+    
+        this.whitePawns = other.whitePawns;
+        this.whiteKnights = other.whiteKnights;
+        this.whiteBishops = other.whiteBishops;
+        this.whiteRooks = other.whiteRooks;
+        this.whiteQueens = other.whiteQueens;
+        this.whiteKing = other.whiteKing;
+    
+        this.blackPawns = other.blackPawns;
+        this.blackKnights = other.blackKnights;
+        this.blackBishops = other.blackBishops;
+        this.blackRooks = other.blackRooks;
+        this.blackQueens = other.blackQueens;
+        this.blackKing = other.blackKing;
+    
+        this.whitePieces = other.whitePieces;
+        this.blackPieces = other.blackPieces;
+        this.bitboard = other.bitboard;
+    
+        this.whiteCastleQueenSide = other.whiteCastleQueenSide;
+        this.whiteCastleKingSide = other.whiteCastleKingSide;
+        this.blackCastleQueenSide = other.blackCastleQueenSide;
+        this.blackCastleKingSide = other.blackCastleKingSide;
+    
+        this.enPassantSquare = other.enPassantSquare;
+    
+        this.currentEvalMG = other.currentEvalMG;
+        this.currentEvalEG = other.currentEvalEG;
+        this.phase = other.phase;
+    
+        this.zobristKey = other.zobristKey;
+    }    
 
 }
