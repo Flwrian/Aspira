@@ -482,6 +482,19 @@ public class BitBoard {
     public static final int QUEEN = 5;
     public static final int KING = 6;
 
+    public static final int WHITE_PAWN = 0;
+    public static final int WHITE_KNIGHT = 1;
+    public static final int WHITE_BISHOP = 2;
+    public static final int WHITE_ROOK = 3;
+    public static final int WHITE_QUEEN = 4;
+    public static final int WHITE_KING = 5;
+    public static final int BLACK_PAWN = 6;
+    public static final int BLACK_KNIGHT = 7;
+    public static final int BLACK_BISHOP = 8;
+    public static final int BLACK_ROOK = 9;
+    public static final int BLACK_QUEEN = 10;
+    public static final int BLACK_KING = 11;
+
     public static final int PAWN_SCORE = 100;
     public static final int KNIGHT_SCORE = 320;
     public static final int BISHOP_SCORE = 330;
@@ -540,7 +553,7 @@ public class BitBoard {
         BoardHistory boardHistory = new BoardHistory(bitboard, move, whitePawns, whiteKnights, whiteBishops, whiteRooks,
                 whiteQueens, whiteKing, blackPawns, blackKnights, blackBishops, blackRooks, blackQueens, blackKing,
                 whiteCastleQueenSide, whiteCastleKingSide, blackCastleQueenSide, blackCastleKingSide, enPassantSquare,
-                whiteTurn, currentEvalMG, currentEvalEG, phase);
+                whiteTurn, currentEvalMG, currentEvalEG, phase, zobristKey);
         history.push(boardHistory);
     }
 
@@ -889,7 +902,6 @@ public class BitBoard {
 
         // en passant (hash only if there is en passant)
         if (enPassantSquare != 0L) {
-            System.out.println("en passant square: " + Long.toBinaryString(enPassantSquare));
             zobristKey ^= Zobrist.EN_PASSANT_KEYS[Long.numberOfTrailingZeros(this.enPassantSquare)];
         }
 
@@ -1268,16 +1280,12 @@ public class BitBoard {
         final long fromBitboard = 1L << PackedMove.getFrom(move);
         final long toBitboard = 1L << PackedMove.getTo(move);
 
-        final int pieceFrom;
-        final int pieceTo;
         final int squareFrom;
         final int squareTo;
 
         // Separate logic for white and black moves
         if (whiteTurn) {
 
-            pieceFrom = PackedMove.getPieceFrom(move) - 1;
-            pieceTo = PackedMove.getPieceFrom(move) - 1;
             squareFrom = PackedMove.getFrom(move);
             squareTo = PackedMove.getTo(move);
 
@@ -1290,6 +1298,8 @@ public class BitBoard {
                     final long capturedPawn = enPassantSquare >> 8;
                     blackPawns &= ~capturedPawn;
 
+                    this.zobristKey ^= Zobrist.PIECE_KEYS[BLACK_PAWN][Long.numberOfTrailingZeros(capturedPawn)];
+
                     // Move pawn
                     whitePawns &= ~fromBitboard;
                     whitePawns |= toBitboard;
@@ -1300,10 +1310,15 @@ public class BitBoard {
                     currentEvalEG += PAWN_TABLE_EG[Long.numberOfTrailingZeros(toBitboard) ^ 56]
                             - PAWN_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
 
+                    // === Update ZobristKey ===
+                    // Remove
+                    this.zobristKey ^= Zobrist.PIECE_KEYS[WHITE_PAWN][squareFrom];
+                    // Add
+                    this.zobristKey ^= Zobrist.PIECE_KEYS[WHITE_PAWN][squareTo];
                 }
 
                 // Handle double pawn push
-                if (PackedMove.getFlags(move) == Move.DOUBLE_PAWN_PUSH) {
+                else if (PackedMove.getFlags(move) == Move.DOUBLE_PAWN_PUSH) {
                     if (enPassantSquare != 0) {
                         this.zobristKey ^= Zobrist.EN_PASSANT_KEYS[Long.numberOfTrailingZeros(enPassantSquare)];
                     }
@@ -1321,6 +1336,12 @@ public class BitBoard {
 
                     // Update ZobristKey
                     this.zobristKey ^= Zobrist.EN_PASSANT_KEYS[Long.numberOfTrailingZeros(this.enPassantSquare)];
+
+                    // === Update ZobristKey ===
+                    // Remove
+                    this.zobristKey ^= Zobrist.PIECE_KEYS[WHITE_PAWN][squareFrom];
+                    // Add
+                    this.zobristKey ^= Zobrist.PIECE_KEYS[WHITE_PAWN][squareTo];
                     
                 } else {
                     if (enPassantSquare != 0) {
@@ -1341,6 +1362,8 @@ public class BitBoard {
                                         - PAWN_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
                                 phase += 1; // Knights add 1 to phase
                                 whiteKnights |= toBitboard;
+                                this.zobristKey ^= Zobrist.PIECE_KEYS[WHITE_PAWN][squareFrom];
+                                this.zobristKey ^= Zobrist.PIECE_KEYS[WHITE_KNIGHT][squareTo];
                                 break;
                             case BISHOP:
                                 // Update evaluations for promotion to bishop
@@ -1352,6 +1375,8 @@ public class BitBoard {
                                         - PAWN_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
                                 phase += 1; // Bishops add 1 to phase
                                 whiteBishops |= toBitboard;
+                                this.zobristKey ^= Zobrist.PIECE_KEYS[WHITE_PAWN][squareFrom];
+                                this.zobristKey ^= Zobrist.PIECE_KEYS[WHITE_BISHOP][squareTo];
                                 break;
                             case ROOK:
                                 // Update evaluations for promotion to rook
@@ -1361,6 +1386,8 @@ public class BitBoard {
                                         - PAWN_SCORE - PAWN_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
                                 phase += 2; // Rooks add 2 to phase
                                 whiteRooks |= toBitboard;
+                                this.zobristKey ^= Zobrist.PIECE_KEYS[WHITE_PAWN][squareFrom];
+                                this.zobristKey ^= Zobrist.PIECE_KEYS[WHITE_ROOK][squareTo];
                                 break;
                             case QUEEN:
                                 // Update evaluations for promotion to queen
@@ -1372,6 +1399,8 @@ public class BitBoard {
                                         - PAWN_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
                                 phase += 4; // Queens add 4 to phase
                                 whiteQueens |= toBitboard;
+                                this.zobristKey ^= Zobrist.PIECE_KEYS[WHITE_PAWN][squareFrom];
+                                this.zobristKey ^= Zobrist.PIECE_KEYS[WHITE_QUEEN][squareTo];
                                 break;
                         }
 
@@ -1388,6 +1417,12 @@ public class BitBoard {
                                 - PAWN_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
                         currentEvalEG += PAWN_TABLE_EG[Long.numberOfTrailingZeros(toBitboard) ^ 56]
                                 - PAWN_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
+
+                        // === Update ZobristKey ===
+                        // Remove
+                        this.zobristKey ^= Zobrist.PIECE_KEYS[WHITE_PAWN][squareFrom];
+                        // Add
+                        this.zobristKey ^= Zobrist.PIECE_KEYS[WHITE_PAWN][squareTo];
                     }
 
                 }
@@ -1403,6 +1438,10 @@ public class BitBoard {
                 currentEvalEG += KNIGHT_TABLE_EG[Long.numberOfTrailingZeros(toBitboard) ^ 56]
                         - KNIGHT_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
 
+                // Update ZobristKey
+                this.zobristKey ^= Zobrist.PIECE_KEYS[WHITE_KNIGHT][squareFrom];
+                this.zobristKey ^= Zobrist.PIECE_KEYS[WHITE_KNIGHT][squareTo];
+
                 // Fous blancs
             } else if ((whiteBishops & fromBitboard) != 0) {
                 whiteBishops &= ~fromBitboard;
@@ -1414,20 +1453,38 @@ public class BitBoard {
                 currentEvalEG += BISHOP_TABLE_EG[Long.numberOfTrailingZeros(toBitboard) ^ 56]
                         - BISHOP_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
 
+                // Update ZobristKey
+                this.zobristKey ^= Zobrist.PIECE_KEYS[WHITE_BISHOP][squareFrom];
+                this.zobristKey ^= Zobrist.PIECE_KEYS[WHITE_BISHOP][squareTo];
+
                 // Tours blanches
             } else if ((whiteRooks & fromBitboard) != 0) {
-                if ((A1 & fromBitboard) != 0)
+                
+                if ((A1 & fromBitboard) != 0 && whiteCastleQueenSide != 0) {
+                    this.zobristKey ^= Zobrist.CASTLING_KEYS[getCastlingRights()];
                     whiteCastleQueenSide = 0L;
-                if ((H1 & fromBitboard) != 0)
+                    this.zobristKey ^= Zobrist.CASTLING_KEYS[getCastlingRights()];
+
+                }
+                if ((H1 & fromBitboard) != 0 && whiteCastleKingSide != 0) {
+                    this.zobristKey ^= Zobrist.CASTLING_KEYS[getCastlingRights()];
                     whiteCastleKingSide = 0L;
+                    this.zobristKey ^= Zobrist.CASTLING_KEYS[getCastlingRights()];
+
+                }
                 whiteRooks &= ~fromBitboard;
                 whiteRooks |= toBitboard;
+                
+                // Update ZobristKey
+                this.zobristKey ^= Zobrist.PIECE_KEYS[WHITE_ROOK][squareFrom];
+                this.zobristKey ^= Zobrist.PIECE_KEYS[WHITE_ROOK][squareTo];
 
                 // Update evaluations for both phases
                 currentEvalMG += ROOK_TABLE_MG[Long.numberOfTrailingZeros(toBitboard) ^ 56]
                         - ROOK_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
                 currentEvalEG += ROOK_TABLE_EG[Long.numberOfTrailingZeros(toBitboard) ^ 56]
                         - ROOK_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
+
 
                 // Dames blanches
             } else if ((whiteQueens & fromBitboard) != 0) {
@@ -1439,6 +1496,10 @@ public class BitBoard {
                         - QUEEN_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
                 currentEvalEG += QUEEN_TABLE_EG[Long.numberOfTrailingZeros(toBitboard) ^ 56]
                         - QUEEN_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
+
+                // Update ZobristKey
+                this.zobristKey ^= Zobrist.PIECE_KEYS[WHITE_QUEEN][squareFrom];
+                this.zobristKey ^= Zobrist.PIECE_KEYS[WHITE_QUEEN][squareTo];
 
                 // Roi blanc
             } else if ((whiteKing & fromBitboard) != 0) {
@@ -1455,8 +1516,12 @@ public class BitBoard {
                     whiteKing |= toBitboard;
 
                     // Reset castling rights
-                    whiteCastleQueenSide = 0L;
-                    whiteCastleKingSide = 0L;
+                    if (whiteCastleKingSide != 0 || whiteCastleQueenSide != 0) {
+                        this.zobristKey ^= Zobrist.CASTLING_KEYS[getCastlingRights()];
+                        whiteCastleQueenSide = 0L;
+                        whiteCastleKingSide = 0L;
+                        this.zobristKey ^= Zobrist.CASTLING_KEYS[getCastlingRights()];
+                    }
 
                     // Update evaluations for both phases
                     currentEvalMG += KING_MIDDLE_GAME_TABLE_MG[Long.numberOfTrailingZeros(toBitboard) ^ 56]
@@ -1464,11 +1529,13 @@ public class BitBoard {
                     currentEvalEG += KING_END_GAME_TABLE_EG[Long.numberOfTrailingZeros(toBitboard) ^ 56]
                             - KING_END_GAME_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
                 }
+
+                // Update ZobristKey
+                this.zobristKey ^= Zobrist.PIECE_KEYS[WHITE_KING][squareFrom];
+                this.zobristKey ^= Zobrist.PIECE_KEYS[WHITE_KING][squareTo];
             }
         } else {
 
-            pieceFrom = PackedMove.getPieceFrom(move) - 1;
-            pieceTo = PackedMove.getPieceFrom(move) - 1;
             squareFrom = PackedMove.getFrom(move);
             squareTo = PackedMove.getTo(move);
 
@@ -1481,6 +1548,8 @@ public class BitBoard {
                     final long capturedPawn = enPassantSquare << 8;
                     whitePawns &= ~capturedPawn;
 
+                    this.zobristKey ^= Zobrist.PIECE_KEYS[WHITE_PAWN][Long.numberOfTrailingZeros(capturedPawn)];
+
                     // Move pawn
                     blackPawns &= ~fromBitboard;
                     blackPawns |= toBitboard;
@@ -1490,10 +1559,14 @@ public class BitBoard {
                             - PAWN_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard)];
                     currentEvalEG -= PAWN_TABLE_EG[Long.numberOfTrailingZeros(toBitboard)]
                             - PAWN_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard)];
+
+                    // Update ZobristKey
+                    this.zobristKey ^= Zobrist.PIECE_KEYS[BLACK_PAWN][squareFrom];
+                    this.zobristKey ^= Zobrist.PIECE_KEYS[BLACK_PAWN][squareTo];
                 }
 
                 // Handle double pawn push
-                if (PackedMove.getFlags(move) == Move.DOUBLE_PAWN_PUSH) {
+                else if (PackedMove.getFlags(move) == Move.DOUBLE_PAWN_PUSH) {
                     if (enPassantSquare != 0) {
                         this.zobristKey ^= Zobrist.EN_PASSANT_KEYS[Long.numberOfTrailingZeros(enPassantSquare)];
                     }
@@ -1509,9 +1582,15 @@ public class BitBoard {
                     currentEvalEG -= PAWN_TABLE_EG[Long.numberOfTrailingZeros(toBitboard)]
                             - PAWN_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard)];
 
-
                     // Update ZobirstKey
                     this.zobristKey ^= Zobrist.EN_PASSANT_KEYS[Long.numberOfTrailingZeros(enPassantSquare)];
+
+                    // === Update ZobristKey ===
+                    // Remove
+                    this.zobristKey ^= Zobrist.PIECE_KEYS[BLACK_PAWN][squareFrom];
+                    // Add
+                    this.zobristKey ^= Zobrist.PIECE_KEYS[BLACK_PAWN][squareTo];
+
                 } else {
                     if (enPassantSquare != 0) {
                         this.zobristKey ^= Zobrist.EN_PASSANT_KEYS[Long.numberOfTrailingZeros(enPassantSquare)];
@@ -1529,6 +1608,9 @@ public class BitBoard {
                                         - PAWN_SCORE - PAWN_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard)];
                                 phase += 1; // Knights add 1 to phase
                                 blackKnights |= toBitboard;
+                                
+                                this.zobristKey ^= Zobrist.PIECE_KEYS[BLACK_KNIGHT][squareTo];
+                                this.zobristKey ^= Zobrist.PIECE_KEYS[BLACK_PAWN][squareFrom];
                                 break;
                             case BISHOP:
                                 // Update evaluations for both phases
@@ -1538,6 +1620,9 @@ public class BitBoard {
                                         - PAWN_SCORE - PAWN_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard)];
                                 phase += 1; // Bishops add 1 to phase
                                 blackBishops |= toBitboard;
+
+                                this.zobristKey ^= Zobrist.PIECE_KEYS[BLACK_BISHOP][squareTo];
+                                this.zobristKey ^= Zobrist.PIECE_KEYS[BLACK_PAWN][squareFrom];
                                 break;
                             case ROOK:
                                 // Update evaluations for both phases
@@ -1547,6 +1632,9 @@ public class BitBoard {
                                         - PAWN_SCORE - PAWN_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard)];
                                 phase += 2; // Rooks add 2 to phase
                                 blackRooks |= toBitboard;
+
+                                this.zobristKey ^= Zobrist.PIECE_KEYS[BLACK_ROOK][squareTo];
+                                this.zobristKey ^= Zobrist.PIECE_KEYS[BLACK_PAWN][squareFrom];
                                 break;
                             case QUEEN:
                                 // Update evaluations for both phases
@@ -1556,6 +1644,9 @@ public class BitBoard {
                                         - PAWN_SCORE - PAWN_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard)];
                                 phase += 4; // Queens add 4 to phase
                                 blackQueens |= toBitboard;
+
+                                this.zobristKey ^= Zobrist.PIECE_KEYS[BLACK_QUEEN][squareTo];
+                                this.zobristKey ^= Zobrist.PIECE_KEYS[BLACK_PAWN][squareFrom];
                                 break;
                         }
 
@@ -1572,6 +1663,10 @@ public class BitBoard {
                                 - PAWN_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard)];
                         currentEvalEG -= PAWN_TABLE_EG[Long.numberOfTrailingZeros(toBitboard)]
                                 - PAWN_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard)];
+
+                        // Update ZobristKey
+                        this.zobristKey ^= Zobrist.PIECE_KEYS[BLACK_PAWN][squareFrom];
+                        this.zobristKey ^= Zobrist.PIECE_KEYS[BLACK_PAWN][squareTo];
                     }
                 }
 
@@ -1586,6 +1681,10 @@ public class BitBoard {
                 currentEvalEG -= KNIGHT_TABLE_EG[Long.numberOfTrailingZeros(toBitboard)]
                         - KNIGHT_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard)];
 
+                // Update ZobristKey
+                this.zobristKey ^= Zobrist.PIECE_KEYS[BLACK_KNIGHT][squareFrom];
+                this.zobristKey ^= Zobrist.PIECE_KEYS[BLACK_KNIGHT][squareTo];
+
                 // Fous noirs
             } else if ((blackBishops & fromBitboard) != 0) {
                 blackBishops &= ~fromBitboard;
@@ -1597,12 +1696,28 @@ public class BitBoard {
                 currentEvalEG -= BISHOP_TABLE_EG[Long.numberOfTrailingZeros(toBitboard)]
                         - BISHOP_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard)];
 
+                // Update ZobristKey
+                this.zobristKey ^= Zobrist.PIECE_KEYS[BLACK_BISHOP][squareFrom];
+                this.zobristKey ^= Zobrist.PIECE_KEYS[BLACK_BISHOP][squareTo];
+
                 // Tours noires
             } else if ((blackRooks & fromBitboard) != 0) {
-                if ((A8 & fromBitboard) != 0)
+                
+                if ((A8 & fromBitboard) != 0 && blackCastleQueenSide != 0) {
+                    this.zobristKey ^= Zobrist.CASTLING_KEYS[getCastlingRights()];
                     blackCastleQueenSide = 0L;
-                if ((H8 & fromBitboard) != 0)
+                    this.zobristKey ^= Zobrist.CASTLING_KEYS[getCastlingRights()];
+                }
+                if ((H8 & fromBitboard) != 0 && blackCastleKingSide != 0) {
+                    this.zobristKey ^= Zobrist.CASTLING_KEYS[getCastlingRights()];
                     blackCastleKingSide = 0L;
+                    this.zobristKey ^= Zobrist.CASTLING_KEYS[getCastlingRights()];
+                }
+
+                // Update ZobristKey
+                this.zobristKey ^= Zobrist.PIECE_KEYS[BLACK_ROOK][squareFrom];
+                this.zobristKey ^= Zobrist.PIECE_KEYS[BLACK_ROOK][squareTo];
+
                 blackRooks &= ~fromBitboard;
                 blackRooks |= toBitboard;
 
@@ -1623,6 +1738,10 @@ public class BitBoard {
                 currentEvalEG -= QUEEN_TABLE_EG[Long.numberOfTrailingZeros(toBitboard)]
                         - QUEEN_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard)];
 
+                // Update ZobristKey
+                this.zobristKey ^= Zobrist.PIECE_KEYS[BLACK_QUEEN][squareFrom];
+                this.zobristKey ^= Zobrist.PIECE_KEYS[BLACK_QUEEN][squareTo];
+
                 // Roi noir
             } else if ((blackKing & fromBitboard) != 0) {
                 if (((blackCastleQueenSide != 0) && (C8 & toBitboard) != 0)
@@ -1638,8 +1757,12 @@ public class BitBoard {
                     blackKing |= toBitboard;
 
                     // Reset castling rights
-                    blackCastleQueenSide = 0L;
-                    blackCastleKingSide = 0L;
+                    if (blackCastleKingSide != 0 || blackCastleQueenSide != 0) {
+                        this.zobristKey ^= Zobrist.CASTLING_KEYS[getCastlingRights()];
+                        blackCastleQueenSide = 0L;
+                        blackCastleKingSide = 0L;
+                        this.zobristKey ^= Zobrist.CASTLING_KEYS[getCastlingRights()];
+                    }
 
                     // Update evaluations for both phases
                     currentEvalMG -= KING_MIDDLE_GAME_TABLE_MG[Long.numberOfTrailingZeros(toBitboard)]
@@ -1647,6 +1770,10 @@ public class BitBoard {
                     currentEvalEG -= KING_END_GAME_TABLE_EG[Long.numberOfTrailingZeros(toBitboard)]
                             - KING_END_GAME_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard)];
                 }
+
+                // Update ZobristKey
+                this.zobristKey ^= Zobrist.PIECE_KEYS[BLACK_KING][squareFrom];
+                this.zobristKey ^= Zobrist.PIECE_KEYS[BLACK_KING][squareTo];
             }
         }
 
@@ -1658,13 +1785,6 @@ public class BitBoard {
             }
             enPassantSquare = 0L;
         }
-
-        
-        // === Update ZobristKey ===
-        // Remove
-        this.zobristKey ^= Zobrist.PIECE_KEYS[pieceFrom][squareFrom];
-        // Add
-        this.zobristKey ^= Zobrist.PIECE_KEYS[pieceTo][squareTo];
         
         this.zobristKey ^= Zobrist.SIDE_TO_MOVE_KEY;
         
@@ -1708,6 +1828,7 @@ public class BitBoard {
         currentEvalEG = boardHistory.currentEvalEG;
 
         phase = boardHistory.phase;
+        zobristKey = boardHistory.zobristKey;
 
         whitePieces = whitePawns | whiteKnights | whiteBishops | whiteRooks | whiteQueens | whiteKing;
         blackPieces = blackPawns | blackKnights | blackBishops | blackRooks | blackQueens | blackKing;
@@ -1725,21 +1846,31 @@ public class BitBoard {
             currentEvalMG += KNIGHT_SCORE + KNIGHT_TABLE_MG[Long.numberOfTrailingZeros(toBitboard)];
             currentEvalEG += KNIGHT_SCORE + KNIGHT_TABLE_EG[Long.numberOfTrailingZeros(toBitboard)];
             phase -= 1; // Knights contribute 1 to phase
+            this.zobristKey ^= Zobrist.PIECE_KEYS[7][Long.numberOfTrailingZeros(toBitboard)];
         } else if ((blackBishops & toBitboard) != 0) {
             blackBishops &= ~toBitboard;
             currentEvalMG += BISHOP_SCORE + BISHOP_TABLE_MG[Long.numberOfTrailingZeros(toBitboard)];
             currentEvalEG += BISHOP_SCORE + BISHOP_TABLE_EG[Long.numberOfTrailingZeros(toBitboard)];
             phase -= 1; // Bishops contribute 1 to phase
+            this.zobristKey ^= Zobrist.PIECE_KEYS[8][Long.numberOfTrailingZeros(toBitboard)];
         } else if ((blackRooks & toBitboard) != 0) {
             blackRooks &= ~toBitboard;
             currentEvalMG += ROOK_SCORE + ROOK_TABLE_MG[Long.numberOfTrailingZeros(toBitboard)];
             currentEvalEG += ROOK_SCORE + ROOK_TABLE_EG[Long.numberOfTrailingZeros(toBitboard)];
             phase -= 2; // Rooks contribute 2 to phase
+            this.zobristKey ^= Zobrist.PIECE_KEYS[9][Long.numberOfTrailingZeros(toBitboard)];
         } else if ((blackQueens & toBitboard) != 0) {
             blackQueens &= ~toBitboard;
             currentEvalMG += QUEEN_SCORE + QUEEN_TABLE_MG[Long.numberOfTrailingZeros(toBitboard)];
             currentEvalEG += QUEEN_SCORE + QUEEN_TABLE_EG[Long.numberOfTrailingZeros(toBitboard)];
             phase -= 4; // Queens contribute 4 to phase
+            this.zobristKey ^= Zobrist.PIECE_KEYS[10][Long.numberOfTrailingZeros(toBitboard)];
+        } else if ((blackKing & toBitboard) != 0) {
+            blackKing &= ~toBitboard;
+            currentEvalMG += KING_SCORE + KING_MIDDLE_GAME_TABLE_MG[Long.numberOfTrailingZeros(toBitboard)];
+            currentEvalEG += KING_SCORE + KING_END_GAME_TABLE_EG[Long.numberOfTrailingZeros(toBitboard)];
+            phase -= 6; // King contributes 6 to phase
+            this.zobristKey ^= Zobrist.PIECE_KEYS[11][Long.numberOfTrailingZeros(toBitboard)];
         }
     }
 
@@ -1755,21 +1886,31 @@ public class BitBoard {
             currentEvalMG -= KNIGHT_SCORE + KNIGHT_TABLE_MG[Long.numberOfTrailingZeros(toBitboard) ^ 56];
             currentEvalEG -= KNIGHT_SCORE + KNIGHT_TABLE_EG[Long.numberOfTrailingZeros(toBitboard) ^ 56];
             phase -= 1; // Knights contribute 1 to phase
+            this.zobristKey ^= Zobrist.PIECE_KEYS[1][Long.numberOfTrailingZeros(toBitboard)];
         } else if ((whiteBishops & toBitboard) != 0) {
             whiteBishops &= ~toBitboard;
             currentEvalMG -= BISHOP_SCORE + BISHOP_TABLE_MG[Long.numberOfTrailingZeros(toBitboard) ^ 56];
             currentEvalEG -= BISHOP_SCORE + BISHOP_TABLE_EG[Long.numberOfTrailingZeros(toBitboard) ^ 56];
             phase -= 1; // Bishops contribute 1 to phase
+            this.zobristKey ^= Zobrist.PIECE_KEYS[2][Long.numberOfTrailingZeros(toBitboard)];
         } else if ((whiteRooks & toBitboard) != 0) {
             whiteRooks &= ~toBitboard;
             currentEvalMG -= ROOK_SCORE + ROOK_TABLE_MG[Long.numberOfTrailingZeros(toBitboard) ^ 56];
             currentEvalEG -= ROOK_SCORE + ROOK_TABLE_EG[Long.numberOfTrailingZeros(toBitboard) ^ 56];
             phase -= 2; // Rooks contribute 2 to phase
+            this.zobristKey ^= Zobrist.PIECE_KEYS[3][Long.numberOfTrailingZeros(toBitboard)];
         } else if ((whiteQueens & toBitboard) != 0) {
             whiteQueens &= ~toBitboard;
             currentEvalMG -= QUEEN_SCORE + QUEEN_TABLE_MG[Long.numberOfTrailingZeros(toBitboard) ^ 56];
             currentEvalEG -= QUEEN_SCORE + QUEEN_TABLE_EG[Long.numberOfTrailingZeros(toBitboard) ^ 56];
             phase -= 4; // Queens contribute 4 to phase
+            this.zobristKey ^= Zobrist.PIECE_KEYS[4][Long.numberOfTrailingZeros(toBitboard)];
+        } else if ((whiteKing & toBitboard) != 0) {
+            whiteKing &= ~toBitboard;
+            currentEvalMG -= KING_SCORE + KING_MIDDLE_GAME_TABLE_MG[Long.numberOfTrailingZeros(toBitboard) ^ 56];
+            currentEvalEG -= KING_SCORE + KING_END_GAME_TABLE_EG[Long.numberOfTrailingZeros(toBitboard) ^ 56];
+            phase -= 6; // King contributes 6 to phase
+            this.zobristKey ^= Zobrist.PIECE_KEYS[5][Long.numberOfTrailingZeros(toBitboard)];
         }
     }
 
@@ -1779,6 +1920,8 @@ public class BitBoard {
         whiteKing |= 1L << 6;
         whiteRooks &= ~(1L << 7);
         whiteRooks |= 1L << 5;
+
+        this.zobristKey ^= Zobrist.CASTLING_KEYS[getCastlingRights()];
 
         whiteCastleKingSide = 0L;
         whiteCastleQueenSide = 0L;
@@ -1792,6 +1935,13 @@ public class BitBoard {
         // Update evaluations for rook
         currentEvalMG += ROOK_TABLE_MG[Long.numberOfTrailingZeros(whiteRooks & (1L << 5)) ^ 56] - ROOK_TABLE_MG[7 ^ 56];
         currentEvalEG += ROOK_TABLE_EG[Long.numberOfTrailingZeros(whiteRooks & (1L << 5)) ^ 56] - ROOK_TABLE_EG[7 ^ 56];
+
+        // Update ZobristKey for the rook (before and after)
+        this.zobristKey ^= Zobrist.PIECE_KEYS[3][7]; // Remove the rook from H1
+        this.zobristKey ^= Zobrist.PIECE_KEYS[3][5];
+
+        // castling rights
+        this.zobristKey ^= Zobrist.CASTLING_KEYS[getCastlingRights()];
     }
 
     public void processWhiteCastleQueenSide(long fromBitboard) {
@@ -1800,6 +1950,8 @@ public class BitBoard {
         whiteKing |= 1L << 2;
         whiteRooks &= ~(1L << 0);
         whiteRooks |= 1L << 3;
+
+        this.zobristKey ^= Zobrist.CASTLING_KEYS[getCastlingRights()];
 
         whiteCastleKingSide = 0L;
         whiteCastleQueenSide = 0L;
@@ -1813,6 +1965,13 @@ public class BitBoard {
         // Update evaluations for rook
         currentEvalMG += ROOK_TABLE_MG[Long.numberOfTrailingZeros(whiteRooks & (1L << 3)) ^ 56] - ROOK_TABLE_MG[0 ^ 56];
         currentEvalEG += ROOK_TABLE_EG[Long.numberOfTrailingZeros(whiteRooks & (1L << 3)) ^ 56] - ROOK_TABLE_EG[0 ^ 56];
+
+        // Update ZobristKey for the rook (before and after)
+        this.zobristKey ^= Zobrist.PIECE_KEYS[3][0]; // Remove the rook from A1
+        this.zobristKey ^= Zobrist.PIECE_KEYS[3][3];
+
+        // castling rights
+        this.zobristKey ^= Zobrist.CASTLING_KEYS[getCastlingRights()];
     }
 
     public void processBlackCastleKingSide(long fromBitboard) {
@@ -1821,6 +1980,8 @@ public class BitBoard {
         blackKing |= 1L << 62;
         blackRooks &= ~(1L << 63);
         blackRooks |= 1L << 61;
+
+        this.zobristKey ^= Zobrist.CASTLING_KEYS[getCastlingRights()];
 
         blackCastleKingSide = 0L;
         blackCastleQueenSide = 0L;
@@ -1834,6 +1995,13 @@ public class BitBoard {
         // Update evaluations for rook
         currentEvalMG -= ROOK_TABLE_MG[Long.numberOfTrailingZeros(blackRooks & (1L << 61))] - ROOK_TABLE_MG[63];
         currentEvalEG -= ROOK_TABLE_EG[Long.numberOfTrailingZeros(blackRooks & (1L << 61))] - ROOK_TABLE_EG[63];
+
+        // Update ZobristKey for the rook (before and after)
+        this.zobristKey ^= Zobrist.PIECE_KEYS[9][63]; // Remove the rook from H8
+        this.zobristKey ^= Zobrist.PIECE_KEYS[9][61];
+
+        // castling rights
+        this.zobristKey ^= Zobrist.CASTLING_KEYS[getCastlingRights()];
     }
 
     public void processBlackCastleQueenSide(long fromBitboard) {
@@ -1842,6 +2010,8 @@ public class BitBoard {
         blackKing |= 1L << 58;
         blackRooks &= ~(1L << 56);
         blackRooks |= 1L << 59;
+
+        this.zobristKey ^= Zobrist.CASTLING_KEYS[getCastlingRights()];
 
         blackCastleKingSide = 0L;
         blackCastleQueenSide = 0L;
@@ -1855,6 +2025,13 @@ public class BitBoard {
         // Update evaluations for rook
         currentEvalMG -= ROOK_TABLE_MG[Long.numberOfTrailingZeros(blackRooks & (1L << 59))] - ROOK_TABLE_MG[56];
         currentEvalEG -= ROOK_TABLE_EG[Long.numberOfTrailingZeros(blackRooks & (1L << 59))] - ROOK_TABLE_EG[56];
+
+        // Update ZobristKey for the rook (before and after)
+        this.zobristKey ^= Zobrist.PIECE_KEYS[9][56]; // Remove the rook from A8
+        this.zobristKey ^= Zobrist.PIECE_KEYS[9][59];
+
+        // castling rights
+        this.zobristKey ^= Zobrist.CASTLING_KEYS[getCastlingRights()];
     }
 
     public void makeMove(String move) {
@@ -2212,6 +2389,53 @@ public class BitBoard {
             rights |= 8; // Droit de roque du côté de la reine
         }
         return rights;
+    }
+
+    @Override
+    public BitBoard clone() {
+        try {
+            BitBoard copy = (BitBoard) super.clone();
+
+            // === Copie manuelle des champs (exemples) ===
+            copy.whitePawns = this.whitePawns;
+            copy.whiteKnights = this.whiteKnights;
+            copy.whiteBishops = this.whiteBishops;
+            copy.whiteRooks = this.whiteRooks;
+            copy.whiteQueens = this.whiteQueens;
+            copy.whiteKing = this.whiteKing;
+
+            copy.blackPawns = this.blackPawns;
+            copy.blackKnights = this.blackKnights;
+            copy.blackBishops = this.blackBishops;
+            copy.blackRooks = this.blackRooks;
+            copy.blackQueens = this.blackQueens;
+            copy.blackKing = this.blackKing;
+
+            copy.whiteCastleKingSide = this.whiteCastleKingSide;
+            copy.whiteCastleQueenSide = this.whiteCastleQueenSide;
+            copy.blackCastleKingSide = this.blackCastleKingSide;
+            copy.blackCastleQueenSide = this.blackCastleQueenSide;
+
+            copy.enPassantSquare = this.enPassantSquare;
+            copy.whiteTurn = this.whiteTurn;
+
+            copy.currentEvalMG = this.currentEvalMG;
+            copy.currentEvalEG = this.currentEvalEG;
+            copy.phase = this.phase;
+
+            copy.zobristKey = this.zobristKey;
+
+            // Copie les historiques si nécessaire (shallow ou deep selon ton implémentation)
+            // copy.history = new ArrayList<>(this.history); ← si tu enregistres des états
+
+            // Mets à jour les bitboards dérivés si nécessaire
+            copy.updateBitBoard();
+
+            return copy;
+
+        } catch (CloneNotSupportedException e) {
+            throw new AssertionError("BitBoard should be cloneable", e);
+        }
     }
 
 }

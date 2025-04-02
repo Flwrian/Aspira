@@ -98,7 +98,7 @@ public class UCI {
                     go(inputArray);
                     break;
                 case "perft-test":
-                    Perft.perftSuiteTest("./perft-suite/standard.epd");
+                    Perft.perftSuiteTest("./perft-suite/standard.epd", Integer.parseInt(inputArray[1]));
                     break;
                 case "quit":
                     quit();
@@ -327,7 +327,6 @@ public class UCI {
             for(int i = 0; i < inputArray.length; i++){
                 if(inputArray[i].equals("moves")){
                     for(int j = i + 1; j < inputArray.length; j++){
-                        // If en passant move, we set the flag
                         Move move = new Move(inputArray[j], board);
                         board.makeMove(PackedMove.encode(move));
                     }

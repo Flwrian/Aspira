@@ -26,11 +26,21 @@ ________________________________________________________________________________
         bitBoard.printChessBoard();
 
         // Test Zobrist
-        Move m = new Move("e2e3", bitBoard);
-        bitBoard.makeMove(PackedMove.encode(m));
-        Move m2 = new Move("e7e5", bitBoard);
-        bitBoard.makeMove(PackedMove.encode(m2));
+        Move move1 = new Move("h2h4", bitBoard);
+        Move move2 = new Move("g8h6", bitBoard);
+        Move move3 = new Move("h4h5", bitBoard);
+        Move move4 = new Move("g7g5", bitBoard);
+        Move move5 = new Move("h5g6", bitBoard);
+        move5.setType(Move.EN_PASSENT);
+        bitBoard.makeMove(PackedMove.encode(move1));
+        bitBoard.makeMove(PackedMove.encode(move2));
+        bitBoard.makeMove(PackedMove.encode(move3));
+        bitBoard.makeMove(PackedMove.encode(move4));
+        bitBoard.makeMove(PackedMove.encode(move5));
         bitBoard.printChessBoard();
+
+        // System.out.println(Perft.perft(bitBoard, 2));
+
 
 
     }

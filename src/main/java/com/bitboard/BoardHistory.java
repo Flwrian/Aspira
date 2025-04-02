@@ -24,6 +24,7 @@ public class BoardHistory {
     public int currentEvalMG;
     public int currentEvalEG;
     public int phase;
+    public long zobristKey;
 
     public long move;
     
@@ -32,7 +33,7 @@ public class BoardHistory {
             long whiteQueens, long whiteKing, long blackPawns, long blackKnights, long blackBishops, long blackRooks,
             long blackQueens, long blackKing, long whiteCastleQueenSide, long whiteCastleKingSide,
             long blackCastleQueenSide, long blackCastleKingSide, long enPassantSquare, boolean whiteTurn, int currentEvalMG,
-            int currentEvalEG, int phase) {
+            int currentEvalEG, int phase, long zobristKey) {
         this.bitboard = bitboard;
         this.whitePawns = whitePawns;
         this.whiteKnights = whiteKnights;
@@ -55,6 +56,7 @@ public class BoardHistory {
         this.currentEvalMG = currentEvalMG;
         this.currentEvalEG = currentEvalEG;
         this.phase = phase;
+        this.zobristKey = zobristKey;
 
         this.move = move;
     }
