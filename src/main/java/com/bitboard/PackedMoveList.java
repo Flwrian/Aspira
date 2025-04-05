@@ -63,6 +63,16 @@ public class PackedMoveList {
             }
         }
     }
+
+    public void shuffle() {
+        for (int i = size - 1; i > 0; i--) {
+            int j = (int) (Math.random() * (i + 1));
+            // Swap moves[i] and moves[j]
+            long temp = moves[i];
+            moves[i] = moves[j];
+            moves[j] = temp;
+        }
+    }
     
     @Override
     public String toString() {

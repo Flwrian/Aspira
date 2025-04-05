@@ -2,6 +2,8 @@ package com.bitboard;
 
 import java.io.PrintWriter;
 import java.util.ArrayDeque;
+import java.util.HashMap;
+import java.util.Map;
 
 import com.bitboard.algorithms.Zobrist;
 
@@ -42,6 +44,8 @@ public class BitBoard {
 
     // === ZobristKey ===
     public long zobristKey;
+
+    public short plyCount;
 
     // valid
     public static final long RANK_1 = 0x00000000000000FFL;
@@ -313,7 +317,7 @@ public class BitBoard {
             -11, 34, 126, 68, 95, 61, 134, 98,
             -20, 25, 56, 65, 31, 26, 7, -6,
             -23, 17, 12, 23, 21, 6, 13, -14,
-            -25, 10, 6, 17, 12, -5, -2, -27,
+            -25, 10, 6, 17, 18, -5, -2, -27,
             -12, 33, 3, 3, -10, -4, -4, -26,
             -22, 38, 24, -15, -23, -20, -1, -35,
             0, 0, 0, 0, 0, 0, 0, 0,
@@ -500,7 +504,7 @@ public class BitBoard {
     public static final int QUEEN_SCORE = 900;
     public static final int KING_SCORE = 20000;
 
-    private BoardHistoryStack history = new BoardHistoryStack(256); // profondeur max
+    public final BoardHistoryStack history = new BoardHistoryStack(256); // profondeur max
 
     public static final String INITIAL_STARTING_POSITION = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
@@ -542,13 +546,27 @@ public class BitBoard {
 
         enPassantSquare = 0L;
 
-        history = new BoardHistoryStack(256);
-        // bbHistory = new ArrayDeque<>();
+        plyCount = 0;
 
     }
 
     private void saveBoardHistory(long move) {
         history.push(this, move);
+    }
+
+    public boolean isThreefoldRepetition() {
+        // to check for repetition, we need to check if the current position has been seen (we will check in the history stack if it appears 3 times)
+        if (history.isEmpty() || plyCount < 4) {
+            return false;
+        }
+        else{
+            // If the position before the last move is the same as the current position, we can return true
+            if (history.stack[plyCount - 4].zobristKey == this.zobristKey) {
+                return true;
+            }
+
+            return false;
+        }
     }
     
 
@@ -610,6 +628,8 @@ public class BitBoard {
         blackCastleKingSide = 1L;
 
         enPassantSquare = 0L;
+
+        plyCount = 0;
 
         for (String r : rows) {
             for (int i = 0; i < r.length(); i++) {
@@ -923,6 +943,9 @@ public class BitBoard {
     }
 
     public final int evaluate() {
+        if (isThreefoldRepetition()) {
+            return 0;
+        }
         return (currentEvalMG * phase + currentEvalEG * (24 - phase)) / 24;
     }
 
@@ -1175,6 +1198,7 @@ public class BitBoard {
         System.out.println("     " + getFen());
         System.out.println("    Key: " + Long.toHexString(this.zobristKey));
         System.out.println("    Key generated: " + Long.toHexString(generateZobristKey()));
+        System.out.println("     Eval: " + evaluate());
     }
 
     // Get bitboard for a square
@@ -1782,6 +1806,9 @@ public class BitBoard {
         }
         
         this.zobristKey ^= Zobrist.SIDE_TO_MOVE_KEY;
+
+        plyCount++;
+
         
         // Update the bitboard representation
         updateBitBoard();
@@ -1794,10 +1821,13 @@ public class BitBoard {
         if (!history.isEmpty()) {
             BoardHistory last = history.pop();
             last.restoreTo(this);
+            plyCount--;
+
         } else {
             throw new IllegalStateException("No move to undo");
         }
-    }    
+    }
+    
 
     public final void restoreBoardHistory(BoardHistory boardHistory) {
         bitboard = boardHistory.bitboard;
@@ -2126,16 +2156,15 @@ public class BitBoard {
         return moveList;
     }
 
-    // public boolean isStaleMate() {
-    // MoveList moveList = getLegalMoves();
-    // return moveList.size() == 0 && !isKingInCheck(whiteTurn);
-    // }
+    public boolean isStaleMate() {
+        PackedMoveList moveList = getLegalMoves();
+        return moveList.size() == 0 && !isKingInCheck(whiteTurn);
+    }
 
-    // // pseudo legal
-    // public boolean isCheckMate() {
-    // MoveList moveList = getLegalMoves();
-    // return moveList.size() == 0 && isKingInCheck(whiteTurn);
-    // }
+    public boolean isCheckMate() {
+        PackedMoveList moveList = getLegalMoves();
+        return moveList.size() == 0 && isKingInCheck(whiteTurn);
+    }
 
     private void updateBitBoard() {
         whitePieces = whitePawns | whiteKnights | whiteBishops | whiteRooks | whiteQueens | whiteKing;
