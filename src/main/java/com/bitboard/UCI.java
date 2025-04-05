@@ -53,7 +53,7 @@ public class UCI {
         // System.out.println("option - set engine options");
         // System.out.println();
 
-        NewChessAlgorithm advancedChessAlgorithm = new NewChessAlgorithm(4);
+        NewChessAlgorithm advancedChessAlgorithm = new NewChessAlgorithm();
         engine.setAlgorithm(advancedChessAlgorithm);
 
         board.loadFromFen(STARTING_POSITION);
@@ -243,8 +243,8 @@ public class UCI {
             
             // go wtime <> btime <> winc <> binc <> movestogo <>
             int depth = 11;
-            int wtime = 10000;
-            int btime = 10000;
+            int wtime = 99999999; // infinite time if no time specified
+            int btime = 99999999; // infinite time if no time specified
             int winc = 0;
             int binc = 0;
             int movetime = 0;
@@ -270,17 +270,7 @@ public class UCI {
                 }
             }
 
-
-            // Start the search
-            engine.setDepth(depth);
-            // Start time 
-            long startTime = System.currentTimeMillis();
-            Move move = engine.getAlgorithm().search(board, wtime, btime, winc, binc, movetime, depth);
-            long endTime = System.currentTimeMillis();
-            long ftime = endTime - startTime;
-            // Print the time taken
-            // System.out.println("Time taken: " + ftime + "ms");
-            // System.out.println("bestmove " + move.toString());
+            engine.getAlgorithm().search(board, wtime, btime, winc, binc, movetime, depth);
 
             
     
@@ -297,16 +287,6 @@ public class UCI {
         System.out.println("Depth set to " + depth);
     }
 
-    // private static void setRazorDepth(int depth) {
-    //     engine.setRazorDepth(depth);
-    //     System.out.println("Razoring-Depth set to " + depth);
-    // }
-
-    // private static void setNPM(int npm) {
-    //     engine.setNPM(npm);
-    //     System.out.println("NullPruningMove set to " + npm);
-    // }
-
     private static void position(String[] inputArray) {
         // Example: position startpos moves e2e4 e7e5
         // Example2: position fen rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1 moves e2e4 e7e5
@@ -321,6 +301,7 @@ public class UCI {
                 }
                 fen += inputArray[i] + " ";
             }
+            board.history.clear();
             board.loadFromFen(fen);
 
             // Make the moves
@@ -334,7 +315,7 @@ public class UCI {
             }
         } else if (inputArray[1].equals("startpos")) {
             // Load the starting position
-            board = new BitBoard();
+            board.history.clear();
             board.loadFromFen(STARTING_POSITION);
 
             // Make the moves

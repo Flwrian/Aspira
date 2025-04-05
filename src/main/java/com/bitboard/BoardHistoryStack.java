@@ -1,7 +1,7 @@
 package com.bitboard;
 
 public class BoardHistoryStack {
-    private final BoardHistory[] stack;
+    public final BoardHistory[] stack;
     private int top = -1;
 
     public BoardHistoryStack(int maxDepth) {
@@ -32,5 +32,11 @@ public class BoardHistoryStack {
 
     public boolean isEmpty() {
         return top == -1;
+    }
+
+    public void printStack() {
+        for (int i = 0; i <= top; i++) {
+            System.out.println("Stack[" + i + "]: Hash -> " + Long.toHexString(stack[i].zobristKey) + " Move -> " + PackedMove.unpack(stack[i].move));
+        }
     }
 }

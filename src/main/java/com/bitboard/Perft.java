@@ -241,7 +241,7 @@ public class Perft {
             System.out.printf("► Speed: %.2f MN/s%n", nodesPerSecond);
             System.out.printf("► Parallel Speed: %.2f MN/s%n", (totalActualNodes / 1000000.0) / (totalTime / 1000.0));
             System.out.printf("► Parallel Efficiency: %.2f%%%n", (totalTime / 1000.0) / (totalRealTime * cores) * 100);
-            System.out.printf("► Cores Used: %d%n", cores);
+            System.out.printf("► Thread(s) Used: %d%n", cores);
 
         } catch (IOException e) {
             System.out.println("❌ Error processing file: " + e.getMessage());

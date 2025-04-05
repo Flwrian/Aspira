@@ -23,22 +23,21 @@ ________________________________________________________________________________
 
         """);
         bitBoard.loadFromFen(BitBoard.INITIAL_STARTING_POSITION);
-        bitBoard.printChessBoard();
 
         // Test Zobrist
-        Move move1 = new Move("h2h4", bitBoard);
-        Move move2 = new Move("g8h6", bitBoard);
-        Move move3 = new Move("h4h5", bitBoard);
-        Move move4 = new Move("g7g5", bitBoard);
-        Move move5 = new Move("h5g6", bitBoard);
-        move5.setType(Move.EN_PASSENT);
+        Move move1 = new Move("b1c3", bitBoard);
+        Move move2 = new Move("b8c6", bitBoard);
+        Move move3 = new Move("c3b1", bitBoard);
+        Move move4 = new Move("c6b8", bitBoard);
+        bitBoard.makeMove(PackedMove.encode(new Move("e2e4", bitBoard)));
+        bitBoard.makeMove(PackedMove.encode(new Move("a7a6", bitBoard)));
         bitBoard.makeMove(PackedMove.encode(move1));
         bitBoard.makeMove(PackedMove.encode(move2));
         bitBoard.makeMove(PackedMove.encode(move3));
         bitBoard.makeMove(PackedMove.encode(move4));
-        bitBoard.makeMove(PackedMove.encode(move5));
         bitBoard.printChessBoard();
-
+        System.out.println(bitBoard.isThreefoldRepetition());
+        bitBoard.history.printStack();
         // System.out.println(Perft.perft(bitBoard, 2));
 
 
