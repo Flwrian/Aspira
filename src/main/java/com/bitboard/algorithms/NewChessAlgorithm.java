@@ -161,7 +161,7 @@ public class NewChessAlgorithm implements ChessAlgorithm {
         if (moves.size() == 0 && !board.isKingInCheck(board.whiteTurn)) {
             return new MoveValue(0L, 0); // Stalemate
         } else if (moves.size() == 0) {
-            return new MoveValue(0L, 90000 - depth * 100); // Checkmate
+            return board.whiteTurn ? new MoveValue(0L, -90000 - depth * 100) : new MoveValue(0L, 90000 + depth * 100); // Checkmate
         }
 
         // moves.shuffle();
