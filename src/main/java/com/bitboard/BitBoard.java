@@ -313,14 +313,14 @@ public class BitBoard {
     };
 
     private static final int[] PAWN_TABLE_MG = {
-            0, 0, 0, 0, 0, 0, 0, 0,
-            -11, 34, 126, 68, 95, 61, 134, 98,
-            -20, 25, 56, 65, 31, 26, 7, -6,
-            -23, 17, 12, 23, 21, 6, 13, -14,
-            -25, 10, 6, 17, 18, -5, -2, -27,
-            -12, 33, 3, 3, -10, -4, -4, -26,
-            -22, 38, 24, -15, -23, -20, -1, -35,
-            0, 0, 0, 0, 0, 0, 0, 0,
+            0,    0,    0,    0,    0,    0,    0,    0,
+           -11,   34,  126,   68,   95,   61,  134,   98,
+           -20,   25,   56,   65,   31,   26,    7,   -6,
+           -23,   17,   12,   23,   21,    6,   13,  -14,
+           -25,   10,    6,   17,   18,   -5,   -2,  -27,
+           -12,   33,    3,    3,  -10,   -4,   -4,  -26,
+           -22,   38,   24,  -15,  -23,  -20,   -1,  -35,
+             0,    0,    0,    0,    0,    0,    0,    0,
     };
 
     private static final int[] PAWN_TABLE_EG = {
@@ -556,12 +556,12 @@ public class BitBoard {
 
     public boolean isThreefoldRepetition() {
         // to check for repetition, we need to check if the current position has been seen (we will check in the history stack if it appears 3 times)
-        if (history.isEmpty() || plyCount < 4) {
+        if (history.isEmpty() || plyCount < 8) {
             return false;
         }
         else{
             // If the position before the last move is the same as the current position, we can return true
-            if (history.stack[plyCount - 4].zobristKey == this.zobristKey) {
+            if ((history.stack[plyCount - 4].zobristKey == this.zobristKey) && (history.stack[plyCount - 8].zobristKey == this.zobristKey)) {
                 return true;
             }
 
@@ -1284,10 +1284,14 @@ public class BitBoard {
 
     public void makeNullMove() {
         whiteTurn = !whiteTurn;
+
+        this.zobristKey ^= Zobrist.SIDE_TO_MOVE_KEY;
     }
 
     public void undoNullMove() {
         whiteTurn = !whiteTurn;
+
+        this.zobristKey ^= Zobrist.SIDE_TO_MOVE_KEY;
     }
 
     public final void makeMove(long move) {
@@ -2133,7 +2137,10 @@ public class BitBoard {
         long opponentAttacks = MoveGenerator.generateMask(this, !whiteTurn);
         long king = whiteTurn ? whiteKing : blackKing;
         return (opponentAttacks & king) != 0;
+    }
 
+    public boolean isInCheck() {
+        return isKingInCheck(whiteTurn);
     }
 
     public PackedMoveList getCaptureMoves() {

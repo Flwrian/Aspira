@@ -673,12 +673,12 @@ public class MoveGenerator {
                 }
 
                 // if check move is possible, add it to the list
-                long king = board.whiteTurn ? board.blackKing : board.whiteKing;
-                if((generateRookAttacks(from, board.bitboard) & king) != 0L) {
-                    long packed = PackedMove.encode(from, to, BitBoard.QUEEN, BitBoard.EMPTY, 0, Move.DEFAULT,
-                            Move.IS_CHECK_SCORE);
-                    moves.add(packed);
-                }
+                // long king = board.whiteTurn ? board.blackKing : board.whiteKing;
+                // if((generateRookAttacks(from, board.bitboard) & king) != 0L) {
+                //     long packed = PackedMove.encode(from, to, BitBoard.QUEEN, BitBoard.EMPTY, 0, Move.DEFAULT,
+                //             Move.IS_CHECK_SCORE);
+                //     moves.add(packed);
+                // }
             }
         }
 
