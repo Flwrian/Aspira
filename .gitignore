@@ -29,3 +29,8 @@ engines/
 fastchess-windows-latest/
 
 *.exe
+
+private.pem
+public.pem
+dev_version.txt
+config.json

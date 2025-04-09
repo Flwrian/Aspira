@@ -256,7 +256,7 @@ public final class Move {
     }
 
     public boolean isCapture() {
-        return getPieceTo() != 0;
+        return type == CAPTURE;
     }
 
     public int packMove(){
