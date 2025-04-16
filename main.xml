@@ -2,7 +2,7 @@
 <launch4jConfig>
   <dontWrapJar>false</dontWrapJar>
   <headerType>console</headerType>
-  <jar>C:\Users\flofl\Desktop\Code\chess-java\JavaChessEngine\target\demo-1-jar-with-dependencies.jar</jar>
+  <jar>C:\Users\flofl\Desktop\Code\chess-java\JavaChessEngine\target\chess-engine.jar</jar>
   <outfile>C:\Users\flofl\Desktop\Code\chess-java\JavaChessEngine\Aspira_main.exe</outfile>
   <errTitle></errTitle>
   <cmdLine></cmdLine>

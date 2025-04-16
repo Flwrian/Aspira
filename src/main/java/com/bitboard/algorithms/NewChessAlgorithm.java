@@ -19,9 +19,16 @@ public class NewChessAlgorithm implements ChessAlgorithm {
     private long timeLimitNanos;
     private boolean timeExceeded = false;
 
+    // === Transposition Table ===
     private final TranspositionTable tt = new TranspositionTable(64); // 64MB
     private long ttHits = 0;
     private long ttStores = 0;
+
+    private static final int ply = 0;
+
+    public static final int MATE_SCORE = 80000;
+
+
 
     @Override
     public Move search(BitBoard board, int wtime, int btime, int winc, int binc, int movetime, int depth) {
@@ -57,7 +64,8 @@ public class NewChessAlgorithm implements ChessAlgorithm {
             ttStores = 0;
             long startTime = System.nanoTime();
 
-            MoveValue result = alphaBeta(board, currentDepth, Integer.MIN_VALUE, Integer.MAX_VALUE, board.whiteTurn);
+            MoveValue result = alphaBeta(board, currentDepth, Integer.MIN_VALUE, Integer.MAX_VALUE, board.whiteTurn,
+                    ply);
             long endTime = System.nanoTime();
 
             // Interrompu ? On garde le dernier coup valide
@@ -95,23 +103,34 @@ public class NewChessAlgorithm implements ChessAlgorithm {
     }
 
     private void printSearchInfo(int depth, int score, long nodes, long durationNanos, long cutoffs, long ttHits,
-            long ttStores, Move bestMove) {
-        double timeMs = durationNanos / 1_000_000.0;
-        double rawNps = nodes / (durationNanos / 1_000_000_000.0);
-        double cutoffRatio = 100.0 * cutoffs / Math.max(nodes, 1);
-        String npsStr = formatNps(rawNps);
-        String ttHitStr = String.format(Locale.US, "%d/%d", ttHits, ttStores);
-        String ttHitRatio = String.format(Locale.US, "%.2f%%", 100.0 * ttHits / Math.max(ttStores, 1));
+                long ttStores, Move bestMove) {
+            double timeMs = durationNanos / 1_000_000.0;
+            double rawNps = nodes / (durationNanos / 1_000_000_000.0);
+            double cutoffRatio = 100.0 * cutoffs / Math.max(nodes, 1);
+            String npsStr = formatNps(rawNps);
+            String ttHitStr = String.format(Locale.US, "%d/%d", ttHits, ttStores);
+            String ttHitRatio = String.format(Locale.US, "%.2f%%", 100.0 * ttHits / Math.max(ttStores, 1));
 
-        if (DEBUG_FLAG) {
-            System.out.printf(Locale.US, "║ %-6d │ %-6d │ %-12d │ %-10s │ %-10.1f │ %-9d │ %-6.2f%% │ %-17s │ %-7s ║\n",
-                    depth, score, nodes, npsStr, timeMs, cutoffs, cutoffRatio, ttHitStr, ttHitRatio);
-        } else {
-            System.out.printf(Locale.US, "info depth %d score cp %d nodes %d nps %d time %.0f pv %s\n",
-                    depth, score, nodes, (long) rawNps, timeMs,
-                    bestMove != null ? bestMove.toString() : "(none)");
+            if (DEBUG_FLAG) {
+                String scoreStr = Math.abs(score) >= MATE_SCORE - 1000 ? 
+                        String.format("M%d", (MATE_SCORE - Math.abs(score) + 1) / 2) : 
+                        String.valueOf(score);
+                System.out.printf(Locale.US, "║ %-6d │ %-6s │ %-12d │ %-10s │ %-10.1f │ %-9d │ %-6.2f%% │ %-17s │ %-7s ║\n",
+                        depth, scoreStr, nodes, npsStr, timeMs, cutoffs, cutoffRatio, ttHitStr, ttHitRatio);
+            } else {
+                if (Math.abs(score) >= MATE_SCORE - 1000) {
+                    int mateIn = (MATE_SCORE - Math.abs(score) + 1) / 2;
+                    String mateScore = score > 0 ? "mate " + mateIn : "mate -" + mateIn;
+                    System.out.printf(Locale.US, "info depth %d score %s nodes %d nps %d time %.0f pv %s\n",
+                            depth, mateScore, nodes, (long) rawNps, timeMs,
+                            bestMove != null ? bestMove.toString() : "(none)");
+                } else {
+                    System.out.printf(Locale.US, "info depth %d score cp %d nodes %d nps %d time %.0f pv %s\n",
+                            depth, score, nodes, (long) rawNps, timeMs,
+                            bestMove != null ? bestMove.toString() : "(none)");
+                }
+            }
         }
-    }
 
     private String formatNps(double nps) {
         if (nps >= 1_000_000)
@@ -121,7 +140,7 @@ public class NewChessAlgorithm implements ChessAlgorithm {
         return String.format(Locale.US, "%.0f", nps);
     }
 
-    public MoveValue alphaBeta(BitBoard board, int depth, int alpha, int beta, boolean maximizingPlayer) {
+    public MoveValue alphaBeta(BitBoard board, int depth, int alpha, int beta, boolean maximizingPlayer, int ply) {
 
         // === TIME CHECK ===
         if (System.nanoTime() - searchStartTime > timeLimitNanos) {
@@ -150,21 +169,41 @@ public class NewChessAlgorithm implements ChessAlgorithm {
             return new MoveValue(0L, quiescenceSearch(board, alpha, beta, maximizingPlayer).value);
         }
 
+        // if (depth >= 3 && depth <= 6 && !board.isKingInCheck(board.whiteTurn)) {
+        //     int R = (depth >= 6) ? 3 : 2;
+        
+        //     board.makeNullMove();
+        //     int nullMoveValue = alphaBeta(board, depth - R, alpha, beta, !maximizingPlayer, ply + 1).value;
+        //     board.undoMove();
+        
+        //     if (timeExceeded)
+        //         return new MoveValue(0L, 0);
+        
+        //     if (maximizingPlayer && nullMoveValue >= beta) {
+        //         cutoffs++;
+        //         return new MoveValue(0L, beta);
+        //     }
+        //     if (!maximizingPlayer && nullMoveValue <= alpha) {
+        //         cutoffs++;
+        //         return new MoveValue(0L, alpha);
+        //     }
+        // }
+              
+
         nodes++;
 
         
 
         PackedMoveList moves = board.getLegalMoves();
 
-        // if (board.isThreefoldRepetition()) {
-        //     System.out.println("Threefold repetition detected. Returning draw.");
-        //     return new MoveValue(0L, 0); // draw by repetition
-        // }   
+        if (board.isThreefoldRepetition()) {
+            return new MoveValue(0L, 0); // draw by repetition
+        }   
 
         if (moves.size() == 0 && !board.isKingInCheck(board.whiteTurn)) {
             return new MoveValue(0L, 0); // Stalemate
         } else if (moves.size() == 0) {
-            return board.whiteTurn ? new MoveValue(0L, -100000 - depth * 100) : new MoveValue(0L, 100000 + depth * 100); // Checkmate
+            return board.whiteTurn ? new MoveValue(0L, -MATE_SCORE + ply) : new MoveValue(0L, MATE_SCORE - ply); // Checkmate
         }
 
         // moves.shuffle();
@@ -178,8 +217,10 @@ public class NewChessAlgorithm implements ChessAlgorithm {
         for (int i = 0; i < moves.size(); i++) {
             long move = moves.get(i);
             board.makeMove(move);
-            int value = alphaBeta(board, depth - 1, alpha, beta, !maximizingPlayer).value;
+            ply++;
+            int value = alphaBeta(board, depth - 1, alpha, beta, !maximizingPlayer, ply).value;
             board.undoMove();
+            ply--;
 
             if (timeExceeded)
                 return new MoveValue(0L, 0); // stop immediately

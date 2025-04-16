@@ -309,7 +309,8 @@ public class BitBoard {
             (D8 | F8 | D7 | F7 | E7), // E8
             (E8 | G8 | E7 | G7 | F7), // F8
             (F8 | H8 | F7 | H7 | G7), // G8
-            (G8 | G7 | H7) // H8
+            (G8 | G7 | H7), // H8
+            (0L)
     };
 
     private static final int[] PAWN_TABLE_MG = {
@@ -946,7 +947,7 @@ public class BitBoard {
         if (isThreefoldRepetition()) {
             return 0;
         }
-        return (currentEvalMG * phase + currentEvalEG * (24 - phase)) / 24;
+        return (currentEvalMG * phase + currentEvalEG * (24 - phase)) / 24 + (whiteTurn ? 1 : -1) * 50;
     }
 
     public String getFen() {
@@ -1283,15 +1284,11 @@ public class BitBoard {
     }
 
     public void makeNullMove() {
-        whiteTurn = !whiteTurn;
-
-        this.zobristKey ^= Zobrist.SIDE_TO_MOVE_KEY;
+        makeMove(0L);
     }
 
     public void undoNullMove() {
-        whiteTurn = !whiteTurn;
-
-        this.zobristKey ^= Zobrist.SIDE_TO_MOVE_KEY;
+        
     }
 
     public final void makeMove(long move) {

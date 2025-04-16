@@ -48,14 +48,14 @@
     },
     "config_name": "",
     "output": 0,
-    "seed": 12615400303531801304,
+    "seed": 10301857723608208034,
     "variant": 0,
     "ratinginterval": 10,
     "scoreinterval": 1,
     "wait": 0,
     "autosaveinterval": 20,
     "games": 2,
-    "rounds": 40,
+    "rounds": 150,
     "concurrency": 7,
     "force_concurrency": false,
     "recover": true,
@@ -111,26 +111,26 @@
     ],
     "stats": {
         "main vs dev": {
-            "wins": 12,
-            "losses": 16,
-            "draws": 30,
-            "penta_WW": 2,
-            "penta_WD": 6,
-            "penta_WL": 2,
-            "penta_DD": 7,
-            "penta_LD": 10,
-            "penta_LL": 2
+            "wins": 51,
+            "losses": 47,
+            "draws": 90,
+            "penta_WW": 10,
+            "penta_WD": 21,
+            "penta_WL": 10,
+            "penta_DD": 21,
+            "penta_LD": 27,
+            "penta_LL": 5
         },
         "dev vs main": {
-            "wins": 4,
-            "losses": 7,
-            "draws": 11,
-            "penta_WW": 0,
-            "penta_WD": 1,
-            "penta_WL": 3,
-            "penta_DD": 3,
-            "penta_LD": 4,
-            "penta_LL": 0
+            "wins": 27,
+            "losses": 24,
+            "draws": 61,
+            "penta_WW": 4,
+            "penta_WD": 12,
+            "penta_WL": 7,
+            "penta_DD": 19,
+            "penta_LD": 11,
+            "penta_LL": 3
         }
     }
 }
