@@ -20,6 +20,9 @@ if /i "%versionType%"=="dev" (
 echo Building the project...
 call mvn clean compile assembly:single || exit /b 1
 
+@REM outputs to target/chess-engine.jar
+set jar_file=.\target\chess-engine.jar
+
 :: === Création de l'exe avec Launch4j
 echo Building EXE with Launch4j...
 call %launch4jc% "%engine%.xml" || exit /b 1
@@ -41,6 +44,10 @@ echo Version updated to %newVersion%
 set output_file=Aspira_%engine%_%newVersion%.exe
 move Aspira_%engine%.exe %engines_dir%\%output_file%
 
+:: === Renommage du jar
+set jar_output_file=Aspira_%engine%_%newVersion%.jar
+move %jar_file% %engines_dir%\%jar_output_file%
+
 :: Signe le fichier
 echo Signing the file...
 python sign.py %engines_dir%\%output_file%
@@ -51,6 +58,21 @@ curl -X POST http://localhost:8000/upload_engine ^
   -H "X-API-Key: %API_KEY%" ^
   -F "file=@%engines_dir%\%output_file%" ^
   -F "signature=@%engines_dir%\%output_file%.sig" ^
+  -F "version=%newVersion%" ^
+  -F "engine_type=%engine%" ^
+  -F "key=Aspira.pem"
+
+:: sign jar file
+echo Signing the jar file...
+python sign.py %engines_dir%\%jar_output_file%
+echo Jar file signed
+
+:: Upload jar + .sig
+
+curl -X POST http://localhost:8000/upload_engine ^
+  -H "X-API-Key: %API_KEY%" ^
+  -F "file=@%engines_dir%\%jar_output_file%" ^
+  -F "signature=@%engines_dir%\%jar_output_file%.sig" ^
   -F "version=%newVersion%" ^
   -F "engine_type=%engine%" ^
   -F "key=Aspira.pem"
