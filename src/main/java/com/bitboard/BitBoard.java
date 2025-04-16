@@ -569,36 +569,6 @@ public class BitBoard {
             return false;
         }
     }
-    
-
-    // private void saveBoardHistoryLONG() {
-    // bbHistory.push(new long[]{whitePawns, whiteKnights, whiteBishops, whiteRooks,
-    // whiteQueens, whiteKing, blackPawns, blackKnights, blackBishops, blackRooks,
-    // blackQueens, blackKing, whiteCastleQueenSide, whiteCastleKingSide,
-    // blackCastleQueenSide, blackCastleKingSide, enPassantSquare, (whiteTurn ? 1L :
-    // 0L)});
-    // }
-
-    public void restoreBoardHistoryLONG(long[] boardHistory) {
-        whitePawns = boardHistory[0];
-        whiteKnights = boardHistory[1];
-        whiteBishops = boardHistory[2];
-        whiteRooks = boardHistory[3];
-        whiteQueens = boardHistory[4];
-        whiteKing = boardHistory[5];
-        blackPawns = boardHistory[6];
-        blackKnights = boardHistory[7];
-        blackBishops = boardHistory[8];
-        blackRooks = boardHistory[9];
-        blackQueens = boardHistory[10];
-        blackKing = boardHistory[11];
-        whiteCastleQueenSide = boardHistory[12];
-        whiteCastleKingSide = boardHistory[13];
-        blackCastleQueenSide = boardHistory[14];
-        blackCastleKingSide = boardHistory[15];
-        enPassantSquare = boardHistory[16];
-        whiteTurn = boardHistory[17] == 1L;
-    }
 
     public void loadFromFen(String fen) {
         String[] fenParts = fen.split(" ");

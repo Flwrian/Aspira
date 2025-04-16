@@ -168,28 +168,7 @@ public class NewChessAlgorithm implements ChessAlgorithm {
         if (depth == 0) {
             return new MoveValue(0L, quiescenceSearch(board, alpha, beta, maximizingPlayer).value);
         }
-
-        // if (depth >= 3 && depth <= 6 && !board.isKingInCheck(board.whiteTurn)) {
-        //     int R = (depth >= 6) ? 3 : 2;
-        
-        //     board.makeNullMove();
-        //     int nullMoveValue = alphaBeta(board, depth - R, alpha, beta, !maximizingPlayer, ply + 1).value;
-        //     board.undoMove();
-        
-        //     if (timeExceeded)
-        //         return new MoveValue(0L, 0);
-        
-        //     if (maximizingPlayer && nullMoveValue >= beta) {
-        //         cutoffs++;
-        //         return new MoveValue(0L, beta);
-        //     }
-        //     if (!maximizingPlayer && nullMoveValue <= alpha) {
-        //         cutoffs++;
-        //         return new MoveValue(0L, alpha);
-        //     }
-        // }
               
-
         nodes++;
 
         
@@ -206,7 +185,11 @@ public class NewChessAlgorithm implements ChessAlgorithm {
             return board.whiteTurn ? new MoveValue(0L, -MATE_SCORE + ply) : new MoveValue(0L, MATE_SCORE - ply); // Checkmate
         }
 
-        // moves.shuffle();
+        // Sort tt move first
+        long ttMove = (entry != null) ? entry.bestMove : 0L;
+        if (ttMove != 0L) {
+            moves.prioritize(ttMove);
+        }
         moves.sortByScore();
 
         long bestMove = 0L;
@@ -252,7 +235,7 @@ public class NewChessAlgorithm implements ChessAlgorithm {
             flag = TranspositionTable.Entry.LOWERBOUND;
         }
 
-        tt.put(key, new TranspositionTable.Entry(bestMove, bestValue, depth, flag));
+        tt.put(key, new TranspositionTable.Entry(bestMove, bestValue - ply, depth, flag));
         ttStores++;
 
         return new MoveValue(bestMove, bestValue);
