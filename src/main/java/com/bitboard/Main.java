@@ -24,9 +24,7 @@ ________________________________________________________________________________
         """);
         bitBoard.loadFromFen(BitBoard.INITIAL_STARTING_POSITION);
 
-        bitBoard.makeNullMove();
-        bitBoard.undoMove();
-        bitBoard.printChessBoard();
+        NewTT tt = new NewTT(16); // 16 Mo de TT
 
 
 
