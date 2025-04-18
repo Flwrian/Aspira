@@ -48,10 +48,10 @@ public class NewChessAlgorithm implements ChessAlgorithm {
         timeExceeded = false;
 
         if (DEBUG_FLAG) {
-            String separator = "╔" + "═".repeat(109) + "╗";
+            String separator = "╔" + "═".repeat(110) + "╗";
             String header = String.format("║ %-6s │ %-6s │ %-12s │ %-10s │ %-10s │ %-9s │ %-7s │ %-17s │ %-7s ║",
                     "Depth", "Score", "Nodes", "NPS", "Time (ms)", "Cutoffs", "Cut %", "TT (hits/stores)", "TT hit%");
-            String divider = "╟" + "─".repeat(109) + "╢";
+            String divider = "╟" + "─".repeat(110) + "╢";
             System.out.println(separator);
             System.out.println(header);
             System.out.println(divider);
@@ -84,7 +84,7 @@ public class NewChessAlgorithm implements ChessAlgorithm {
         }
 
         if (DEBUG_FLAG) {
-            System.out.println("╚" + "═".repeat(109) + "╝");
+            System.out.println("╚" + "═".repeat(110) + "╝");
         }
 
         // Si il n'y a pas de coup valide, on renvoie un aléatoire
@@ -187,10 +187,10 @@ public class NewChessAlgorithm implements ChessAlgorithm {
 
         // Sort tt move first
         long ttMove = (entry != null) ? entry.bestMove : 0L;
+        moves.sortByScore();
         if (ttMove != 0L) {
             moves.prioritize(ttMove);
         }
-        moves.sortByScore();
 
         long bestMove = 0L;
         int bestValue = maximizingPlayer ? -90000 : 90000;
@@ -235,13 +235,30 @@ public class NewChessAlgorithm implements ChessAlgorithm {
             flag = TranspositionTable.Entry.LOWERBOUND;
         }
 
-        tt.put(key, new TranspositionTable.Entry(bestMove, bestValue - ply, depth, flag));
+        tt.put(key, bestMove, bestValue, depth, flag);
         ttStores++;
 
         return new MoveValue(bestMove, bestValue);
     }
 
     private MoveValue quiescenceSearch(BitBoard board, int alpha, int beta, boolean maximizingPlayer) {
+
+
+        long key = board.zobristKey;
+        TranspositionTable.Entry entry = tt.get(key);
+        if (entry != null && entry.depth == 0) { // profondeur 0 = quiescence
+            ttHits++;
+            if (entry.flag == TranspositionTable.Entry.EXACT) {
+                return new MoveValue(entry.bestMove, entry.value);
+            } else if (entry.flag == TranspositionTable.Entry.LOWERBOUND && entry.value > alpha) {
+                alpha = entry.value;
+            } else if (entry.flag == TranspositionTable.Entry.UPPERBOUND && entry.value < beta) {
+                beta = entry.value;
+            }
+            if (alpha >= beta) {
+                return new MoveValue(entry.bestMove, entry.value);
+            }
+        }
         nodes++;
 
         // Check if time limit exceeded
@@ -274,7 +291,12 @@ public class NewChessAlgorithm implements ChessAlgorithm {
             return new MoveValue(0L, standPat);
         }
 
+        // Sort tt move first
+        long ttMove = (entry != null) ? entry.bestMove : 0L;
         captures.sortByScore();
+        if (ttMove != 0L) {
+            captures.prioritize(ttMove);
+        }
         
         long bestMove = 0L;
         int bestValue = maximizingPlayer ? alpha : beta;

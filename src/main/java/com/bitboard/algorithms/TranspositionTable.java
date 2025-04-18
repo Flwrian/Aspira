@@ -1,19 +1,22 @@
 package com.bitboard.algorithms;
-import java.util.*;
 
 public class TranspositionTable {
-    private final Map<Long, Entry> table;
-    private final int maxEntries;
+    private final Entry[] table;
+    private final int sizeMask;
 
     public TranspositionTable(int maxSizeMB) {
+        // Not 100% accurate but will change this later
         long bytesPerEntry = 32;
-        this.maxEntries = (int) ((maxSizeMB * 1024L * 1024L) / bytesPerEntry);
-        this.table = new LinkedHashMap<>(maxEntries, 0.75f, true) {
-            @Override
-            protected boolean removeEldestEntry(Map.Entry<Long, Entry> eldest) {
-                return size() > maxEntries;
-            }
-        };
+        int maxEntries = (int) ((maxSizeMB * 1024L * 1024L) / bytesPerEntry);
+
+        // Make size a power of two for efficient masking
+        int actualSize = 1;
+        while (actualSize < maxEntries) {
+            actualSize *= 2;
+        }
+
+        this.table = new Entry[actualSize];
+        this.sizeMask = actualSize - 1;
     }
 
     public static class Entry {
@@ -21,12 +24,14 @@ public class TranspositionTable {
         public static final int LOWERBOUND = 1;
         public static final int UPPERBOUND = 2;
 
+        public final long key;       // Zobrist key
         public final long bestMove;
         public final int value;
         public final int depth;
         public final int flag;
 
-        public Entry(long bestMove, int value, int depth, int flag) {
+        public Entry(long key, long bestMove, int value, int depth, int flag) {
+            this.key = key;
             this.bestMove = bestMove;
             this.value = value;
             this.depth = depth;
@@ -34,15 +39,31 @@ public class TranspositionTable {
         }
     }
 
-    public void put(long zobristKey, Entry entry) {
-        table.put(zobristKey, entry);
+    public void put(long zobristKey, long bestMove, int value, int depth, int flag) {
+        int index = indexFor(zobristKey);
+        Entry existing = table[index];
+
+        if (existing == null || existing.depth <= depth) {
+            table[index] = new Entry(zobristKey, bestMove, value, depth, flag);
+        }
     }
 
     public Entry get(long zobristKey) {
-        return table.get(zobristKey);
+        int index = indexFor(zobristKey);
+        Entry entry = table[index];
+        return (entry != null && entry.key == zobristKey) ? entry : null;
+    }
+
+    private int indexFor(long key) {
+         // Efficient modulo for power-of-two size
+        return (int) (key & sizeMask);
     }
 
     public int size() {
-        return table.size();
+        int count = 0;
+        for (Entry entry : table) {
+            if (entry != null) count++;
+        }
+        return count;
     }
 }
