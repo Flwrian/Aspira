@@ -1,9 +1,6 @@
 package com.bitboard;
 
 import java.io.PrintWriter;
-import java.util.ArrayDeque;
-import java.util.HashMap;
-import java.util.Map;
 
 import com.bitboard.algorithms.Zobrist;
 
@@ -917,7 +914,7 @@ public class BitBoard {
         if (isThreefoldRepetition()) {
             return 0;
         }
-        return (currentEvalMG * phase + currentEvalEG * (24 - phase)) / 24 + (whiteTurn ? 1 : -1) * 50;
+        return (currentEvalMG * phase + currentEvalEG * (24 - phase)) / 24;
     }
 
     public String getFen() {

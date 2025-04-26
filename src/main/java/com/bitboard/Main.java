@@ -24,8 +24,6 @@ ________________________________________________________________________________
         """);
         bitBoard.loadFromFen(BitBoard.INITIAL_STARTING_POSITION);
 
-        NewTT tt = new NewTT(16); // 16 Mo de TT
-
 
 
     }

@@ -80,7 +80,7 @@ public class NewChessAlgorithm implements ChessAlgorithm {
             Move bestPrintableMove = PackedMove.unpack(bestPackedMove);
 
             printSearchInfo(currentDepth, result.value, nodes, endTime - startTime, cutoffs, ttHits, ttStores,
-                    bestPrintableMove);
+                    result.pv);
         }
 
         if (DEBUG_FLAG) {
@@ -103,7 +103,7 @@ public class NewChessAlgorithm implements ChessAlgorithm {
     }
 
     private void printSearchInfo(int depth, int score, long nodes, long durationNanos, long cutoffs, long ttHits,
-                long ttStores, Move bestMove) {
+                long ttStores, String pv) {
             double timeMs = durationNanos / 1_000_000.0;
             double rawNps = nodes / (durationNanos / 1_000_000_000.0);
             double cutoffRatio = 100.0 * cutoffs / Math.max(nodes, 1);
@@ -122,12 +122,10 @@ public class NewChessAlgorithm implements ChessAlgorithm {
                     int mateIn = (MATE_SCORE - Math.abs(score) + 1) / 2;
                     String mateScore = score > 0 ? "mate " + mateIn : "mate -" + mateIn;
                     System.out.printf(Locale.US, "info depth %d score %s nodes %d nps %d time %.0f pv %s\n",
-                            depth, mateScore, nodes, (long) rawNps, timeMs,
-                            bestMove != null ? bestMove.toString() : "(none)");
+                            depth, mateScore, nodes, (long) rawNps, timeMs, pv);
                 } else {
                     System.out.printf(Locale.US, "info depth %d score cp %d nodes %d nps %d time %.0f pv %s\n",
-                            depth, score, nodes, (long) rawNps, timeMs,
-                            bestMove != null ? bestMove.toString() : "(none)");
+                            depth, score, nodes, (long) rawNps, timeMs, pv);
                 }
             }
         }
@@ -166,18 +164,12 @@ public class NewChessAlgorithm implements ChessAlgorithm {
         }
 
         if (depth == 0) {
-            return new MoveValue(0L, quiescenceSearch(board, alpha, beta, maximizingPlayer).value);
+            return quiescenceSearch(board, alpha, beta, maximizingPlayer);
         }
               
         nodes++;
 
-        
-
         PackedMoveList moves = board.getLegalMoves();
-
-        if (board.isThreefoldRepetition()) {
-            return new MoveValue(0L, 0); // draw by repetition
-        }   
 
         if (moves.size() == 0 && !board.isKingInCheck(board.whiteTurn)) {
             return new MoveValue(0L, 0); // Stalemate
@@ -186,14 +178,15 @@ public class NewChessAlgorithm implements ChessAlgorithm {
         }
 
         // Sort tt move first
-        long ttMove = (entry != null) ? entry.bestMove : 0L;
-        moves.sortByScore();
+        final long ttMove = (entry != null) ? entry.bestMove : 0L;
         if (ttMove != 0L) {
             moves.prioritize(ttMove);
         }
+        moves.sortByScore();
 
         long bestMove = 0L;
         int bestValue = maximizingPlayer ? -90000 : 90000;
+        String bestPv = "";
 
         int originalAlpha = alpha;
 
@@ -201,23 +194,37 @@ public class NewChessAlgorithm implements ChessAlgorithm {
             long move = moves.get(i);
             board.makeMove(move);
             ply++;
-            int value = alphaBeta(board, depth - 1, alpha, beta, !maximizingPlayer, ply).value;
+            MoveValue child = alphaBeta(board, depth - 1, alpha, beta, !maximizingPlayer, ply);
             board.undoMove();
             ply--;
 
             if (timeExceeded)
                 return new MoveValue(0L, 0); // stop immediately
 
+            int value = child.value;
+
             if (maximizingPlayer) {
                 if (value > bestValue) {
                     bestValue = value;
                     bestMove = move;
+                    // Update PV: current move + child's PV
+                    Move printableMove = PackedMove.unpack(move);
+                    bestPv = printableMove.toString();
+                    if (!child.pv.isEmpty()) {
+                        bestPv += " " + child.pv;
+                    }
                 }
                 alpha = Math.max(alpha, value);
             } else {
                 if (value < bestValue) {
                     bestValue = value;
                     bestMove = move;
+                    // Update PV: current move + child's PV
+                    Move printableMove = PackedMove.unpack(move);
+                    bestPv = printableMove.toString();
+                    if (!child.pv.isEmpty()) {
+                        bestPv += " " + child.pv;
+                    }
                 }
                 beta = Math.min(beta, value);
             }
@@ -235,30 +242,14 @@ public class NewChessAlgorithm implements ChessAlgorithm {
             flag = TranspositionTable.Entry.LOWERBOUND;
         }
 
+        // Store PV in TT if possible
         tt.put(key, bestMove, bestValue, depth, flag);
         ttStores++;
 
-        return new MoveValue(bestMove, bestValue);
+        return new MoveValue(bestMove, bestValue, bestPv);
     }
 
     private MoveValue quiescenceSearch(BitBoard board, int alpha, int beta, boolean maximizingPlayer) {
-
-
-        long key = board.zobristKey;
-        TranspositionTable.Entry entry = tt.get(key);
-        if (entry != null && entry.depth == 0) { // profondeur 0 = quiescence
-            ttHits++;
-            if (entry.flag == TranspositionTable.Entry.EXACT) {
-                return new MoveValue(entry.bestMove, entry.value);
-            } else if (entry.flag == TranspositionTable.Entry.LOWERBOUND && entry.value > alpha) {
-                alpha = entry.value;
-            } else if (entry.flag == TranspositionTable.Entry.UPPERBOUND && entry.value < beta) {
-                beta = entry.value;
-            }
-            if (alpha >= beta) {
-                return new MoveValue(entry.bestMove, entry.value);
-            }
-        }
         nodes++;
 
         // Check if time limit exceeded
@@ -291,35 +282,43 @@ public class NewChessAlgorithm implements ChessAlgorithm {
             return new MoveValue(0L, standPat);
         }
 
-        // Sort tt move first
-        long ttMove = (entry != null) ? entry.bestMove : 0L;
         captures.sortByScore();
-        if (ttMove != 0L) {
-            captures.prioritize(ttMove);
-        }
         
         long bestMove = 0L;
         int bestValue = maximizingPlayer ? alpha : beta;
+        String bestPv = "";
 
         for (int i = 0; i < captures.size(); i++) {
             long move = captures.get(i);
             board.makeMove(move);
-            int value = quiescenceSearch(board, alpha, beta, !maximizingPlayer).value;
+            MoveValue child = quiescenceSearch(board, alpha, beta, !maximizingPlayer);
             board.undoMove();
 
             if (timeExceeded)
                 return new MoveValue(0L, 0);
 
+            int value = child.value;
+
             if (maximizingPlayer) {
                 if (value > bestValue) {
                     bestValue = value;
                     bestMove = move;
+                    Move printableMove = PackedMove.unpack(move);
+                    bestPv = printableMove.toString();
+                    if (!child.pv.isEmpty()) {
+                        bestPv += " " + child.pv;
+                    }
                 }
                 alpha = Math.max(alpha, value);
             } else {
                 if (value < bestValue) {
                     bestValue = value;
                     bestMove = move;
+                    Move printableMove = PackedMove.unpack(move);
+                    bestPv = printableMove.toString();
+                    if (!child.pv.isEmpty()) {
+                        bestPv += " " + child.pv;
+                    }
                 }
                 beta = Math.min(beta, value);
             }
@@ -330,7 +329,7 @@ public class NewChessAlgorithm implements ChessAlgorithm {
             }
         }
 
-        return new MoveValue(bestMove, bestValue);
+        return new MoveValue(bestMove, bestValue, bestPv);
     }
 
     @Override
@@ -346,10 +345,28 @@ public class NewChessAlgorithm implements ChessAlgorithm {
     public class MoveValue {
         public final long move;
         public final int value;
-
+        public String pv = ""; // Principal Variation
+    
         public MoveValue(long move, int value) {
             this.move = move;
             this.value = value;
+            // update pv
+            if (move != 0L) {
+                Move printableMove = PackedMove.unpack(move);
+                String moveStr = printableMove.toString();
+                if (pv.isEmpty()) {
+                    pv = moveStr;
+                } else {
+                    pv += " " + moveStr;
+                }
+            }
+        }
+
+        public MoveValue(long move, int value, String pv) {
+            this.move = move;
+            this.value = value;
+            this.pv = pv;
         }
     }
+    
 }
