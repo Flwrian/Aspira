@@ -57,6 +57,8 @@ public class NewChessAlgorithm implements ChessAlgorithm {
             System.out.println(divider);
         }
 
+        int window = 50; // Aspiration window size (centipawns)
+        int prevScore = 0;
         for (int currentDepth = 1; currentDepth <= depth; currentDepth++) {
             nodes = 0;
             cutoffs = 0;
@@ -64,8 +66,21 @@ public class NewChessAlgorithm implements ChessAlgorithm {
             ttStores = 0;
             long startTime = System.nanoTime();
 
-            MoveValue result = alphaBeta(board, currentDepth, Integer.MIN_VALUE, Integer.MAX_VALUE, board.whiteTurn,
-                    ply);
+            int alpha = prevScore - window;
+            int beta = prevScore + window;
+            MoveValue result = alphaBeta(board, currentDepth, alpha, beta, board.whiteTurn, ply);
+
+            // If fail-low or fail-high, re-search with full window
+            if (!timeExceeded && (result.value <= alpha || result.value >= beta)) {
+                if (result.value <= alpha) {
+                    alpha = Integer.MIN_VALUE;
+                }
+                if (result.value >= beta) {
+                    beta = Integer.MAX_VALUE;
+                }
+                result = alphaBeta(board, currentDepth, alpha, beta, board.whiteTurn, ply);
+            }
+
             long endTime = System.nanoTime();
 
             // Interrompu ? On garde le dernier coup valide
@@ -77,10 +92,9 @@ public class NewChessAlgorithm implements ChessAlgorithm {
             }
 
             bestPackedMove = result.move;
-            Move bestPrintableMove = PackedMove.unpack(bestPackedMove);
+            prevScore = result.value;
 
-            printSearchInfo(currentDepth, result.value, nodes, endTime - startTime, cutoffs, ttHits, ttStores,
-                    result.pv);
+            printSearchInfo(currentDepth, result.value, nodes, endTime - startTime, cutoffs, ttHits, ttStores, result.pv);
         }
 
         if (DEBUG_FLAG) {
@@ -190,11 +204,39 @@ public class NewChessAlgorithm implements ChessAlgorithm {
 
         int originalAlpha = alpha;
 
+        // === Late Move Reduction (LMR) parameters ===
+        final int LMR_MIN_DEPTH = 3; // Only apply LMR at depth >= 3
+        final int LMR_MIN_MOVES = 3; // Only reduce after this many moves
+        final int LMR_REDUCTION = 1; // Reduce by 1 ply
+
         for (int i = 0; i < moves.size(); i++) {
             long move = moves.get(i);
+
             board.makeMove(move);
             ply++;
-            MoveValue child = alphaBeta(board, depth - 1, alpha, beta, !maximizingPlayer, ply);
+
+            MoveValue child;
+            boolean reduced = false;
+
+            // LMR: Reduce depth for late, non-capture, non-pv moves
+            boolean isFirstMove = (i == 0);
+            boolean isCapture = PackedMove.isCapture(move);
+            boolean canReduce = depth >= LMR_MIN_DEPTH && i >= LMR_MIN_MOVES && !isFirstMove && !isCapture;
+
+            if (canReduce) {
+                // Reduced search
+                child = alphaBeta(board, depth - 1 - LMR_REDUCTION, alpha, beta, !maximizingPlayer, ply);
+                reduced = true;
+                // If reduction produces a new best, re-search at full depth
+                int value = child.value;
+                boolean failHigh = maximizingPlayer ? value > alpha : value < beta;
+                if (failHigh) {
+                    child = alphaBeta(board, depth - 1, alpha, beta, !maximizingPlayer, ply);
+                }
+            } else {
+                child = alphaBeta(board, depth - 1, alpha, beta, !maximizingPlayer, ply);
+            }
+
             board.undoMove();
             ply--;
 
