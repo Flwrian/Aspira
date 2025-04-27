@@ -206,6 +206,9 @@ public class UCI {
 
     public static void d(){
         board.printChessBoard();
+        var legalMoves = board.getLegalMoves();
+        legalMoves.sortByScore();
+        System.out.println("Legal moves: " + legalMoves);
     }
 
     private static void stop() {
