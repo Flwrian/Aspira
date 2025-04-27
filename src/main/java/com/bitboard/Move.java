@@ -19,7 +19,7 @@ public final class Move {
     public static final int CAPTURE_SCORE = 100;
     public static final int CASTLING_SCORE = 150;
     public static final int DOUBLE_PAWN_PUSH_SCORE = 0;
-    public static final int IS_CHECK_SCORE = 150;
+    public static final int IS_CHECK_SCORE = 500;
 
 
     public int from;
@@ -256,7 +256,7 @@ public final class Move {
     }
 
     public boolean isCapture() {
-        return getPieceTo() != 0;
+        return type == CAPTURE;
     }
 
     public int packMove(){

@@ -47,6 +47,10 @@ public class PackedMove {
     public static int getFlags(long move)       { return (int)((move >> 24) & 0xF); }
     public static int getScore(long move)       { return (int)((move >> 28) & 0xFFFFF); }
 
+    public static boolean isCapture(long move) {
+        return (getFlags(move) & Move.CAPTURE) != 0;
+    }
+
     public static long setScore(long move, int newScore) {
         return (move & ~(0xFFFFFL << 28)) | (((long) newScore & 0xFFFFF) << 28);
     }
