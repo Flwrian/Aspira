@@ -275,7 +275,7 @@ public class MoveGenerator {
         PackedMoveList moves = new PackedMoveList(218);
 
         // PAWNS
-        long pawns = board.whiteTurn ? board.getWhitePawns() : board.getBlackPawns();
+        long pawns = board.whiteTurn ? board.whitePawns : board.blackPawns;
         while (pawns != 0L) {
             long pawn = BitBoard.getLSB(pawns);
             pawns &= pawns - 1;
@@ -324,7 +324,7 @@ public class MoveGenerator {
 
                 if (capturedPiece != BitBoard.EMPTY) {
                     // MVV-LVA calculation
-                    int attackerType = BitBoard.getPieceType(BitBoard.PAWN) - 1;
+                    int attackerType = BitBoard.PAWN - 1;
                     int capturedType = BitBoard.getPieceType(capturedPiece) - 1;
                     score = mvvLva[attackerType][capturedType];
                 } else {
@@ -337,7 +337,7 @@ public class MoveGenerator {
         }
 
         // KNIGHTS
-        long knights = board.whiteTurn ? board.getWhiteKnights() : board.getBlackKnights();
+        long knights = board.whiteTurn ? board.whiteKnights : board.blackKnights;
         while (knights != 0L) {
             long knight = BitBoard.getLSB(knights);
             knights &= knights - 1;
@@ -357,7 +357,7 @@ public class MoveGenerator {
 
                 if (captured != BitBoard.EMPTY) {
                     // MVV-LVA calculation
-                    int attackerType = BitBoard.getPieceType(BitBoard.KNIGHT) - 1;
+                    int attackerType = BitBoard.KNIGHT - 1;
                     int capturedType = BitBoard.getPieceType(captured) - 1;
                     score = mvvLva[attackerType][capturedType];
                 } else {
@@ -370,7 +370,7 @@ public class MoveGenerator {
         }
 
         // BISHOPS
-        long bishops = board.whiteTurn ? board.getWhiteBishops() : board.getBlackBishops();
+        long bishops = board.whiteTurn ? board.whiteBishops : board.blackBishops;
         while (bishops != 0L) {
             long bishop = BitBoard.getLSB(bishops);
             bishops &= bishops - 1;
@@ -390,7 +390,7 @@ public class MoveGenerator {
 
                 if (captured != BitBoard.EMPTY) {
                     // MVV-LVA calculation
-                    int attackerType = BitBoard.getPieceType(BitBoard.BISHOP) - 1;
+                    int attackerType = BitBoard.BISHOP - 1;
                     int capturedType = BitBoard.getPieceType(captured) - 1;
                     score = mvvLva[attackerType][capturedType];
                 } else {
@@ -403,7 +403,7 @@ public class MoveGenerator {
         }
 
         // ROOKS
-        long rooks = board.whiteTurn ? board.getWhiteRooks() : board.getBlackRooks();
+        long rooks = board.whiteTurn ? board.whiteRooks : board.blackRooks;
         while (rooks != 0L) {
             long rook = BitBoard.getLSB(rooks);
             rooks &= rooks - 1;
@@ -423,7 +423,7 @@ public class MoveGenerator {
 
                 if (captured != BitBoard.EMPTY) {
                     // MVV-LVA calculation
-                    int attackerType = BitBoard.getPieceType(BitBoard.ROOK) - 1;
+                    int attackerType = BitBoard.ROOK - 1;
                     int capturedType = BitBoard.getPieceType(captured) - 1;
                     score = mvvLva[attackerType][capturedType];
                 } else {
@@ -436,7 +436,7 @@ public class MoveGenerator {
         }
 
         // QUEENS
-        long queens = board.whiteTurn ? board.getWhiteQueens() : board.getBlackQueens();
+        long queens = board.whiteTurn ? board.whiteQueens : board.blackQueens;
         while (queens != 0L) {
             long queen = BitBoard.getLSB(queens);
             queens &= queens - 1;
@@ -456,7 +456,7 @@ public class MoveGenerator {
 
                 if (captured != BitBoard.EMPTY) {
                     // MVV-LVA calculation
-                    int attackerType = BitBoard.getPieceType(BitBoard.QUEEN) - 1;
+                    int attackerType = BitBoard.QUEEN - 1;
                     int capturedType = BitBoard.getPieceType(captured) - 1;
                     score = mvvLva[attackerType][capturedType];
                 } else {
@@ -469,7 +469,7 @@ public class MoveGenerator {
         }
 
         // KING
-        long kings = board.whiteTurn ? board.getWhiteKing() : board.getBlackKing();
+        long kings = board.whiteTurn ? board.whiteKing : board.blackKing;
         long king = BitBoard.getLSB(kings);
         int from = BitBoard.getSquare(king);
         long kingMoves = board.whiteTurn ? generateWhiteKingMoves(king, board) : generateBlackKingMoves(king, board);
@@ -488,7 +488,7 @@ public class MoveGenerator {
                 score = Move.CASTLING_SCORE;
             } else if (captured != BitBoard.EMPTY) {
                 // MVV-LVA calculation
-                int attackerType = BitBoard.getPieceType(BitBoard.KING) - 1;
+                int attackerType = BitBoard.KING - 1;
                 int capturedType = BitBoard.getPieceType(captured) - 1;
                 score = mvvLva[attackerType][capturedType];
             } else {
@@ -671,6 +671,14 @@ public class MoveGenerator {
                         moves.add(packed);
                     }
                 }
+
+                // if check move is possible, add it to the list
+                // long king = board.whiteTurn ? board.blackKing : board.whiteKing;
+                // if((generateRookAttacks(from, board.bitboard) & king) != 0L) {
+                //     long packed = PackedMove.encode(from, to, BitBoard.QUEEN, BitBoard.EMPTY, 0, Move.DEFAULT,
+                //             Move.IS_CHECK_SCORE);
+                //     moves.add(packed);
+                // }
             }
         }
 
@@ -709,15 +717,15 @@ public class MoveGenerator {
         long whiteAttacks = 0L;
 
         // Générer les mouvements des pions blancs
-        long whitePawnMask = generatePawnMask(board.getWhitePawns(), true);
+        long whitePawnMask = generatePawnMask(board.whitePawns, true);
         whiteAttacks |= whitePawnMask;
 
         // Générer les mouvements des cavaliers blancs
-        long whiteKnightMask = generateKnightMask(board.getWhiteKnights());
+        long whiteKnightMask = generateKnightMask(board.whiteKnights);
         whiteAttacks |= whiteKnightMask;
 
         // Générer les mouvements des fous blancs
-        long whiteBishops = board.getWhiteBishops();
+        long whiteBishops = board.whiteBishops;
         while (whiteBishops != 0L) {
             int bishopSquare = Long.numberOfTrailingZeros(whiteBishops);
             whiteBishops &= whiteBishops - 1;
@@ -725,7 +733,7 @@ public class MoveGenerator {
         }
 
         // Générer les mouvements des tours blanches
-        long whiteRooks = board.getWhiteRooks();
+        long whiteRooks = board.whiteRooks;
         while (whiteRooks != 0L) {
             int rookSquare = Long.numberOfTrailingZeros(whiteRooks);
             whiteRooks &= whiteRooks - 1;
@@ -733,7 +741,7 @@ public class MoveGenerator {
         }
 
         // Générer les mouvements des reines blanches
-        long whiteQueens = board.getWhiteQueens();
+        long whiteQueens = board.whiteQueens;
         while (whiteQueens != 0L) {
             int queenSquare = Long.numberOfTrailingZeros(whiteQueens);
             whiteQueens &= whiteQueens - 1;
@@ -742,7 +750,7 @@ public class MoveGenerator {
         }
 
         // Générer les mouvements des rois blancs
-        long whiteKingMask = generateKingMask(board.getWhiteKing());
+        long whiteKingMask = generateKingMask(board.whiteKing);
         whiteAttacks |= whiteKingMask;
 
         return whiteAttacks;
@@ -752,15 +760,15 @@ public class MoveGenerator {
         long blackAttacks = 0L;
 
         // Générer les mouvements des pions noirs
-        long blackPawnMask = generatePawnMask(board.getBlackPawns(), false);
+        long blackPawnMask = generatePawnMask(board.blackPawns, false);
         blackAttacks |= blackPawnMask;
 
         // Générer les mouvements des cavaliers noirs
-        long blackKnightMask = generateKnightMask(board.getBlackKnights());
+        long blackKnightMask = generateKnightMask(board.blackKnights);
         blackAttacks |= blackKnightMask;
 
         // Générer les mouvements des fous noirs
-        long blackBishops = board.getBlackBishops();
+        long blackBishops = board.blackBishops;
         while (blackBishops != 0L) {
             int bishopSquare = Long.numberOfTrailingZeros(blackBishops);
             blackBishops &= blackBishops - 1;
@@ -768,7 +776,7 @@ public class MoveGenerator {
         }
 
         // Générer les mouvements des tours noirs
-        long blackRooks = board.getBlackRooks();
+        long blackRooks = board.blackRooks;
         while (blackRooks != 0L) {
             int rookSquare = Long.numberOfTrailingZeros(blackRooks);
             blackRooks &= blackRooks - 1;
@@ -776,7 +784,7 @@ public class MoveGenerator {
         }
 
         // Générer les mouvements des reines noires
-        long blackQueens = board.getBlackQueens();
+        long blackQueens = board.blackQueens;
         while (blackQueens != 0L) {
             int queenSquare = Long.numberOfTrailingZeros(blackQueens);
             blackQueens &= blackQueens - 1;
@@ -785,7 +793,7 @@ public class MoveGenerator {
         }
 
         // Générer les mouvements des rois noirs
-        long blackKingMask = generateKingMask(board.getBlackKing());
+        long blackKingMask = generateKingMask(board.blackKing);
         blackAttacks |= blackKingMask;
 
         return blackAttacks;
@@ -810,6 +818,37 @@ public class MoveGenerator {
 
         return pawnMask;
     }
+
+    private static long generatePawnAttacks(long pawns, boolean white) {
+        // Mask + capture and en passant moves
+        long pawnAttacks = 0L;
+        if (white) {
+            // Captures diagonales, gauche et droite
+            long capturesLeft = (pawns << 9) & ~BitBoard.FILE_H;
+            long capturesRight = (pawns << 7) & ~BitBoard.FILE_A;
+
+            pawnAttacks |= capturesLeft | capturesRight;
+        } else {
+            // Captures diagonales, gauche et droite
+            long capturesLeft = (pawns >> 7) & ~BitBoard.FILE_H;
+            long capturesRight = (pawns >> 9) & ~BitBoard.FILE_A;
+
+            pawnAttacks |= capturesLeft | capturesRight;
+        }
+
+        // En passant
+        if (white) {
+            long enPassantLeft = (pawns << 9) & BitBoard.FILE_H;
+            long enPassantRight = (pawns << 7) & BitBoard.FILE_A;
+            pawnAttacks |= enPassantLeft | enPassantRight;
+        } else {
+            long enPassantLeft = (pawns >> 7) & BitBoard.FILE_H;
+            long enPassantRight = (pawns >> 9) & BitBoard.FILE_A;
+            pawnAttacks |= enPassantLeft | enPassantRight;
+        }
+        return pawnAttacks;
+    }
+
 
     public static long generatePawnMoves(long pawns, BitBoard board) {
         long pawnMoves = 0L;
@@ -866,7 +905,7 @@ public class MoveGenerator {
             knights &= knights - 1; //
 
             // run the knight through the precomputed knight moves
-            long knightMoves = BitBoard.KNIGHT_MOVES[BitBoard.getSquare(knight)];
+            long knightMoves = BitBoard.KNIGHT_MOVES[Long.numberOfTrailingZeros(knight)];
 
             knightMask |= knightMoves;
         }
@@ -1091,7 +1130,7 @@ public class MoveGenerator {
     }
 
     public static long generateKingMask(long king) {
-        return BitBoard.KING_MOVES[BitBoard.getSquare(king)];
+        return BitBoard.KING_MOVES[Long.numberOfTrailingZeros(king)];
     }
 
     public static long generateKingMoves(long king, BitBoard board) {
@@ -1346,5 +1385,4 @@ public class MoveGenerator {
 
         return queenMoves;
     }
-
 }

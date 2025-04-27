@@ -1,5 +1,4 @@
 package com.bitboard;
-import java.util.Arrays;
 
 public class PackedMoveList {
     private final long[] moves;
@@ -55,12 +54,18 @@ public class PackedMoveList {
     public void prioritize(long move) {
         for (int i = 0; i < size; i++) {
             if (moves[i] == move) {
-                // Swap avec le premier
-                long tmp = moves[0];
-                moves[0] = moves[i];
-                moves[i] = tmp;
-                return;
+                PackedMove.setScore(moves[i], 1000); // Set high score
             }
+        }
+    }
+
+    public void shuffle() {
+        for (int i = size - 1; i > 0; i--) {
+            int j = (int) (Math.random() * (i + 1));
+            // Swap moves[i] and moves[j]
+            long temp = moves[i];
+            moves[i] = moves[j];
+            moves[j] = temp;
         }
     }
     

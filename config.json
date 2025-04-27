@@ -48,17 +48,17 @@
     },
     "config_name": "",
     "output": 0,
-    "seed": 16072293166723898909,
+    "seed": 15069259893684593624,
     "variant": 0,
     "ratinginterval": 10,
     "scoreinterval": 1,
     "wait": 0,
     "autosaveinterval": 20,
     "games": 2,
-    "rounds": 20,
-    "concurrency": 2,
+    "rounds": 15000,
+    "concurrency": 6,
     "force_concurrency": false,
-    "recover": false,
+    "recover": true,
     "noswap": false,
     "reverse": false,
     "report_penta": true,
@@ -78,9 +78,9 @@
             "options": [],
             "limit": {
                 "tc": {
-                    "increment": 800,
+                    "increment": 40,
                     "fixed_time": 0,
-                    "time": 8000,
+                    "time": 4000,
                     "moves": 0,
                     "timemargin": 0
                 },
@@ -92,14 +92,14 @@
         {
             "name": "main",
             "dir": "",
-            "cmd": "Aspira_main.exe",
+            "cmd": "Aspira_dev2.exe",
             "args": "",
             "options": [],
             "limit": {
                 "tc": {
-                    "increment": 800,
+                    "increment": 40,
                     "fixed_time": 0,
-                    "time": 8000,
+                    "time": 4000,
                     "moves": 0,
                     "timemargin": 0
                 },
@@ -111,26 +111,26 @@
     ],
     "stats": {
         "main vs dev": {
-            "wins": 4,
-            "losses": 16,
-            "draws": 8,
-            "penta_WW": 0,
-            "penta_WD": 2,
-            "penta_WL": 2,
-            "penta_DD": 3,
-            "penta_LD": 0,
-            "penta_LL": 7
+            "wins": 211,
+            "losses": 150,
+            "draws": 305,
+            "penta_WW": 32,
+            "penta_WD": 89,
+            "penta_WL": 58,
+            "penta_DD": 77,
+            "penta_LD": 62,
+            "penta_LL": 15
         },
         "dev vs main": {
-            "wins": 7,
-            "losses": 1,
-            "draws": 4,
-            "penta_WW": 2,
-            "penta_WD": 2,
-            "penta_WL": 1,
-            "penta_DD": 1,
-            "penta_LD": 0,
-            "penta_LL": 0
+            "wins": 58,
+            "losses": 102,
+            "draws": 134,
+            "penta_WW": 5,
+            "penta_WD": 23,
+            "penta_WL": 25,
+            "penta_DD": 32,
+            "penta_LD": 47,
+            "penta_LL": 15
         }
     }
 }
