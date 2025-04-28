@@ -97,14 +97,14 @@ public class UCI {
                 case "go":
                     go(inputArray);
                     break;
+                case "stop":
+                    engine.getAlgorithm().setStopSearch(true);
+                    break;
                 case "perft-test":
                     Perft.perftSuiteTest("./perft-suite/standard.epd", Integer.parseInt(inputArray[1]));
                     break;
                 case "quit":
                     quit();
-                    break;
-                case "stop":
-                    stop();
                     break;
                 case "option":
                     option(inputArray);
@@ -273,7 +273,19 @@ public class UCI {
                 }
             }
 
-            engine.getAlgorithm().search(board, wtime, btime, winc, binc, movetime, depth);
+            // Create final variables for use in the lambda
+            final int finalWtime = wtime;
+            final int finalBtime = btime;
+            final int finalWinc = winc;
+            final int finalBinc = binc;
+            final int finalMovetime = movetime;
+            final int finalDepth = depth;
+
+            Thread searchThread = new Thread(() -> {
+                engine.getAlgorithm().setStopSearch(false);
+                engine.getAlgorithm().search(board, finalWtime, finalBtime, finalWinc, finalBinc, finalMovetime, finalDepth);
+            });
+            searchThread.start();
 
             
     
