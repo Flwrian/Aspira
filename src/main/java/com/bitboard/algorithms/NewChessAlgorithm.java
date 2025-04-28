@@ -14,6 +14,12 @@ public class NewChessAlgorithm implements ChessAlgorithm {
     private long cutoffs = 0;
     private final boolean DEBUG_FLAG = false;
 
+    // Stop search flag
+    private boolean stopSearch = false;
+    public void setStopSearch(boolean b) {
+        stopSearch = b;
+    }
+
     // === Timeout Control ===
     private long searchStartTime;
     private long timeLimitNanos;
@@ -155,7 +161,7 @@ public class NewChessAlgorithm implements ChessAlgorithm {
     public MoveValue alphaBeta(BitBoard board, int depth, int alpha, int beta, boolean maximizingPlayer, int ply) {
 
         // === TIME CHECK ===
-        if (System.nanoTime() - searchStartTime > timeLimitNanos) {
+        if (System.nanoTime() - searchStartTime > timeLimitNanos || stopSearch) {
             timeExceeded = true;
             return new MoveValue(0L, 0); // Valeur arbitraire (ne sera pas utilisée)
         }
