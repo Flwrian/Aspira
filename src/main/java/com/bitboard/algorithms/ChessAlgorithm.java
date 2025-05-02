@@ -11,6 +11,8 @@ public interface ChessAlgorithm {
 
     public String getName();
 
+    public void setStopSearch(boolean b);
+
     // public void setDepth(int depth);
 
     // public void setRazorDepth(int depth);
