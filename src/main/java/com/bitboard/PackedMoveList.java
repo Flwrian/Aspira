@@ -78,4 +78,13 @@ public class PackedMoveList {
         }
         return moveList.toString();
     }
+
+    public boolean contains(long killer1) {
+        for (int i = 0; i < size; i++) {
+            if (moves[i] == killer1) {
+                return true;
+            }
+        }
+        return false;
+    }
 }
