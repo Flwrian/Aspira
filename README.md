@@ -1,3 +1,7 @@
+![Java](https://img.shields.io/badge/Language-Java-blue.svg)
+![UCI Support](https://img.shields.io/badge/Protocol-UCI-green.svg)
+![License](https://img.shields.io/badge/License-MIT-lightgrey.svg)
+
 # 🧠 Aspira – Java Chess Engine
 
 **Aspira** is a chess engine built from the ground up in **Java** — born out of curiosity, a love of chess, and a deep drive to understand how things work at a low level.
