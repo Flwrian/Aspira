@@ -79,8 +79,11 @@ public class UCI {
                 System.out.println("An error occurred.");
                 e.printStackTrace();
             }
-            // System.out.println(input);
             nbCommands++;
+
+            
+
+
             switch(command){
                 case "uci":
                     uci();

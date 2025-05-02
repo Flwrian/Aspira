@@ -186,9 +186,9 @@ public class NewChessAlgorithm implements ChessAlgorithm {
         if (depth == 0) {
             return quiescenceSearch(board, alpha, beta, maximizingPlayer);
         }
-              
+        
         nodes++;
-
+        
         PackedMoveList moves = board.getLegalMoves();
 
         if (moves.size() == 0 && !board.isKingInCheck(board.whiteTurn)) {
