@@ -1,4 +1,3 @@
-
 package com.bitboard.algorithms;
 
 import com.bitboard.BitBoard;
@@ -16,25 +15,44 @@ public class NewChessAlgorithm implements ChessAlgorithm {
 
     // Stop search flag
     private boolean stopSearch = false;
-    public void setStopSearch(boolean b) {
-        stopSearch = b;
-    }
+    public void setStopSearch(boolean b) { stopSearch = b; }
 
-    // === Timeout Control ===
+    // ==== Time control ====
     private long searchStartTime;
     private long timeLimitNanos;
     private boolean timeExceeded = false;
 
-    // === Transposition Table ===
-    private final TranspositionTable tt = new TranspositionTable(64); // 64MB
+    // ==== Transposition Table ====
+    private final TranspositionTable tt = new TranspositionTable(64); // MB
     private long ttHits = 0;
     private long ttStores = 0;
 
-    private static final int ply = 0;
+    // ==== Mate / scores ====
+    public static final int MATE       = 32000;
+    public static final int MATE_BOUND = 31000; // seuil de détection mate
+    public static final int DRAW       = 0;
 
-    public static final int MATE_SCORE = 80000;
+    private static int toTTScore(int score, int ply) {
+        if (score >=  MATE_BOUND) return score + ply; // préfère mate plus court
+        if (score <= -MATE_BOUND) return score - ply; // retarde côté perdant
+        return score;
+    }
+    private static int fromTTScore(int score, int ply) {
+        if (score >=  MATE_BOUND) return score - ply;
+        if (score <= -MATE_BOUND) return score + ply;
+        return score;
+    }
+    private static int preferShorterMates(int s) {
+        if (s >=  MATE_BOUND) return s - 1;
+        if (s <= -MATE_BOUND) return s + 1;
+        return s;
+    }
 
-
+    // Évaluation orientée côté trait (négamax)
+    private int evalSideToMove(BitBoard b) {
+        int e = evaluate(b);           // positif = bon pour Blanc
+        return b.whiteTurn ? e : -e;   // orienté côté trait
+    }
 
     @Override
     public Move search(BitBoard board, int wtime, int btime, int winc, int binc, int movetime, int depth) {
@@ -46,11 +64,10 @@ public class NewChessAlgorithm implements ChessAlgorithm {
             timeLimitNanos = movetime * 1_000_000L;
         } else {
             int time = board.whiteTurn ? wtime : btime;
-            int inc = board.whiteTurn ? winc : binc;
+            int inc  = board.whiteTurn ? winc  : binc;
             int timePerMoveMs = (time / 20) + (inc / 2);
             timeLimitNanos = (long) (timePerMoveMs * 0.9 * 1_000_000L);
         }
-
         timeExceeded = false;
 
         if (DEBUG_FLAG) {
@@ -63,39 +80,32 @@ public class NewChessAlgorithm implements ChessAlgorithm {
             System.out.println(divider);
         }
 
-        int window = 50; // Aspiration window size (centipawns)
+        int window = 50; // aspiration (cp)
         int prevScore = 0;
+
         for (int currentDepth = 1; currentDepth <= depth; currentDepth++) {
-            nodes = 0;
-            cutoffs = 0;
-            ttHits = 0;
-            ttStores = 0;
+            nodes = 0; cutoffs = 0; ttHits = 0; ttStores = 0;
             long startTime = System.nanoTime();
 
-            int alpha = prevScore - window;
-            int beta = prevScore + window;
-            MoveValue result = alphaBeta(board, currentDepth, alpha, beta, board.whiteTurn, ply);
+            int alpha, beta;
+            // Évite aspiration serrée si on est proche d'un mate
+            if (Math.abs(prevScore) >= MATE_BOUND - 512) {
+                alpha = -MATE; beta = +MATE;
+            } else {
+                alpha = prevScore - window;
+                beta  = prevScore + window;
+            }
 
-            // If fail-low or fail-high, re-search with full window
+            MoveValue result = negamax(board, currentDepth, alpha, beta, 0, true);
+
+            // Re-search fenêtre pleine si fail-low/high
             if (!timeExceeded && (result.value <= alpha || result.value >= beta)) {
-                if (result.value <= alpha) {
-                    alpha = Integer.MIN_VALUE;
-                }
-                if (result.value >= beta) {
-                    beta = Integer.MAX_VALUE;
-                }
-                result = alphaBeta(board, currentDepth, alpha, beta, board.whiteTurn, ply);
+                alpha = -MATE; beta = +MATE;
+                result = negamax(board, currentDepth, alpha, beta, 0, true);
             }
 
             long endTime = System.nanoTime();
-
-            // Interrompu ? On garde le dernier coup valide
-            if (timeExceeded) {
-                if (DEBUG_FLAG) {
-                    System.out.println("Time limit exceeded during search. Stopping at depth " + (currentDepth - 1));
-                }
-                break;
-            }
+            if (timeExceeded) break;
 
             bestPackedMove = result.move;
             prevScore = result.value;
@@ -103,18 +113,13 @@ public class NewChessAlgorithm implements ChessAlgorithm {
             printSearchInfo(currentDepth, result.value, nodes, endTime - startTime, cutoffs, ttHits, ttStores, result.pv);
         }
 
-        if (DEBUG_FLAG) {
-            System.out.println("╚" + "═".repeat(110) + "╝");
-        }
+        if (DEBUG_FLAG) System.out.println("╚" + "═".repeat(110) + "╝");
 
-        // Si il n'y a pas de coup valide, on renvoie un aléatoire
+        // Fallback si aucun coup trouvé
         if (bestPackedMove == 0L) {
             PackedMoveList moves = board.getLegalMoves();
-            if (moves.size() > 0) {
-                bestPackedMove = moves.get(0);
-            } else {
-                return null;
-            }
+            if (moves.size() > 0) bestPackedMove = moves.get(0);
+            else return null;
         }
 
         Move best = PackedMove.unpack(bestPackedMove);
@@ -123,261 +128,243 @@ public class NewChessAlgorithm implements ChessAlgorithm {
     }
 
     private void printSearchInfo(int depth, int score, long nodes, long durationNanos, long cutoffs, long ttHits,
-                long ttStores, String pv) {
-            double timeMs = durationNanos / 1_000_000.0;
-            double rawNps = nodes / (durationNanos / 1_000_000_000.0);
-            double cutoffRatio = 100.0 * cutoffs / Math.max(nodes, 1);
-            String npsStr = formatNps(rawNps);
-            String ttHitStr = String.format(Locale.US, "%d/%d", ttHits, ttStores);
-            String ttHitRatio = String.format(Locale.US, "%.2f%%", 100.0 * ttHits / Math.max(ttStores, 1));
+                                 long ttStores, String pv) {
+        double timeMs = durationNanos / 1_000_000.0;
+        double rawNps = nodes / (durationNanos / 1_000_000_000.0);
+        double cutoffRatio = 100.0 * cutoffs / Math.max(nodes, 1);
+        String npsStr = formatNps(rawNps);
+        String ttHitStr = String.format(Locale.US, "%d/%d", ttHits, ttStores);
+        String ttHitRatio = String.format(Locale.US, "%.2f%%", 100.0 * ttHits / Math.max(ttStores, 1));
 
-            if (DEBUG_FLAG) {
-                String scoreStr = Math.abs(score) >= MATE_SCORE - 1000 ? 
-                        String.format("M%d", (MATE_SCORE - Math.abs(score) + 1) / 2) : 
-                        String.valueOf(score);
-                System.out.printf(Locale.US, "║ %-6d │ %-6s │ %-12d │ %-10s │ %-10.1f │ %-9d │ %-6.2f%% │ %-17s │ %-7s ║\n",
-                        depth, scoreStr, nodes, npsStr, timeMs, cutoffs, cutoffRatio, ttHitStr, ttHitRatio);
+        if (DEBUG_FLAG) {
+            String scoreStr = Math.abs(score) >= MATE_BOUND
+                    ? String.format("M%d", (MATE - Math.abs(score) + 1) / 2)
+                    : String.valueOf(score);
+            System.out.printf(Locale.US, "║ %-6d │ %-6s │ %-12d │ %-10s │ %-10.1f │ %-9d │ %-6.2f%% │ %-17s │ %-7s ║\n",
+                    depth, scoreStr, nodes, npsStr, timeMs, cutoffs, cutoffRatio, ttHitStr, ttHitRatio);
+        } else {
+            if (Math.abs(score) >= MATE_BOUND) {
+                int mateIn = (MATE - Math.abs(score) + 1) / 2;
+                String mateScore = score > 0 ? "mate " + mateIn : "mate -" + mateIn;
+                System.out.printf(Locale.US, "info depth %d score %s nodes %d nps %d time %.0f pv %s\n",
+                        depth, mateScore, nodes, (long) rawNps, timeMs, pv);
             } else {
-                if (Math.abs(score) >= MATE_SCORE - 1000) {
-                    int mateIn = (MATE_SCORE - Math.abs(score) + 1) / 2;
-                    String mateScore = score > 0 ? "mate " + mateIn : "mate -" + mateIn;
-                    System.out.printf(Locale.US, "info depth %d score %s nodes %d nps %d time %.0f pv %s\n",
-                            depth, mateScore, nodes, (long) rawNps, timeMs, pv);
-                } else {
-                    System.out.printf(Locale.US, "info depth %d score cp %d nodes %d nps %d time %.0f pv %s\n",
-                            depth, score, nodes, (long) rawNps, timeMs, pv);
-                }
+                System.out.printf(Locale.US, "info depth %d score cp %d nodes %d nps %d time %.0f pv %s\n",
+                        depth, score, nodes, (long) rawNps, timeMs, pv);
             }
         }
+    }
 
     private String formatNps(double nps) {
-        if (nps >= 1_000_000)
-            return String.format(Locale.US, "%.1fM", nps / 1_000_000);
-        if (nps >= 1_000)
-            return String.format(Locale.US, "%.1fk", nps / 1_000);
+        if (nps >= 1_000_000) return String.format(Locale.US, "%.1fM", nps / 1_000_000);
+        if (nps >= 1_000)     return String.format(Locale.US, "%.1fk", nps / 1_000);
         return String.format(Locale.US, "%.0f", nps);
     }
 
-    public MoveValue alphaBeta(BitBoard board, int depth, int alpha, int beta, boolean maximizingPlayer, int ply) {
-
-        // === TIME CHECK ===
+    // =========================
+    //        NEGAMAX + PVS
+    // =========================
+    private MoveValue negamax(BitBoard board, int depth, int alpha, int beta, int ply, boolean isPV) {
+        // TIME
         if (System.nanoTime() - searchStartTime > timeLimitNanos || stopSearch) {
-            timeExceeded = true;
-            return new MoveValue(0L, 0); // Valeur arbitraire (ne sera pas utilisée)
-        }
-
-        long key = board.zobristKey;
-        TranspositionTable.Entry entry = tt.get(key);
-        if (entry != null && entry.depth >= depth) {
-            ttHits++;
-            if (entry.flag == TranspositionTable.Entry.EXACT) {
-                return new MoveValue(entry.bestMove, entry.value);
-            } else if (entry.flag == TranspositionTable.Entry.LOWERBOUND && entry.value > alpha) {
-                alpha = entry.value;
-            } else if (entry.flag == TranspositionTable.Entry.UPPERBOUND && entry.value < beta) {
-                beta = entry.value;
-            }
-
-            if (alpha >= beta) {
-                return new MoveValue(entry.bestMove, entry.value);
-            }
-        }
-
-        if (depth == 0) {
-            return quiescenceSearch(board, alpha, beta, maximizingPlayer);
-        }
-        
-        nodes++;
-        
-        PackedMoveList moves = board.getLegalMoves();
-
-        if (moves.size() == 0 && !board.isKingInCheck(board.whiteTurn)) {
-            return new MoveValue(0L, 0); // Stalemate
-        } else if (moves.size() == 0) {
-            return board.whiteTurn ? new MoveValue(0L, -MATE_SCORE + ply) : new MoveValue(0L, MATE_SCORE - ply); // Checkmate
-        }
-
-        // Sort tt move first
-        final long ttMove = (entry != null) ? entry.bestMove : 0L;
-        if (ttMove != 0L) {
-            moves.prioritize(ttMove);
-        }
-        moves.sortByScore();
-
-        long bestMove = 0L;
-        int bestValue = maximizingPlayer ? -90000 : 90000;
-        String bestPv = "";
-
-        int originalAlpha = alpha;
-
-        // === Late Move Reduction (LMR) parameters ===
-        final int LMR_MIN_DEPTH = 3; // Only apply LMR at depth >= 3
-        final int LMR_MIN_MOVES = 3; // Only reduce after this many moves
-        final int LMR_REDUCTION = 1; // Reduce by 1 ply
-
-        for (int i = 0; i < moves.size(); i++) {
-            long move = moves.get(i);
-
-            board.makeMove(move);
-            ply++;
-
-            MoveValue child;
-            boolean reduced = false;
-
-            // LMR: Reduce depth for late, non-capture, non-pv moves
-            boolean isFirstMove = (i == 0);
-            boolean isCapture = PackedMove.isCapture(move);
-            boolean canReduce = depth >= LMR_MIN_DEPTH && i >= LMR_MIN_MOVES && !isFirstMove && !isCapture;
-
-            if (canReduce) {
-                // Reduced search
-                child = alphaBeta(board, depth - 1 - LMR_REDUCTION, alpha, beta, !maximizingPlayer, ply);
-                reduced = true;
-                // If reduction produces a new best, re-search at full depth
-                int value = child.value;
-                boolean failHigh = maximizingPlayer ? value > alpha : value < beta;
-                if (failHigh) {
-                    child = alphaBeta(board, depth - 1, alpha, beta, !maximizingPlayer, ply);
-                }
-            } else {
-                child = alphaBeta(board, depth - 1, alpha, beta, !maximizingPlayer, ply);
-            }
-
-            board.undoMove();
-            ply--;
-
-            if (timeExceeded)
-                return new MoveValue(0L, 0); // stop immediately
-
-            int value = child.value;
-
-            if (maximizingPlayer) {
-                if (value > bestValue) {
-                    bestValue = value;
-                    bestMove = move;
-                    // Update PV: current move + child's PV
-                    Move printableMove = PackedMove.unpack(move);
-                    bestPv = printableMove.toString();
-                    if (!child.pv.isEmpty()) {
-                        bestPv += " " + child.pv;
-                    }
-                }
-                alpha = Math.max(alpha, value);
-            } else {
-                if (value < bestValue) {
-                    bestValue = value;
-                    bestMove = move;
-                    // Update PV: current move + child's PV
-                    Move printableMove = PackedMove.unpack(move);
-                    bestPv = printableMove.toString();
-                    if (!child.pv.isEmpty()) {
-                        bestPv += " " + child.pv;
-                    }
-                }
-                beta = Math.min(beta, value);
-            }
-
-            if (alpha >= beta) {
-                cutoffs++;
-                break;
-            }
-        }
-
-        int flag = TranspositionTable.Entry.EXACT;
-        if (bestValue <= originalAlpha) {
-            flag = TranspositionTable.Entry.UPPERBOUND;
-        } else if (bestValue >= beta) {
-            flag = TranspositionTable.Entry.LOWERBOUND;
-        }
-
-        // Store PV in TT if possible
-        tt.put(key, bestMove, bestValue, depth, flag);
-        ttStores++;
-
-        return new MoveValue(bestMove, bestValue, bestPv);
-    }
-
-    private MoveValue quiescenceSearch(BitBoard board, int alpha, int beta, boolean maximizingPlayer) {
-        nodes++;
-
-        // Check if time limit exceeded
-        if (System.nanoTime() - searchStartTime > timeLimitNanos) {
             timeExceeded = true;
             return new MoveValue(0L, 0);
         }
 
-        // Stand pat - evaluate the position if we don't make any move
-        int standPat = evaluate(board);
-        if (maximizingPlayer) {
-            if (standPat >= beta) {
-                return new MoveValue(0L, beta);
+        nodes++;
+
+        // Mate Distance Pruning
+        if (alpha < -MATE + ply + 1) alpha = -MATE + ply + 1;
+        if (beta  >  MATE - ply - 1) beta  =  MATE - ply - 1;
+        if (alpha >= beta) return new MoveValue(0L, alpha);
+
+        // TT probe
+        long key = board.zobristKey;
+        TranspositionTable.Entry entry = tt.get(key);
+        if (entry != null && entry.depth >= depth) {
+            ttHits++;
+            int ttVal = fromTTScore(entry.value, ply);
+            if (entry.flag == TranspositionTable.Entry.EXACT) {
+                return new MoveValue(entry.bestMove, ttVal, "");
+            } else if (entry.flag == TranspositionTable.Entry.LOWERBOUND) {
+                if (ttVal > alpha) alpha = ttVal;
+            } else if (entry.flag == TranspositionTable.Entry.UPPERBOUND) {
+                if (ttVal < beta) beta = ttVal;
             }
-            if (standPat > alpha) {
-                alpha = standPat;
-            }
-        } else {
-            if (standPat <= alpha) {
-                return new MoveValue(0L, alpha);
-            }
-            if (standPat < beta) {
-                beta = standPat;
-            }
+            if (alpha >= beta) return new MoveValue(entry.bestMove, ttVal, "");
         }
 
-        // Get only captures
-        PackedMoveList captures = board.getCaptureMoves();
-        if (captures.size() == 0) {
-            return new MoveValue(0L, standPat);
+        // Répétition
+        if (board.isThreefoldRepetition()) return new MoveValue(0L, DRAW);
+
+        // Feuille => QS
+        if (depth <= 0) return qsearch(board, alpha, beta, ply);
+
+        // Génération mouvements
+        PackedMoveList moves = board.getLegalMoves();
+        boolean inCheck = board.isKingInCheck(board.whiteTurn);
+        if (moves.size() == 0) {
+            if (inCheck) return new MoveValue(0L, -MATE + ply);
+            return new MoveValue(0L, DRAW);
         }
 
-        captures.sortByScore();
-        
+        // Ordonnancement: TT move d'abord
+        final long ttMove = (entry != null) ? entry.bestMove : 0L;
+        if (ttMove != 0L) moves.prioritize(ttMove);
+        moves.sortByScore();
+
+        int originalAlpha = alpha;
+        int originalBeta  = beta;
+
         long bestMove = 0L;
-        int bestValue = maximizingPlayer ? alpha : beta;
         String bestPv = "";
+        int bestScore = -MATE;
 
-        for (int i = 0; i < captures.size(); i++) {
-            long move = captures.get(i);
+        // LMR params
+        final int LMR_MIN_DEPTH = 3;
+        final int LMR_MIN_MOVES = 3;
+        final int LMR_REDUCTION = 1;
+
+        boolean firstMove = true;
+
+        for (int i = 0; i < moves.size(); i++) {
+            long move = moves.get(i);
+
+            // Make
             board.makeMove(move);
-            MoveValue child = quiescenceSearch(board, alpha, beta, !maximizingPlayer);
-            board.undoMove();
+            boolean givesCheck = board.isKingInCheck(board.whiteTurn);
 
-            if (timeExceeded)
-                return new MoveValue(0L, 0);
+            int newDepth = depth - 1;
+            int score;
+            String childPv;
 
-            int value = child.value;
-
-            if (maximizingPlayer) {
-                if (value > bestValue) {
-                    bestValue = value;
-                    bestMove = move;
-                    Move printableMove = PackedMove.unpack(move);
-                    bestPv = printableMove.toString();
-                    if (!child.pv.isEmpty()) {
-                        bestPv += " " + child.pv;
-                    }
-                }
-                alpha = Math.max(alpha, value);
+            if (firstMove) {
+                MoveValue child = negamax(board, newDepth, -beta, -alpha, ply + 1, isPV);
+                score = -child.value;
+                childPv = child.pv;
+                firstMove = false;
             } else {
-                if (value < bestValue) {
-                    bestValue = value;
-                    bestMove = move;
-                    Move printableMove = PackedMove.unpack(move);
-                    bestPv = printableMove.toString();
-                    if (!child.pv.isEmpty()) {
-                        bestPv += " " + child.pv;
-                    }
+                boolean isCapture = PackedMove.isCapture(move);
+                boolean canReduce = !isPV && depth >= LMR_MIN_DEPTH && i >= LMR_MIN_MOVES
+                        && !isCapture && !givesCheck;
+
+                int searchDepth = canReduce ? (newDepth - LMR_REDUCTION) : newDepth;
+
+                // PVS: fenêtre nulle
+                MoveValue red = negamax(board, searchDepth, -(alpha + 1), -alpha, ply + 1, false);
+                score = -red.value;
+                childPv = red.pv;
+
+                // Re-search full window si améliore
+                if (score > alpha) {
+                    MoveValue full = negamax(board, newDepth, -beta, -alpha, ply + 1, true);
+                    score = -full.value;
+                    childPv = full.pv;
                 }
-                beta = Math.min(beta, value);
             }
-            
-            if (alpha >= beta) {
-                cutoffs++;
-                break;
+
+            // Unmake
+            board.undoMove();
+            if (timeExceeded) return new MoveValue(0L, 0);
+
+            score = preferShorterMates(score);
+
+            if (score > bestScore) {
+                bestScore = score;
+                bestMove = move;
+                String pv = PackedMove.unpack(move).toString();
+                if (!childPv.isEmpty()) pv += " " + childPv;
+                bestPv = pv;
             }
+
+            if (score > alpha) {
+                alpha = score;
+            }
+
+            if (alpha >= beta) { cutoffs++; break; }
         }
 
-        return new MoveValue(bestMove, bestValue, bestPv);
+        // TT store
+        int flag;
+        if (bestScore <= originalAlpha)       flag = TranspositionTable.Entry.UPPERBOUND;
+        else if (bestScore >= originalBeta)   flag = TranspositionTable.Entry.LOWERBOUND;
+        else                                  flag = TranspositionTable.Entry.EXACT;
+
+        tt.put(key, bestMove, toTTScore(bestScore, ply), depth, flag);
+        ttStores++;
+
+        return new MoveValue(bestMove, bestScore, bestPv);
+    }
+
+    // =========================
+    //          QS
+    // =========================
+    private MoveValue qsearch(BitBoard board, int alpha, int beta, int ply) {
+        if (System.nanoTime() - searchStartTime > timeLimitNanos || stopSearch) {
+            timeExceeded = true;
+            return new MoveValue(0L, 0);
+        }
+
+        // Si en échec: évasions complètes (tous coups légaux)
+        if (board.isKingInCheck(board.whiteTurn)) {
+            PackedMoveList evasions = board.getLegalMoves();
+            if (evasions.size() == 0) {
+                return new MoveValue(0L, -MATE + ply); // mat détecté en QS
+            }
+            evasions.sortByScore();
+
+            long bestMove = 0L; String bestPv = "";
+            for (int i = 0; i < evasions.size(); i++) {
+                long mv = evasions.get(i);
+                board.makeMove(mv);
+                MoveValue childRes = qsearch(board, -beta, -alpha, ply + 1);
+                int s = -childRes.value;
+                board.undoMove();
+                if (timeExceeded) return new MoveValue(0L, 0);
+
+                s = preferShorterMates(s);
+
+                if (s > alpha) {
+                    alpha = s;
+                    bestMove = mv;
+                    bestPv = PackedMove.unpack(mv).toString();
+                    if (!childRes.pv.isEmpty()) bestPv += " " + childRes.pv;
+                }
+                if (alpha >= beta) { cutoffs++; break; }
+            }
+            return new MoveValue(bestMove, alpha, bestPv);
+        }
+
+        // Stand pat (orienté côté trait)
+        int standPat = evalSideToMove(board);
+        if (standPat >= beta) return new MoveValue(0L, beta);
+        if (standPat > alpha) alpha = standPat;
+
+        // Captures (promotions incluses si packées ainsi)
+        PackedMoveList caps = board.getCaptureMoves();
+        if (caps.size() == 0) return new MoveValue(0L, alpha);
+        caps.sortByScore();
+
+        long bestMove = 0L; String bestPv = "";
+        for (int i = 0; i < caps.size(); i++) {
+            long mv = caps.get(i);
+            board.makeMove(mv);
+            MoveValue childRes = qsearch(board, -beta, -alpha, ply + 1);
+            int s = -childRes.value;
+            board.undoMove();
+            if (timeExceeded) return new MoveValue(0L, 0);
+
+            s = preferShorterMates(s);
+
+            if (s > alpha) {
+                alpha = s;
+                bestMove = mv;
+                bestPv = PackedMove.unpack(mv).toString();
+                if (!childRes.pv.isEmpty()) bestPv += " " + childRes.pv;
+            }
+            if (alpha >= beta) { cutoffs++; break; }
+        }
+        return new MoveValue(bestMove, alpha, bestPv);
     }
 
     @Override
@@ -390,31 +377,23 @@ public class NewChessAlgorithm implements ChessAlgorithm {
         return "NewChessAlgorithm";
     }
 
-    public class MoveValue {
+    public static class MoveValue {
         public final long move;
         public final int value;
-        public String pv = ""; // Principal Variation
-    
+        public String pv = "";
+
         public MoveValue(long move, int value) {
             this.move = move;
             this.value = value;
-            // update pv
             if (move != 0L) {
-                Move printableMove = PackedMove.unpack(move);
-                String moveStr = printableMove.toString();
-                if (pv.isEmpty()) {
-                    pv = moveStr;
-                } else {
-                    pv += " " + moveStr;
-                }
+                Move printable = PackedMove.unpack(move);
+                this.pv = printable.toString();
             }
         }
-
         public MoveValue(long move, int value, String pv) {
             this.move = move;
             this.value = value;
-            this.pv = pv;
+            this.pv = (pv == null) ? "" : pv;
         }
     }
-    
 }
