@@ -761,6 +761,7 @@ public class BitBoard {
         // Clamp phase
         phase = Math.min(phase, 24);
 
+
         // PSQT
         long wPawns = whitePawns;
         long wKnights = whiteKnights;
@@ -911,9 +912,6 @@ public class BitBoard {
     }
 
     public final int evaluate() {
-        if (isThreefoldRepetition()) {
-            return 0;
-        }
         return (currentEvalMG * phase + currentEvalEG * (24 - phase)) / 24;
     }
 

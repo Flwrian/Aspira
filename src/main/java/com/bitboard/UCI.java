@@ -214,10 +214,6 @@ public class UCI {
         System.out.println("Legal moves: " + legalMoves);
     }
 
-    private static void stop() {
-        
-    }
-
     private static void quit() {
         System.exit(0);
     }
@@ -226,78 +222,67 @@ public class UCI {
         return Perft.calculateNPS(board, timeMS);
     }
 
-    private static void go(String[] inputArray) {
-        // perft test
-        if(inputArray[1].equals("perft")){
-            int depth = Integer.parseInt(inputArray[2]);
-            long time = System.currentTimeMillis();
-            String perft;
-            perft = Perft.perftDivideString(board, depth);
-
-            time = System.currentTimeMillis() - time;
-            System.out.println(perft);
-            System.out.println("Time: " + time + "ms");
+    private static void go(String[] tokens) {
+        if (tokens.length < 2) {
             return;
         }
-        if (inputArray[1].equals("ponder")) {
-            // infinite search
-            engine.setDepth(20);
-            engine.getAlgorithm().search(board, 0, 0, 0, 0, 0, 20);
-            return;
-        }
-        else{
-            
-            // go wtime <> btime <> winc <> binc <> movestogo <>
-            int depth = 11;
-            int wtime = 99999999; // infinite time if no time specified
-            int btime = 99999999; // infinite time if no time specified
-            int winc = 0;
-            int binc = 0;
-            int movetime = 0;
-
-            for(int i = 1; i < inputArray.length; i++){
-                if(inputArray[i].equals("depth")){
-                    depth = Integer.parseInt(inputArray[i + 1]);
-                }
-                else if(inputArray[i].equals("wtime")){
-                    wtime = Integer.parseInt(inputArray[i + 1]);
-                }
-                else if(inputArray[i].equals("btime")){
-                    btime = Integer.parseInt(inputArray[i + 1]);
-                }
-                else if(inputArray[i].equals("winc")){
-                    winc = Integer.parseInt(inputArray[i + 1]);
-                }
-                else if(inputArray[i].equals("binc")){
-                    binc = Integer.parseInt(inputArray[i + 1]);
-                }
-                else if(inputArray[i].equals("movetime")){
-                    movetime = Integer.parseInt(inputArray[i + 1]);
-                }
-            }
-
-            // Create final variables for use in the lambda
-            final int finalWtime = wtime;
-            final int finalBtime = btime;
-            final int finalWinc = winc;
-            final int finalBinc = binc;
-            final int finalMovetime = movetime;
-            final int finalDepth = depth;
-
-            Thread searchThread = new Thread(() -> {
-                engine.getAlgorithm().setStopSearch(false);
-                engine.getAlgorithm().search(board, finalWtime, finalBtime, finalWinc, finalBinc, finalMovetime, finalDepth);
-            });
-            searchThread.start();
-
-            
-    
-            
-        }
-
-
-
         
+        switch (tokens[1]) {
+            case "perft":
+                if (tokens.length < 3) return;
+                handlePerftCommand(tokens);
+                break;
+                
+            default:
+                handleSearchCommand(tokens);
+                break;
+        }
+    }
+
+    private static void handlePerftCommand(String[] tokens) {
+        int depth = Integer.parseInt(tokens[2]);
+        long time = System.currentTimeMillis();
+        String perft = Perft.perftDivideString(board, depth);
+        time = System.currentTimeMillis() - time;
+        
+        System.out.println(perft);
+        System.out.println("Time: " + time + "ms");
+    }
+
+    private static void handleSearchCommand(String[] tokens) {
+        int depth = 11;
+        int wtime = 99999999;
+        int btime = 99999999;
+        int winc = 0;
+        int binc = 0;
+        int movetime = 0;
+        
+        for (int i = 1; i < tokens.length; i += 2) {
+            if (i + 1 >= tokens.length) break;
+            
+            String arg = tokens[i + 1];
+            switch (tokens[i]) {
+                case "depth" -> depth = Integer.parseInt(arg);
+                case "wtime" -> wtime = Integer.parseInt(arg);
+                case "btime" -> btime = Integer.parseInt(arg);
+                case "winc" -> winc = Integer.parseInt(arg);
+                case "binc" -> binc = Integer.parseInt(arg);
+                case "movetime" -> movetime = Integer.parseInt(arg);
+            }
+        }
+        
+        final int finalWtime = wtime;
+        final int finalBtime = btime;
+        final int finalWinc = winc;
+        final int finalBinc = binc;
+        final int finalMovetime = movetime;
+        final int finalDepth = depth;
+        
+        Thread searchThread = new Thread(() -> {
+            engine.getAlgorithm().setStopSearch(false);
+            engine.getAlgorithm().search(board, finalWtime, finalBtime, finalWinc, finalBinc, finalMovetime, finalDepth);
+        });
+        searchThread.start();
     }
 
     private static void setDepth(int depth) {
