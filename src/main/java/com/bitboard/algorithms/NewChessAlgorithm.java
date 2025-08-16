@@ -11,7 +11,7 @@ public class NewChessAlgorithm implements ChessAlgorithm {
 
     private long nodes = 0;
     private long cutoffs = 0;
-    private final boolean DEBUG_FLAG = false;
+    private final boolean DEBUG_FLAG = true;
 
     // Stop search flag
     private boolean stopSearch = false;
@@ -29,12 +29,12 @@ public class NewChessAlgorithm implements ChessAlgorithm {
 
     // ==== Mate / scores ====
     public static final int MATE       = 32000;
-    public static final int MATE_BOUND = 31000; // seuil de détection mate
+    public static final int MATE_BOUND = 31000;
     public static final int DRAW       = 0;
 
     private static int toTTScore(int score, int ply) {
-        if (score >=  MATE_BOUND) return score + ply; // préfère mate plus court
-        if (score <= -MATE_BOUND) return score - ply; // retarde côté perdant
+        if (score >=  MATE_BOUND) return score + ply;
+        if (score <= -MATE_BOUND) return score - ply;
         return score;
     }
     private static int fromTTScore(int score, int ply) {
@@ -48,9 +48,8 @@ public class NewChessAlgorithm implements ChessAlgorithm {
         return s;
     }
 
-    // Évaluation orientée côté trait (négamax)
     private int evalSideToMove(BitBoard b) {
-        int e = evaluate(b);           // positif = bon pour Blanc
+        int e = evaluate(b);           // + = bon pour Blanc
         return b.whiteTurn ? e : -e;   // orienté côté trait
     }
 
@@ -59,7 +58,7 @@ public class NewChessAlgorithm implements ChessAlgorithm {
         long bestPackedMove = 0L;
         searchStartTime = System.nanoTime();
 
-        // ==== Gestion du temps ====
+        // Temps
         if (movetime > 0) {
             timeLimitNanos = movetime * 1_000_000L;
         } else {
@@ -80,7 +79,7 @@ public class NewChessAlgorithm implements ChessAlgorithm {
             System.out.println(divider);
         }
 
-        int window = 50; // aspiration (cp)
+        int window = 50;
         int prevScore = 0;
 
         for (int currentDepth = 1; currentDepth <= depth; currentDepth++) {
@@ -88,7 +87,6 @@ public class NewChessAlgorithm implements ChessAlgorithm {
             long startTime = System.nanoTime();
 
             int alpha, beta;
-            // Évite aspiration serrée si on est proche d'un mate
             if (Math.abs(prevScore) >= MATE_BOUND - 512) {
                 alpha = -MATE; beta = +MATE;
             } else {
@@ -98,10 +96,15 @@ public class NewChessAlgorithm implements ChessAlgorithm {
 
             MoveValue result = negamax(board, currentDepth, alpha, beta, 0, true);
 
-            // Re-search fenêtre pleine si fail-low/high
             if (!timeExceeded && (result.value <= alpha || result.value >= beta)) {
-                alpha = -MATE; beta = +MATE;
-                result = negamax(board, currentDepth, alpha, beta, 0, true);
+                // aspiration progressive (évite re-search trop large d’un coup)
+                int w = window;
+                do {
+                    w *= 2;
+                    alpha = prevScore - w;
+                    beta  = prevScore + w;
+                    result = negamax(board, currentDepth, alpha, beta, 0, true);
+                } while (!timeExceeded && (result.value <= alpha || result.value >= beta));
             }
 
             long endTime = System.nanoTime();
@@ -115,7 +118,6 @@ public class NewChessAlgorithm implements ChessAlgorithm {
 
         if (DEBUG_FLAG) System.out.println("╚" + "═".repeat(110) + "╝");
 
-        // Fallback si aucun coup trouvé
         if (bestPackedMove == 0L) {
             PackedMoveList moves = board.getLegalMoves();
             if (moves.size() > 0) bestPackedMove = moves.get(0);
@@ -208,8 +210,8 @@ public class NewChessAlgorithm implements ChessAlgorithm {
             return new MoveValue(0L, DRAW);
         }
 
-        // Ordonnancement: TT move d'abord
-        final long ttMove = (entry != null) ? entry.bestMove : 0L;
+        // Ordre: ttMove seulement si EXACT (safe)
+        final long ttMove = (entry != null && entry.flag == TranspositionTable.Entry.EXACT) ? entry.bestMove : 0L;
         if (ttMove != 0L) moves.prioritize(ttMove);
         moves.sortByScore();
 
@@ -226,65 +228,84 @@ public class NewChessAlgorithm implements ChessAlgorithm {
         final int LMR_REDUCTION = 1;
 
         boolean firstMove = true;
+        final boolean criticalDepth = (depth <= 2);  // garde-fous
 
         for (int i = 0; i < moves.size(); i++) {
             long move = moves.get(i);
 
-            // Make
             board.makeMove(move);
-            boolean givesCheck = board.isKingInCheck(board.whiteTurn);
 
-            int newDepth = depth - 1;
-            int score;
-            String childPv;
+            // === M1 garanti en profondeur critique ===
+            if (criticalDepth) {
+                boolean oppInCheck = board.isKingInCheck(board.whiteTurn); // après le coup, c'est l'adversaire au trait
+                if (oppInCheck) {
+                    PackedMoveList evasions = board.getLegalMoves();
+                    if (evasions.size() == 0) {
+                        int scoreRaw = MATE - (ply + 1);
+                        board.undoMove();
 
-            if (firstMove) {
-                MoveValue child = negamax(board, newDepth, -beta, -alpha, ply + 1, isPV);
-                score = -child.value;
-                childPv = child.pv;
-                firstMove = false;
-            } else {
-                boolean isCapture = PackedMove.isCapture(move);
-                boolean canReduce = !isPV && depth >= LMR_MIN_DEPTH && i >= LMR_MIN_MOVES
-                        && !isCapture && !givesCheck;
-
-                int searchDepth = canReduce ? (newDepth - LMR_REDUCTION) : newDepth;
-
-                // PVS: fenêtre nulle
-                MoveValue red = negamax(board, searchDepth, -(alpha + 1), -alpha, ply + 1, false);
-                score = -red.value;
-                childPv = red.pv;
-
-                // Re-search full window si améliore
-                if (score > alpha) {
-                    MoveValue full = negamax(board, newDepth, -beta, -alpha, ply + 1, true);
-                    score = -full.value;
-                    childPv = full.pv;
+                        int scoreCmp = preferShorterMates(scoreRaw);
+                        if (scoreCmp > preferShorterMates(bestScore)) {
+                            bestScore = scoreRaw;
+                            bestMove  = move;
+                            bestPv    = PackedMove.unpack(move).toString();
+                        }
+                        if (scoreCmp > preferShorterMates(alpha)) alpha = scoreRaw;
+                        if (alpha >= beta) { cutoffs++; break; }
+                        continue; // coup suivant
+                    }
                 }
             }
 
-            // Unmake
+            boolean givesCheck = board.isKingInCheck(board.whiteTurn);
+            int newDepth = depth - 1;
+
+            int scoreRaw;
+            String childPv;
+
+            // === Pas de LMR ni PVS en profondeur critique ou si check ===
+            boolean isCapture = PackedMove.isCapture(move);
+            boolean allowLMR  = !criticalDepth && !inCheck && !givesCheck;
+            boolean canReduce = allowLMR && depth >= LMR_MIN_DEPTH && i >= LMR_MIN_MOVES && !isCapture;
+
+            if (firstMove || criticalDepth) {
+                MoveValue child = negamax(board, newDepth, -beta, -alpha, ply + 1, isPV);
+                scoreRaw = -child.value;
+                childPv  = child.pv;
+                firstMove = false;
+            } else {
+                int searchDepth = canReduce ? (newDepth - LMR_REDUCTION) : newDepth;
+
+                // PVS null-window
+                MoveValue red = negamax(board, searchDepth, -(alpha + 1), -alpha, ply + 1, false);
+                scoreRaw = -red.value;
+                childPv  = red.pv;
+
+                if (scoreRaw > alpha) {
+                    MoveValue full = negamax(board, newDepth, -beta, -alpha, ply + 1, true);
+                    scoreRaw = -full.value;
+                    childPv  = full.pv;
+                }
+            }
+
             board.undoMove();
             if (timeExceeded) return new MoveValue(0L, 0);
 
-            score = preferShorterMates(score);
+            int scoreCmp = preferShorterMates(scoreRaw);
 
-            if (score > bestScore) {
-                bestScore = score;
-                bestMove = move;
+            if (scoreCmp > preferShorterMates(bestScore)) {
+                bestScore = scoreRaw;
+                bestMove  = move;
                 String pv = PackedMove.unpack(move).toString();
                 if (!childPv.isEmpty()) pv += " " + childPv;
                 bestPv = pv;
             }
 
-            if (score > alpha) {
-                alpha = score;
-            }
+            if (scoreCmp > preferShorterMates(alpha)) alpha = scoreRaw;
 
             if (alpha >= beta) { cutoffs++; break; }
         }
 
-        // TT store
         int flag;
         if (bestScore <= originalAlpha)       flag = TranspositionTable.Entry.UPPERBOUND;
         else if (bestScore >= originalBeta)   flag = TranspositionTable.Entry.LOWERBOUND;
@@ -305,12 +326,10 @@ public class NewChessAlgorithm implements ChessAlgorithm {
             return new MoveValue(0L, 0);
         }
 
-        // Si en échec: évasions complètes (tous coups légaux)
+        // In-check: évasions complètes
         if (board.isKingInCheck(board.whiteTurn)) {
             PackedMoveList evasions = board.getLegalMoves();
-            if (evasions.size() == 0) {
-                return new MoveValue(0L, -MATE + ply); // mat détecté en QS
-            }
+            if (evasions.size() == 0) return new MoveValue(0L, -MATE + ply);
             evasions.sortByScore();
 
             long bestMove = 0L; String bestPv = "";
@@ -318,29 +337,30 @@ public class NewChessAlgorithm implements ChessAlgorithm {
                 long mv = evasions.get(i);
                 board.makeMove(mv);
                 MoveValue childRes = qsearch(board, -beta, -alpha, ply + 1);
-                int s = -childRes.value;
+                int sRaw = -childRes.value;
                 board.undoMove();
                 if (timeExceeded) return new MoveValue(0L, 0);
 
-                s = preferShorterMates(s);
+                int sCmp = preferShorterMates(sRaw);
 
-                if (s > alpha) {
-                    alpha = s;
-                    bestMove = mv;
-                    bestPv = PackedMove.unpack(mv).toString();
-                    if (!childRes.pv.isEmpty()) bestPv += " " + childRes.pv;
+                if (sCmp > preferShorterMates(alpha)) {
+                    alpha = sRaw;
+                    bestMove  = mv;
+                    String pv = PackedMove.unpack(mv).toString();
+                    if (!childRes.pv.isEmpty()) pv += " " + childRes.pv;
+                    bestPv = pv;
                 }
                 if (alpha >= beta) { cutoffs++; break; }
             }
             return new MoveValue(bestMove, alpha, bestPv);
         }
 
-        // Stand pat (orienté côté trait)
+        // Stand pat
         int standPat = evalSideToMove(board);
         if (standPat >= beta) return new MoveValue(0L, beta);
         if (standPat > alpha) alpha = standPat;
 
-        // Captures (promotions incluses si packées ainsi)
+        // Captures only
         PackedMoveList caps = board.getCaptureMoves();
         if (caps.size() == 0) return new MoveValue(0L, alpha);
         caps.sortByScore();
@@ -350,17 +370,18 @@ public class NewChessAlgorithm implements ChessAlgorithm {
             long mv = caps.get(i);
             board.makeMove(mv);
             MoveValue childRes = qsearch(board, -beta, -alpha, ply + 1);
-            int s = -childRes.value;
+            int sRaw = -childRes.value;
             board.undoMove();
             if (timeExceeded) return new MoveValue(0L, 0);
 
-            s = preferShorterMates(s);
+            int sCmp = preferShorterMates(sRaw);
 
-            if (s > alpha) {
-                alpha = s;
+            if (sCmp > preferShorterMates(alpha)) {
+                alpha = sRaw;
                 bestMove = mv;
-                bestPv = PackedMove.unpack(mv).toString();
-                if (!childRes.pv.isEmpty()) bestPv += " " + childRes.pv;
+                String pv = PackedMove.unpack(mv).toString();
+                if (!childRes.pv.isEmpty()) pv += " " + childRes.pv;
+                bestPv = pv;
             }
             if (alpha >= beta) { cutoffs++; break; }
         }
