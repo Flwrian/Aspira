@@ -11,7 +11,7 @@ public class NewChessAlgorithm implements ChessAlgorithm {
 
     private long nodes = 0;
     private long cutoffs = 0;
-    private final boolean DEBUG_FLAG = true;
+    private final boolean DEBUG_FLAG = false;
 
     // Stop search flag
     private boolean stopSearch = false;
@@ -79,7 +79,7 @@ public class NewChessAlgorithm implements ChessAlgorithm {
             System.out.println(divider);
         }
 
-        int window = 50;
+        int window = 30;
         int prevScore = 0;
 
         for (int currentDepth = 1; currentDepth <= depth; currentDepth++) {
@@ -174,6 +174,9 @@ public class NewChessAlgorithm implements ChessAlgorithm {
         }
 
         nodes++;
+        
+        // Répétition
+        if (board.isThreefoldRepetition()) return new MoveValue(0L, DRAW);
 
         // Mate Distance Pruning
         if (alpha < -MATE + ply + 1) alpha = -MATE + ply + 1;
@@ -196,8 +199,6 @@ public class NewChessAlgorithm implements ChessAlgorithm {
             if (alpha >= beta) return new MoveValue(entry.bestMove, ttVal, "");
         }
 
-        // Répétition
-        if (board.isThreefoldRepetition()) return new MoveValue(0L, DRAW);
 
         // Feuille => QS
         if (depth <= 0) return qsearch(board, alpha, beta, ply);
@@ -211,7 +212,7 @@ public class NewChessAlgorithm implements ChessAlgorithm {
         }
 
         // Ordre: ttMove seulement si EXACT (safe)
-        final long ttMove = (entry != null && entry.flag == TranspositionTable.Entry.EXACT) ? entry.bestMove : 0L;
+        final long ttMove = (entry != null ) ? entry.bestMove : 0L;
         if (ttMove != 0L) moves.prioritize(ttMove);
         moves.sortByScore();
 
@@ -234,28 +235,6 @@ public class NewChessAlgorithm implements ChessAlgorithm {
             long move = moves.get(i);
 
             board.makeMove(move);
-
-            // === M1 garanti en profondeur critique ===
-            if (criticalDepth) {
-                boolean oppInCheck = board.isKingInCheck(board.whiteTurn); // après le coup, c'est l'adversaire au trait
-                if (oppInCheck) {
-                    PackedMoveList evasions = board.getLegalMoves();
-                    if (evasions.size() == 0) {
-                        int scoreRaw = MATE - (ply + 1);
-                        board.undoMove();
-
-                        int scoreCmp = preferShorterMates(scoreRaw);
-                        if (scoreCmp > preferShorterMates(bestScore)) {
-                            bestScore = scoreRaw;
-                            bestMove  = move;
-                            bestPv    = PackedMove.unpack(move).toString();
-                        }
-                        if (scoreCmp > preferShorterMates(alpha)) alpha = scoreRaw;
-                        if (alpha >= beta) { cutoffs++; break; }
-                        continue; // coup suivant
-                    }
-                }
-            }
 
             boolean givesCheck = board.isKingInCheck(board.whiteTurn);
             int newDepth = depth - 1;
