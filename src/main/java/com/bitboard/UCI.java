@@ -1,6 +1,4 @@
 package com.bitboard;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.util.*;
 
 
@@ -19,7 +17,7 @@ public class UCI {
     private static String VERSION = "1.0";
 
     private static String STARTING_POSITION = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
-    
+
     private static BitBoard board = new BitBoard();
     // private static Engine engine;
     static Engine engine = new Engine(board);
@@ -69,18 +67,6 @@ public class UCI {
             String[] inputArray = input.split(" ");
             String command = inputArray[0];
 
-            // Write the command to file for debugging if log option is enabled
-            if (logEnabled) {
-                try {
-                    FileWriter myWriter = new FileWriter("debug.log", true);
-                    myWriter.write(input);
-                    myWriter.write("\r\n");
-                    myWriter.close();
-                } catch (IOException e) {
-                    System.out.println("An error occurred.");
-                    e.printStackTrace();
-                }
-            }
             nbCommands++;
 
             
@@ -140,23 +126,6 @@ public class UCI {
     }
 
     private static void option(String[] inputArray) {
-        if(inputArray[1].equals("name")){
-            if(inputArray[2].equals("Debug Log File")){
-                if(inputArray[3].equals("value")){
-                    String fileName = inputArray[4];
-                    logEnabled = true;
-                    try {
-                        FileWriter myWriter = new FileWriter(fileName, true);
-                        myWriter.write("Debug Log File: " + fileName);
-                        myWriter.write("\r\n");
-                        myWriter.close();
-                    } catch (IOException e) {
-                        System.out.println("An error occurred.");
-                        e.printStackTrace();
-                    }
-                }
-            }
-        }
     }
 
     private static void help() {
@@ -352,7 +321,6 @@ public class UCI {
         System.out.println("option name Hash type spin default 16 min 1 max 1024");
         System.out.println("option name Threads type spin default 1 min 1 max 1024");
         System.out.println("option name Ponder type check default false");
-        System.out.println("option name Debug Log File type string default debug.log");
         // System.out.println("option razoring" + engine.getRazorDepth());
         // System.out.println("option npm" + engine.getNPM());
         System.out.println();

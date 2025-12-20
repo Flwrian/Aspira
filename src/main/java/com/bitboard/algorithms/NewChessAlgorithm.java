@@ -11,7 +11,6 @@ public class NewChessAlgorithm implements ChessAlgorithm {
 
     private long nodes = 0;
     private long cutoffs = 0;
-    private final boolean DEBUG_FLAG = false;
 
     // Stop search flag
     private boolean stopSearch = false;
@@ -69,16 +68,6 @@ public class NewChessAlgorithm implements ChessAlgorithm {
         }
         timeExceeded = false;
 
-        if (DEBUG_FLAG) {
-            String separator = "╔" + "═".repeat(110) + "╗";
-            String header = String.format("║ %-6s │ %-6s │ %-12s │ %-10s │ %-10s │ %-9s │ %-7s │ %-17s │ %-7s ║",
-                    "Depth", "Score", "Nodes", "NPS", "Time (ms)", "Cutoffs", "Cut %", "TT (hits/stores)", "TT hit%");
-            String divider = "╟" + "─".repeat(110) + "╢";
-            System.out.println(separator);
-            System.out.println(header);
-            System.out.println(divider);
-        }
-
         int window = 30;
         int prevScore = 0;
 
@@ -116,8 +105,6 @@ public class NewChessAlgorithm implements ChessAlgorithm {
             printSearchInfo(currentDepth, result.value, nodes, endTime - startTime, cutoffs, ttHits, ttStores, result.pv);
         }
 
-        if (DEBUG_FLAG) System.out.println("╚" + "═".repeat(110) + "╝");
-
         if (bestPackedMove == 0L) {
             PackedMoveList moves = board.getLegalMoves();
             if (moves.size() > 0) bestPackedMove = moves.get(0);
@@ -138,14 +125,7 @@ public class NewChessAlgorithm implements ChessAlgorithm {
         String ttHitStr = String.format(Locale.US, "%d/%d", ttHits, ttStores);
         String ttHitRatio = String.format(Locale.US, "%.2f%%", 100.0 * ttHits / Math.max(ttStores, 1));
 
-        if (DEBUG_FLAG) {
-            String scoreStr = Math.abs(score) >= MATE_BOUND
-                    ? String.format("M%d", (MATE - Math.abs(score) + 1) / 2)
-                    : String.valueOf(score);
-            System.out.printf(Locale.US, "║ %-6d │ %-6s │ %-12d │ %-10s │ %-10.1f │ %-9d │ %-6.2f%% │ %-17s │ %-7s ║\n",
-                    depth, scoreStr, nodes, npsStr, timeMs, cutoffs, cutoffRatio, ttHitStr, ttHitRatio);
-        } else {
-            if (Math.abs(score) >= MATE_BOUND) {
+        if (Math.abs(score) >= MATE_BOUND) {
                 int mateIn = (MATE - Math.abs(score) + 1) / 2;
                 String mateScore = score > 0 ? "mate " + mateIn : "mate -" + mateIn;
                 System.out.printf(Locale.US, "info depth %d score %s nodes %d nps %d time %.0f pv %s\n",
@@ -154,7 +134,6 @@ public class NewChessAlgorithm implements ChessAlgorithm {
                 System.out.printf(Locale.US, "info depth %d score cp %d nodes %d nps %d time %.0f pv %s\n",
                         depth, score, nodes, (long) rawNps, timeMs, pv);
             }
-        }
     }
 
     private String formatNps(double nps) {
