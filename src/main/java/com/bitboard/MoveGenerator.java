@@ -115,8 +115,6 @@ public class MoveGenerator {
                 }
             }
         }
-
-        System.out.println("Slider attacks initialized for " + (bishop ? "bishop" : "rook") + " pieces.");
     }
 
     public static void initSlidingAttacks() {
