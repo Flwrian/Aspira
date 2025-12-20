@@ -69,15 +69,17 @@ public class UCI {
             String[] inputArray = input.split(" ");
             String command = inputArray[0];
 
-            // Write the command to file for debugging
-            try {
-                FileWriter myWriter = new FileWriter("debug.log", true);
-                myWriter.write(input);
-                myWriter.write("\r\n");
-                myWriter.close();
-            } catch (IOException e) {
-                System.out.println("An error occurred.");
-                e.printStackTrace();
+            // Write the command to file for debugging if log option is enabled
+            if (logEnabled) {
+                try {
+                    FileWriter myWriter = new FileWriter("debug.log", true);
+                    myWriter.write(input);
+                    myWriter.write("\r\n");
+                    myWriter.close();
+                } catch (IOException e) {
+                    System.out.println("An error occurred.");
+                    e.printStackTrace();
+                }
             }
             nbCommands++;
 
@@ -142,6 +144,7 @@ public class UCI {
             if(inputArray[2].equals("Debug Log File")){
                 if(inputArray[3].equals("value")){
                     String fileName = inputArray[4];
+                    logEnabled = true;
                     try {
                         FileWriter myWriter = new FileWriter(fileName, true);
                         myWriter.write("Debug Log File: " + fileName);
