@@ -24,25 +24,16 @@ The engine is now in its **second major iteration (V2)**, fully rebuilt with per
 - ⚙️ Core engine loop  
 - ♟️ Bitboard-based move generation (including magic bitboards)  
 - 🔄 UCI protocol support  
-- 🧠 Pluggable search algorithms (minimax, WIP alpha-beta)  
+- 🧠 Pluggable search algorithms
 - 📜 FEN/PGN parsing and saving  
-- 🧪 Perft testing suite (passes full Ethereal test suite as of 20/03/2025)  
+- 🧪 Perft testing suite
 - 🔍 Zobrist hashing for fast position tracking  
-- 🔢 Packed move representation (64-bit long values to reduce GC pressure)  
+- 🔢 Packed move representation
 - ⏱️ Time management inside the search  
 
 ---
 
 ## 🧭 Roadmap & Upcoming Work
-
-- 📈 **Evaluation function**  
-  Material balance, king safety, piece activity, pawn structure, etc.
-
-- 🔍 **Advanced search features**  
-  Alpha-beta pruning, transposition tables, killer moves, etc.
-
-- 🎯 **Legal-only move generation**  
-  Full legality-based movegen
 
 - 🧠 **NNUE / ML experiments** *(future phase)*  
   Possibly integrating simple NN models for position eval.
@@ -52,25 +43,6 @@ The engine is now in its **second major iteration (V2)**, fully rebuilt with per
 ## ⚡ Performance
 
 As of March 2025, Aspira’s move generation peaks at around **15 million nodes per second (MNPS)** on a **Ryzen 7 7800X3D**, with all rule enforcement and legality checks enabled. Optimization is ongoing.
-
----
-
-## 🛠 Dev Log
-
-- **09/07/2024 – V2 rebuild started**  
-  Total rewrite focused on correctness, speed, and proper rule handling.
-
-- **20/03/2025 – Passed Ethereal Perft suite**  
-  Major milestone — all chess rules implemented and verified.
-
-- **23/03/2025 – Packed move format**  
-  Switched from Java objects to packed `long` for moves. ~20% speedup.
-
-- **24/03/2025 – Magic bitboards**  
-  Sliding pieces now use magic bitboards. ~70% boost in movegen.
-
-- **27/03/2025 – Search time control**  
-  Engine can now manage its own clock during games.
 
 ---
 
@@ -95,3 +67,4 @@ Huge thanks to the **Stockfish Discord community** for the resources, discussion
 ## 🚀 Why Aspira?
 
 The name *Aspira* comes from the idea of “aspiring” — to improve, to dig deeper, to push further into the mechanics of something complex. This engine is my way of doing that with both chess and code.
+
