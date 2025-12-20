@@ -1,6 +1,4 @@
 package com.array;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.util.*;
 
 import com.array.algorithms.AlphaBetaPruningAlgorithm;
@@ -28,17 +26,6 @@ public class UCI {
             String input = scanner.nextLine();
             String[] inputArray = input.split(" ");
             String command = inputArray[0];
-
-            // Write the command to file for debugging
-            try {
-                FileWriter myWriter = new FileWriter("debug.log", true);
-                myWriter.write(input);
-                myWriter.write("\r\n");
-                myWriter.close();
-            } catch (IOException e) {
-                System.out.println("An error occurred.");
-                e.printStackTrace();
-            }
             switch(command){
                 case "uci":
                     uci();
@@ -72,22 +59,6 @@ public class UCI {
     }
 
     private static void option(String[] inputArray) {
-        if(inputArray[1].equals("name")){
-            if(inputArray[2].equals("Debug Log File")){
-                if(inputArray[3].equals("value")){
-                    String fileName = inputArray[4];
-                    try {
-                        FileWriter myWriter = new FileWriter(fileName, true);
-                        myWriter.write("Debug Log File: " + fileName);
-                        myWriter.write("\r\n");
-                        myWriter.close();
-                    } catch (IOException e) {
-                        System.out.println("An error occurred.");
-                        e.printStackTrace();
-                    }
-                }
-            }
-        }
     }
 
     private static void setDepth(int depth) {
@@ -178,7 +149,6 @@ public class UCI {
         System.out.println("option name Hash type spin default 16 min 1 max 1024");
         System.out.println("option name Threads type spin default 1 min 1 max 1024");
         System.out.println("option name Ponder type check default false");
-        System.out.println("option name Debug Log File type string default debug.log");
         System.out.println();
         System.out.println("uciok");
     }
