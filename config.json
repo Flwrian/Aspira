@@ -48,15 +48,15 @@
     },
     "config_name": "",
     "output": 0,
-    "seed": 15069259893684593624,
+    "seed": 9912142703733799272,
     "variant": 0,
     "ratinginterval": 10,
     "scoreinterval": 1,
     "wait": 0,
     "autosaveinterval": 20,
     "games": 2,
-    "rounds": 15000,
-    "concurrency": 6,
+    "rounds": 250,
+    "concurrency": 15,
     "force_concurrency": false,
     "recover": true,
     "noswap": false,
@@ -64,7 +64,7 @@
     "report_penta": true,
     "affinity": false,
     "log": {
-        "file": "",
+        "file": "augh.txt",
         "level": 2,
         "compress": false,
         "realtime": true
@@ -78,9 +78,9 @@
             "options": [],
             "limit": {
                 "tc": {
-                    "increment": 40,
+                    "increment": 50,
                     "fixed_time": 0,
-                    "time": 4000,
+                    "time": 1000,
                     "moves": 0,
                     "timemargin": 0
                 },
@@ -92,14 +92,14 @@
         {
             "name": "main",
             "dir": "",
-            "cmd": "Aspira_dev2.exe",
+            "cmd": "Aspira_main.exe",
             "args": "",
             "options": [],
             "limit": {
                 "tc": {
-                    "increment": 40,
+                    "increment": 50,
                     "fixed_time": 0,
-                    "time": 4000,
+                    "time": 1000,
                     "moves": 0,
                     "timemargin": 0
                 },
@@ -111,26 +111,26 @@
     ],
     "stats": {
         "main vs dev": {
-            "wins": 211,
-            "losses": 150,
-            "draws": 305,
-            "penta_WW": 32,
-            "penta_WD": 89,
-            "penta_WL": 58,
-            "penta_DD": 77,
-            "penta_LD": 62,
-            "penta_LL": 15
+            "wins": 62,
+            "losses": 67,
+            "draws": 83,
+            "penta_WW": 8,
+            "penta_WD": 23,
+            "penta_WL": 23,
+            "penta_DD": 18,
+            "penta_LD": 24,
+            "penta_LL": 10
         },
         "dev vs main": {
-            "wins": 58,
-            "losses": 102,
-            "draws": 134,
+            "wins": 39,
+            "losses": 36,
+            "draws": 73,
             "penta_WW": 5,
-            "penta_WD": 23,
-            "penta_WL": 25,
-            "penta_DD": 32,
-            "penta_LD": 47,
-            "penta_LL": 15
+            "penta_WD": 19,
+            "penta_WL": 10,
+            "penta_DD": 17,
+            "penta_LD": 20,
+            "penta_LL": 3
         }
     }
 }

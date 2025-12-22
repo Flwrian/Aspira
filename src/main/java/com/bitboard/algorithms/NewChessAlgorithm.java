@@ -31,6 +31,13 @@ public class NewChessAlgorithm implements ChessAlgorithm {
     public static final int MATE_BOUND = 31000;
     public static final int DRAW       = 0;
 
+    // ==== Killer moves ====
+    private static final int MAX_PLY = 128;
+    private final long[][] killers = new long[2][MAX_PLY];
+
+    private final int[][] history = new int[2][64 * 64];
+
+
     private static int toTTScore(int score, int ply) {
         if (score >=  MATE_BOUND) return score + ply;
         if (score <= -MATE_BOUND) return score - ply;
@@ -68,8 +75,20 @@ public class NewChessAlgorithm implements ChessAlgorithm {
         }
         timeExceeded = false;
 
-        int window = 30;
+        int window = 35;
         int prevScore = 0;
+
+        // Clear killers
+        for (int i = 0; i < MAX_PLY; i++) {
+            killers[0][i] = 0L;
+            killers[1][i] = 0L;
+        }
+
+        for (int i = 0; i < history.length; i++) {
+            for (int j = 0; j < history[i].length; j++) {
+                history[i][j] = 0;
+            }
+        }
 
         for (int currentDepth = 1; currentDepth <= depth; currentDepth++) {
             nodes = 0; cutoffs = 0; ttHits = 0; ttStores = 0;
@@ -120,26 +139,15 @@ public class NewChessAlgorithm implements ChessAlgorithm {
                                  long ttStores, String pv) {
         double timeMs = durationNanos / 1_000_000.0;
         double rawNps = nodes / (durationNanos / 1_000_000_000.0);
-        double cutoffRatio = 100.0 * cutoffs / Math.max(nodes, 1);
-        String npsStr = formatNps(rawNps);
-        String ttHitStr = String.format(Locale.US, "%d/%d", ttHits, ttStores);
-        String ttHitRatio = String.format(Locale.US, "%.2f%%", 100.0 * ttHits / Math.max(ttStores, 1));
-
         if (Math.abs(score) >= MATE_BOUND) {
                 int mateIn = (MATE - Math.abs(score) + 1) / 2;
                 String mateScore = score > 0 ? "mate " + mateIn : "mate -" + mateIn;
                 System.out.printf(Locale.US, "info depth %d score %s nodes %d nps %d time %.0f pv %s\n",
-                        depth, mateScore, nodes, (long) rawNps, timeMs, pv);
+                        depth, mateScore, nodes, (int) rawNps, timeMs, pv);
             } else {
                 System.out.printf(Locale.US, "info depth %d score cp %d nodes %d nps %d time %.0f pv %s\n",
-                        depth, score, nodes, (long) rawNps, timeMs, pv);
+                        depth, score, nodes, (int) rawNps, timeMs, pv);
             }
-    }
-
-    private String formatNps(double nps) {
-        if (nps >= 1_000_000) return String.format(Locale.US, "%.1fM", nps / 1_000_000);
-        if (nps >= 1_000)     return String.format(Locale.US, "%.1fk", nps / 1_000);
-        return String.format(Locale.US, "%.0f", nps);
     }
 
     // =========================
@@ -178,6 +186,33 @@ public class NewChessAlgorithm implements ChessAlgorithm {
             if (alpha >= beta) return new MoveValue(entry.bestMove, ttVal, "");
         }
 
+        // =========================
+        //   NULL MOVE PRUNING (SAFE)
+        // =========================
+        if (!isPV
+            && depth >= 5
+            && !board.isKingInCheck(board.whiteTurn)
+            && board.phase >= 10) {
+
+            int staticEval = evalSideToMove(board);
+
+            if (staticEval >= beta + 50) {   // NOTE : +50, pas -80
+
+                board.makeNullMove();
+                int R = 2;
+
+                int score = -negamax(board, depth - 1 - R,
+                                    -beta, -beta + 1,
+                                    ply + 1, false).value;
+                board.undoNullMove();
+
+                if (score >= beta)
+                    return new MoveValue(0L, beta);
+            }
+        }
+
+
+
 
         // Feuille => QS
         if (depth <= 0) return qsearch(board, alpha, beta, ply);
@@ -192,7 +227,30 @@ public class NewChessAlgorithm implements ChessAlgorithm {
 
         // Ordre: ttMove seulement si EXACT (safe)
         final long ttMove = (entry != null ) ? entry.bestMove : 0L;
-        if (ttMove != 0L) moves.prioritize(ttMove);
+        if (ttMove != 0L) moves.prioritize(ttMove, 2000);
+        // Ordre: killer moves
+        if (killers[0][ply] != 0L) moves.prioritize(killers[0][ply], 1500);
+        if (killers[1][ply] != 0L) moves.prioritize(killers[1][ply], 1000);
+
+        int side = board.whiteTurn ? 0 : 1;
+
+        for (int i = 0; i < moves.size(); i++) {
+            long m = moves.get(i);
+            if (!PackedMove.isCapture(m)) {
+                int from = PackedMove.getFrom(m);
+                int to   = PackedMove.getTo(m);
+                int idx  = from * 64 + to;
+                int h = history[side][idx] >> 1;
+                if (h > 0) {
+                    int score = PackedMove.getScore(m);
+                    score += h;
+                    PackedMove.setScore(m, score);
+                    moves.raw()[i] = m; // update
+                }
+            }
+        }
+
+
         moves.sortByScore();
 
         int originalAlpha = alpha;
@@ -204,7 +262,7 @@ public class NewChessAlgorithm implements ChessAlgorithm {
 
         // LMR params
         final int LMR_MIN_DEPTH = 3;
-        final int LMR_MIN_MOVES = 3;
+        final int LMR_MIN_MOVES = 5;
         final int LMR_REDUCTION = 1;
 
         boolean firstMove = true;
@@ -223,8 +281,9 @@ public class NewChessAlgorithm implements ChessAlgorithm {
 
             // === Pas de LMR ni PVS en profondeur critique ou si check ===
             boolean isCapture = PackedMove.isCapture(move);
+            boolean isTTMove = (move == ttMove);
             boolean allowLMR  = !criticalDepth && !inCheck && !givesCheck;
-            boolean canReduce = allowLMR && depth >= LMR_MIN_DEPTH && i >= LMR_MIN_MOVES && !isCapture;
+            boolean canReduce = allowLMR && depth >= LMR_MIN_DEPTH && i >= LMR_MIN_MOVES && !isCapture && !isTTMove;
 
             if (firstMove || criticalDepth) {
                 MoveValue child = negamax(board, newDepth, -beta, -alpha, ply + 1, isPV);
@@ -261,7 +320,24 @@ public class NewChessAlgorithm implements ChessAlgorithm {
 
             if (scoreCmp > preferShorterMates(alpha)) alpha = scoreRaw;
 
-            if (alpha >= beta) { cutoffs++; break; }
+            if (alpha >= beta) {
+                cutoffs++;
+                // Store killer
+                if (!isCapture && !isTTMove) {
+                    if (killers[0][ply] != move) {
+                        killers[1][ply] = killers[0][ply];
+                        killers[0][ply] = move;
+                    }
+                }
+                // Update history
+                if (!isCapture) {
+                    int from = PackedMove.getFrom(move);
+                    int to   = PackedMove.getTo(move);
+                    int idx  = from * 64 + to;
+                    history[side][idx] += depth;
+                }
+                break;
+            }
         }
 
         int flag;
@@ -284,6 +360,8 @@ public class NewChessAlgorithm implements ChessAlgorithm {
             return new MoveValue(0L, 0);
         }
 
+
+        
         // In-check: évasions complètes
         if (board.isKingInCheck(board.whiteTurn)) {
             PackedMoveList evasions = board.getLegalMoves();

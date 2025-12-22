@@ -266,7 +266,7 @@ public class MoveGenerator {
             // we now get the piece on the destination square
             return board.getPieceAt(to);
         }
-        return 0;
+        return BitBoard.EMPTY;
     }
 
     public static PackedMoveList generatePseudoLegalMoves(BitBoard board) {
@@ -322,8 +322,8 @@ public class MoveGenerator {
 
                 if (capturedPiece != BitBoard.EMPTY) {
                     // MVV-LVA calculation
-                    int attackerType = BitBoard.PAWN - 1;
-                    int capturedType = BitBoard.getPieceType(capturedPiece) - 1;
+                    int attackerType = BitBoard.PAWN;
+                    int capturedType = BitBoard.getPieceType(capturedPiece);
                     score = mvvLva[attackerType][capturedType];
                 } else {
                     score = 0;
@@ -355,8 +355,8 @@ public class MoveGenerator {
 
                 if (captured != BitBoard.EMPTY) {
                     // MVV-LVA calculation
-                    int attackerType = BitBoard.KNIGHT - 1;
-                    int capturedType = BitBoard.getPieceType(captured) - 1;
+                    int attackerType = BitBoard.KNIGHT;
+                    int capturedType = BitBoard.getPieceType(captured);
                     score = mvvLva[attackerType][capturedType];
                 } else {
                     score = 0;
@@ -388,8 +388,8 @@ public class MoveGenerator {
 
                 if (captured != BitBoard.EMPTY) {
                     // MVV-LVA calculation
-                    int attackerType = BitBoard.BISHOP - 1;
-                    int capturedType = BitBoard.getPieceType(captured) - 1;
+                    int attackerType = BitBoard.BISHOP;
+                    int capturedType = BitBoard.getPieceType(captured);
                     score = mvvLva[attackerType][capturedType];
                 } else {
                     score = 0;
@@ -421,8 +421,8 @@ public class MoveGenerator {
 
                 if (captured != BitBoard.EMPTY) {
                     // MVV-LVA calculation
-                    int attackerType = BitBoard.ROOK - 1;
-                    int capturedType = BitBoard.getPieceType(captured) - 1;
+                    int attackerType = BitBoard.ROOK;
+                    int capturedType = BitBoard.getPieceType(captured);
                     score = mvvLva[attackerType][capturedType];
                 } else {
                     score = 0;
@@ -454,8 +454,8 @@ public class MoveGenerator {
 
                 if (captured != BitBoard.EMPTY) {
                     // MVV-LVA calculation
-                    int attackerType = BitBoard.QUEEN - 1;
-                    int capturedType = BitBoard.getPieceType(captured) - 1;
+                    int attackerType = BitBoard.QUEEN;
+                    int capturedType = BitBoard.getPieceType(captured);
                     score = mvvLva[attackerType][capturedType];
                 } else {
                     score = 0;
@@ -486,8 +486,8 @@ public class MoveGenerator {
                 score = Move.CASTLING_SCORE;
             } else if (captured != BitBoard.EMPTY) {
                 // MVV-LVA calculation
-                int attackerType = BitBoard.KING - 1;
-                int capturedType = BitBoard.getPieceType(captured) - 1;
+                int attackerType = BitBoard.KING;
+                int capturedType = BitBoard.getPieceType(captured);
                 score = mvvLva[attackerType][capturedType];
             } else {
                 score = 0;
@@ -524,8 +524,8 @@ public class MoveGenerator {
                     int attackerPiece = BitBoard.PAWN;
 
                     // MVV-LVA calculation
-                    int attackerType = BitBoard.getPieceType(attackerPiece) - 1;
-                    int capturedType = BitBoard.getPieceType(capturedPiece) - 1;
+                    int attackerType = BitBoard.getPieceType(attackerPiece);
+                    int capturedType = BitBoard.getPieceType(capturedPiece);
 
                     if (attackerType >= 0 && attackerType <= 5 && capturedType >= 0 && capturedType <= 5) {
                         int mvvLvaScore = mvvLva[attackerType][capturedType];
@@ -563,8 +563,8 @@ public class MoveGenerator {
                     int attackerPiece = BitBoard.KNIGHT;
 
                     // MVV-LVA calculation
-                    int attackerType = BitBoard.getPieceType(attackerPiece) - 1;
-                    int capturedType = BitBoard.getPieceType(capturedPiece) - 1;
+                    int attackerType = BitBoard.getPieceType(attackerPiece);
+                    int capturedType = BitBoard.getPieceType(capturedPiece);
 
                     if (attackerType >= 0 && attackerType <= 5 && capturedType >= 0 && capturedType <= 5) {
                         int mvvLvaScore = mvvLva[attackerType][capturedType];
@@ -595,8 +595,8 @@ public class MoveGenerator {
                     int attackerPiece = BitBoard.BISHOP;
 
                     // MVV-LVA calculation
-                    int attackerType = BitBoard.getPieceType(attackerPiece) - 1;
-                    int capturedType = BitBoard.getPieceType(capturedPiece) - 1;
+                    int attackerType = BitBoard.getPieceType(attackerPiece);
+                    int capturedType = BitBoard.getPieceType(capturedPiece);
 
                     if (attackerType >= 0 && attackerType <= 5 && capturedType >= 0 && capturedType <= 5) {
                         int mvvLvaScore = mvvLva[attackerType][capturedType];
@@ -627,8 +627,8 @@ public class MoveGenerator {
                     int attackerPiece = BitBoard.ROOK;
 
                     // MVV-LVA calculation
-                    int attackerType = BitBoard.getPieceType(attackerPiece) - 1;
-                    int capturedType = BitBoard.getPieceType(capturedPiece) - 1;
+                    int attackerType = BitBoard.getPieceType(attackerPiece);
+                    int capturedType = BitBoard.getPieceType(capturedPiece);
 
                     if (attackerType >= 0 && attackerType <= 5 && capturedType >= 0 && capturedType <= 5) {
                         int mvvLvaScore = mvvLva[attackerType][capturedType];
@@ -659,8 +659,8 @@ public class MoveGenerator {
                     int attackerPiece = BitBoard.QUEEN;
 
                     // MVV-LVA calculation
-                    int attackerType = BitBoard.getPieceType(attackerPiece) - 1;
-                    int capturedType = BitBoard.getPieceType(capturedPiece) - 1;
+                    int attackerType = BitBoard.getPieceType(attackerPiece);
+                    int capturedType = BitBoard.getPieceType(capturedPiece);
 
                     if (attackerType >= 0 && attackerType <= 5 && capturedType >= 0 && capturedType <= 5) {
                         int mvvLvaScore = mvvLva[attackerType][capturedType];
@@ -696,8 +696,8 @@ public class MoveGenerator {
                 int attackerPiece = BitBoard.KING;
 
                 // MVV-LVA calculation
-                int attackerType = BitBoard.getPieceType(attackerPiece) - 1;
-                int capturedType = BitBoard.getPieceType(capturedPiece) - 1;
+                int attackerType = BitBoard.getPieceType(attackerPiece);
+                int capturedType = BitBoard.getPieceType(capturedPiece);
 
                 if (attackerType >= 0 && attackerType <= 5 && capturedType >= 0 && capturedType <= 5) {
                     int mvvLvaScore = mvvLva[attackerType][capturedType];

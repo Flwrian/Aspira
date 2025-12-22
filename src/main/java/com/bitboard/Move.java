@@ -128,7 +128,7 @@ public final class Move {
         }
 
         // check if the move is en passant
-        if ((pieceFrom == 1 || pieceFrom == 7) && pieceTo == 0) {
+        if ((pieceFrom == 1 || pieceFrom == 7) && pieceTo == BitBoard.EMPTY) {
             // check if the move is en passant
             if (Long.numberOfTrailingZeros(board.enPassantSquare) == to) {
                 this.type = EN_PASSENT;

@@ -51,10 +51,10 @@ public class PackedMoveList {
     }
 
     // hash move
-    public void prioritize(long move) {
+    public void prioritize(long move, int score) {
         for (int i = 0; i < size; i++) {
             if (moves[i] == move) {
-                PackedMove.setScore(moves[i], 1000); // Set high score
+                PackedMove.setScore(moves[i], score); // Set high score
             }
         }
     }

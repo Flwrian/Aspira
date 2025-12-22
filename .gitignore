@@ -34,3 +34,11 @@ private.pem
 public.pem
 dev_version.txt
 config.json
+failed.csv
+failedv2.csv
+puzzle.bat
+puzzle.py
+config.json
+sprt.bat
+
+puzzles/lichess_puzzles.db

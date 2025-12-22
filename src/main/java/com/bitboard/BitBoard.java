@@ -474,13 +474,13 @@ public class BitBoard {
     public static final long BLACK_KING_SIDE_CASTLE_NEED_TO_NOT_BE_ATTACKED_MASK = G8 | F8 | E8;
     public static final long BLACK_QUEEN_SIDE_CASTLE_NEED_TO_NOT_BE_ATTACKED_MASK = D8 | C8 | E8;
 
-    public static final int EMPTY = 0;
-    public static final int PAWN = 1;
-    public static final int KNIGHT = 2;
-    public static final int BISHOP = 3;
-    public static final int ROOK = 4;
-    public static final int QUEEN = 5;
-    public static final int KING = 6;
+    public static final int PAWN = 0;
+    public static final int KNIGHT = 1;
+    public static final int BISHOP = 2;
+    public static final int ROOK = 3;
+    public static final int QUEEN = 4;
+    public static final int KING = 5;
+    public static final int EMPTY = 6;
 
     public static final int WHITE_PAWN = 0;
     public static final int WHITE_KNIGHT = 1;
@@ -547,6 +547,8 @@ public class BitBoard {
         plyCount = 0;
 
     }
+
+
 
     private void saveBoardHistory(long move) {
         history.push(this, move);
@@ -1248,13 +1250,32 @@ public class BitBoard {
         return blackKing;
     }
 
-    public void makeNullMove() {
-        makeMove(0L);
+    public final void makeNullMove() {
+        // Sauve l’état actuel (move = 0L pour marquer "null")
+        saveBoardHistory(0L);
+
+        // Un null move efface toujours l'en-passant
+        if (enPassantSquare != 0L) {
+            // retirer la clé EP courante du zobrist
+            this.zobristKey ^= Zobrist.EN_PASSANT_KEYS[Long.numberOfTrailingZeros(enPassantSquare)];
+            enPassantSquare = 0L;
+        }
+
+        // Change le trait
+        whiteTurn = !whiteTurn;
+        this.zobristKey ^= Zobrist.SIDE_TO_MOVE_KEY;
+
+        plyCount++;
+
+        // ⚠️ pas besoin de updateBitBoard(): aucune pièce ne bouge
+        // ⚠️ pas besoin de toucher evalMG/EG/phase: rien ne change
     }
 
-    public void undoNullMove() {
-        
+    public final void undoNullMove() {
+        // Restaure exactement comme un undo normal
+        undoMove();
     }
+
 
     public final void makeMove(long move) {
         // Save the current board state
@@ -2183,17 +2204,17 @@ public class BitBoard {
     }
 
     public static int getPieceType(int piece) {
-        if (piece == 1 || piece == 7) {
+        if (piece == 0 || piece == 6) {
             return PAWN;
-        } else if (piece == 2 || piece == 8) {
+        } else if (piece == 1 || piece == 7) {
             return KNIGHT;
-        } else if (piece == 3 || piece == 9) {
+        } else if (piece == 2 || piece == 8) {
             return BISHOP;
-        } else if (piece == 4 || piece == 10) {
+        } else if (piece == 3 || piece == 9) {
             return ROOK;
-        } else if (piece == 5 || piece == 11) {
+        } else if (piece == 4 || piece == 10) {
             return QUEEN;
-        } else if (piece == 6 || piece == 12) {
+        } else if (piece == 5 || piece == 11) {
             return KING;
         } else {
             return EMPTY;
@@ -2334,7 +2355,7 @@ public class BitBoard {
         } else if ((blackKing & toBitboard) != 0) {
             return KING;
         } else {
-            return 0;
+            return EMPTY;
         }
     }
 
@@ -2364,7 +2385,7 @@ public class BitBoard {
         } else if ((blackKing & to) != 0) {
             return KING;
         } else {
-            return 0;
+            return EMPTY;
         }
     }
 
