@@ -117,18 +117,18 @@ public final class Move {
         this.from = (7 - rankFrom) * 8 + fileFrom;
         this.to = (7 - rankTo) * 8 + fileTo;
 
-        this.pieceFrom = board.getPiece(from);
-        this.pieceTo = board.getPiece(to);
+        this.pieceFrom = board.getPieceAt(from);
+        this.pieceTo = board.getPieceAt(to);
         this.isWhite = board.whiteTurn;
 
         // check if double pawn push
-        if ((pieceFrom == 1 || pieceFrom == 7) && Math.abs(from - to) == 16) {
+        if (pieceFrom == BitBoard.PAWN && Math.abs(from - to) == 16) {
             this.type = DOUBLE_PAWN_PUSH;
             return;
         }
 
         // check if the move is en passant
-        if ((pieceFrom == 1 || pieceFrom == 7) && pieceTo == BitBoard.EMPTY) {
+        if (pieceFrom == BitBoard.PAWN && pieceTo == BitBoard.EMPTY) {
             // check if the move is en passant
             if (Long.numberOfTrailingZeros(board.enPassantSquare) == to) {
                 this.type = EN_PASSENT;
@@ -138,7 +138,7 @@ public final class Move {
 
         // if piece from is king and it tries to move two squares, it is a castling move
         //! ce code pue sa mere va falloir le changer
-        if (pieceFrom == BitBoard.KING || pieceFrom == BitBoard.KING*2 && Math.abs(from - to) >= 2) {
+        if (pieceFrom == BitBoard.KING && Math.abs(from - to) >= 2) {
             this.type = CASTLING;
             return;
         }

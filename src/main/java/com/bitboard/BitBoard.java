@@ -2055,6 +2055,8 @@ public class BitBoard {
         this.zobristKey ^= Zobrist.CASTLING_KEYS[getCastlingRights()];
     }
 
+    //! ABSOLUTE FIX NEEDED
+    //! tout check les flags en passant etc
     public void makeMove(String move) {
         int fromSquare = getSquare(move.substring(0, 2));
         int toSquare = getSquare(move.substring(2, 4));
