@@ -3,6 +3,10 @@ package com.bitboard;
 import java.io.PrintWriter;
 
 import com.bitboard.algorithms.Zobrist;
+import com.eval.NNUE.NNUE;
+import com.eval.NNUE.NNUEEvaluator;
+import com.eval.NNUE.NNUEState;
+import com.eval.NNUE.NNUEWeights;
 
 public class BitBoard {
 
@@ -506,7 +510,12 @@ public class BitBoard {
 
     public static final String INITIAL_STARTING_POSITION = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
+    public final NNUEState nnueState;
+    public static final int NNUE_HIDDEN = 256;
+
     public BitBoard() {
+
+        this.nnueState = new NNUEState(NNUE_HIDDEN);
 
         whiteTurn = true;
 
@@ -914,7 +923,8 @@ public class BitBoard {
     }
 
     public final int evaluate() {
-        return (currentEvalMG * phase + currentEvalEG * (24 - phase)) / 24;
+        // return (currentEvalMG * phase + currentEvalEG * (24 - phase)) / 24;
+        return NNUEEvaluator.evaluate(this.nnueState, NNUE.WEIGHTS, this.whiteTurn);
     }
 
     public String getFen() {
@@ -1267,8 +1277,6 @@ public class BitBoard {
 
         plyCount++;
 
-        // ⚠️ pas besoin de updateBitBoard(): aucune pièce ne bouge
-        // ⚠️ pas besoin de toucher evalMG/EG/phase: rien ne change
     }
 
     public final void undoNullMove() {
@@ -1280,7 +1288,9 @@ public class BitBoard {
     public final void makeMove(long move) {
         // Save the current board state
         saveBoardHistory(move);
-        // saveBoardHistoryLONG();
+        
+        // Update NNUE state
+        NNUEEvaluator.nnueApplyMove(nnueState, NNUE.WEIGHTS, move, whiteTurn);
 
         // Convert squares to bitboards
         final long fromBitboard = 1L << PackedMove.getFrom(move);

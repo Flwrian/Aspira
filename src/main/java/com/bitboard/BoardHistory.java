@@ -9,6 +9,7 @@ public class BoardHistory {
     public boolean whiteTurn;
     public int evalMG, evalEG, phase;
     public long zobristKey;
+    public int[] nnueState;
 
     public BoardHistory() {
         // vide
@@ -43,6 +44,9 @@ public class BoardHistory {
         this.evalEG = b.currentEvalEG;
         this.phase = b.phase;
         this.zobristKey = b.zobristKey;
+
+        this.nnueState = b.nnueState.acc.clone();
+        
     }
 
     public void restoreTo(BitBoard b) {
@@ -76,5 +80,7 @@ public class BoardHistory {
 
         b.whitePieces = b.whitePawns | b.whiteKnights | b.whiteBishops | b.whiteRooks | b.whiteQueens | b.whiteKing;
         b.blackPieces = b.blackPawns | b.blackKnights | b.blackBishops | b.blackRooks | b.blackQueens | b.blackKing;
+
+        System.arraycopy(this.nnueState, 0, b.nnueState.acc, 0, this.nnueState.length);
     }
 }

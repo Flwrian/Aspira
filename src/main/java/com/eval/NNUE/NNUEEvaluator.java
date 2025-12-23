@@ -97,7 +97,7 @@ public final class NNUEEvaluator {
         NNUEEvaluator.nnueAdd(s, w, color, pieceType, to);
     }
 
-    static void nnueApplyCapture(
+    public static void nnueApplyCapture(
         NNUEState s,
         NNUEWeights w,
         long move,
@@ -120,7 +120,7 @@ public final class NNUEEvaluator {
         NNUEEvaluator.nnueAdd(s, w, color, movedType, to);
     }
 
-    static void nnueApplyPromotion(
+    public static void nnueApplyPromotion(
         NNUEState s,
         NNUEWeights w,
         long move,
@@ -148,7 +148,7 @@ public final class NNUEEvaluator {
         NNUEEvaluator.nnueAdd(s, w, color, promoType, to);
     }
 
-    static void nnueApplyEnPassant(
+    public static void nnueApplyEnPassant(
         NNUEState s,
         NNUEWeights w,
         long move,
@@ -170,7 +170,7 @@ public final class NNUEEvaluator {
         NNUEEvaluator.nnueAdd(s, w, color, BitBoard.PAWN, to);
     }
 
-    static void nnueApplyCastle(
+    public static void nnueApplyCastle(
         NNUEState s,
         NNUEWeights w,
         long move,
@@ -205,7 +205,7 @@ public final class NNUEEvaluator {
         }
     }
 
-    static void nnueApplyMove(
+    public static void nnueApplyMove(
         NNUEState s,
         NNUEWeights w,
         long move,
@@ -226,9 +226,28 @@ public final class NNUEEvaluator {
         }
     }
 
+    static int crelu(int x) {
+        if (x < 0) return 0;
+        if (x > 127) return 127;
+        return x;
+    }
 
+    public static int evaluate(
+        NNUEState s,
+        NNUEWeights w,
+        boolean whiteToMove
+    ) {
+        int sum = 0;
 
+        for (int i = 0; i < w.hidden; i++) {
+            sum += crelu(s.acc[i]) * w.w2[i];
+        }
 
+        sum += w.b2;
+
+        // convention side-to-move
+        return whiteToMove ? sum : -sum;
+    }
 
 
     public static void main(String[] args) {
@@ -241,14 +260,11 @@ public final class NNUEEvaluator {
             }
         }
 
-        int square = 12;
-        int color = 0;
-        int piece = BitBoard.KNIGHT;
 
-        nnueAdd(s, w, color, piece, square);
-        int[] snapshot = s.acc.clone();
-        nnueRemove(s, w, color, piece, square);
+        int whiteEval = evaluate(s, w, true);
+        int blackEval = evaluate(s, w, false);
+        assert whiteEval == -blackEval;
 
-        assert Arrays.equals(s.acc, new int[256]);
+
     }
 }
