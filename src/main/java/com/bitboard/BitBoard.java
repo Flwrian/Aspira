@@ -510,12 +510,11 @@ public class BitBoard {
 
     public static final String INITIAL_STARTING_POSITION = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
-    public final NNUEState nnueState;
     public static final int NNUE_HIDDEN = 256;
+    public NNUEState nnueState = new NNUEState(NNUE_HIDDEN);
+    
 
     public BitBoard() {
-
-        this.nnueState = new NNUEState(NNUE_HIDDEN);
 
         whiteTurn = true;
 
@@ -2059,40 +2058,45 @@ public class BitBoard {
     public void makeMove(String move) {
         int fromSquare = getSquare(move.substring(0, 2));
         int toSquare = getSquare(move.substring(2, 4));
-        int pieceFrom = getPiece(fromSquare);
+        int pieceFrom = getPieceAt(fromSquare);
 
         // piece to if last character is not a digit
-        int pieceTo = 0;
+        int captured = getPieceAt(toSquare);
+        if (captured != BitBoard.EMPTY) {
+            System.out.println("Capture move");
+            System.out.println("captured piece: " + captured);
+        }
+
+        int promotedPiece = 0;
 
         // if last character is q or r or b or n
         if (move.length() == 5) {
             char lastChar = Character.toLowerCase(move.charAt(4));
             switch (lastChar) {
                 case 'q':
-                    pieceTo = QUEEN;
+                    promotedPiece = QUEEN;
                     break;
                 case 'r':
-                    pieceTo = ROOK;
+                    promotedPiece = ROOK;
                     break;
                 case 'b':
-                    pieceTo = BISHOP;
+                    promotedPiece = BISHOP;
                     break;
                 case 'n':
-                    pieceTo = KNIGHT;
+                    promotedPiece = KNIGHT;
                     break;
             }
         }
 
         if (move.length() == 5) {
             System.out.println("Promotion move");
-            System.out.println("to piece: " + pieceTo);
-            long moveLong = PackedMove.encode(fromSquare, pieceTo, pieceFrom, pieceTo, toSquare, pieceFrom, pieceTo);
+            System.out.println("to piece: " + promotedPiece);
+            long moveLong = PackedMove.encode(fromSquare, toSquare, pieceFrom, captured, promotedPiece, Move.PROMOTION, 0);
+
             System.out.println("Move: " + moveLong);
             makeMove(moveLong);
         } else {
-            System.out.println("Normal move");
-            long moveLong = PackedMove.encode(fromSquare, pieceFrom, pieceFrom, pieceTo, toSquare, pieceFrom, pieceTo);
-            System.out.println("Move: " + moveLong);
+            long moveLong = PackedMove.encode(fromSquare, toSquare, pieceFrom, captured, 0, 0, 0);
             makeMove(moveLong);
         }
 
@@ -2209,24 +2213,6 @@ public class BitBoard {
             return 12;
         } else {
             return BitBoard.EMPTY;
-        }
-    }
-
-    public static int getPieceType(int piece) {
-        if (piece == 0 || piece == 6) {
-            return PAWN;
-        } else if (piece == 1 || piece == 7) {
-            return KNIGHT;
-        } else if (piece == 2 || piece == 8) {
-            return BISHOP;
-        } else if (piece == 3 || piece == 9) {
-            return ROOK;
-        } else if (piece == 4 || piece == 10) {
-            return QUEEN;
-        } else if (piece == 5 || piece == 11) {
-            return KING;
-        } else {
-            return EMPTY;
         }
     }
 

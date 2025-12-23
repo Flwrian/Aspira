@@ -48,7 +48,7 @@ public class PackedMove {
     public static int getScore(long move)       { return (int)((move >> 28) & 0xFFFFF); }
 
     public static boolean isCapture(long move) {
-        return (getFlags(move) & Move.CAPTURE) != 0;
+        return getCaptured(move) != BitBoard.EMPTY;
     }
 
     public static long setScore(long move, int newScore) {

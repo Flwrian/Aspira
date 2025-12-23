@@ -58,6 +58,7 @@ public final class NNUEEvaluator {
         int pieceType,
         int square0to63
     ) {
+        System.out.println("NNUE Add: color=" + color01 + " pieceType=" + pieceType + " square=" + square0to63);
         int f = FeatureMapper.featureIndex(color01, pieceType, square0to63);
         short[] row = weights.w1[f];
 
@@ -73,7 +74,7 @@ public final class NNUEEvaluator {
         int pieceType,
         int square0to63
     ) {
-        System.out.println("Removing piece: color=" + color01 + " type=" + pieceType + " square=" + square0to63);
+        System.out.println("NNUE Remove: color=" + color01 + " pieceType=" + pieceType + " square=" + square0to63);
         int f = FeatureMapper.featureIndex(color01, pieceType, square0to63);
         short[] row = weights.w1[f];
 
@@ -117,7 +118,6 @@ public final class NNUEEvaluator {
         NNUEEvaluator.nnueRemove(s, w, enemy, capturedType, to);
 
         // move piece
-        System.out.println("s:" + s + " w:" + w + " color:" + color + " movedType:" + movedType + " from:" + from + " to:" + to);
         NNUEEvaluator.nnueRemove(s, w, color, movedType, from);
         NNUEEvaluator.nnueAdd(s, w, color, movedType, to);
     }
@@ -138,7 +138,7 @@ public final class NNUEEvaluator {
         int flags = PackedMove.getFlags(move);
 
         // capture?
-        if ((flags & Move.CAPTURE) != 0) {
+        if (flags == Move.CAPTURE) {
             int capturedType = PackedMove.getCaptured(move);
             NNUEEvaluator.nnueRemove(s, w, enemy, capturedType, to);
         }
@@ -216,14 +216,14 @@ public final class NNUEEvaluator {
         int flags = PackedMove.getFlags(move);
 
 
-        if (flags == Move.PROMOTION) {
-            nnueApplyPromotion(s, w, move, whiteTurn);
+        if (PackedMove.isCapture(move)) {
+            nnueApplyCapture(s, w, move, whiteTurn);
         } else if (flags == Move.EN_PASSENT) {
             nnueApplyEnPassant(s, w, move, whiteTurn);
         } else if (flags == Move.CASTLING) {
             nnueApplyCastle(s, w, move, whiteTurn);
-        } else if (flags == Move.CAPTURE) {
-            nnueApplyCapture(s, w, move, whiteTurn);
+        } else if (flags == Move.PROMOTION) {
+            nnueApplyPromotion(s, w, move, whiteTurn);
         } else {
             nnueApplyQuietMove(s, w, move, whiteTurn);
         }
@@ -254,20 +254,10 @@ public final class NNUEEvaluator {
 
 
     public static void main(String[] args) {
-        NNUEState s = new NNUEState(256);
-        NNUEWeights w = new NNUEWeights(256);
-        // Initialize weights to some values
-        for (int i = 0; i < FeatureMapper.FEATURES; i++) {
-            for (int j = 0; j < w.hidden; j++) {
-                w.w1[i][j] = (short)(i + j);
-            }
+        
+        for(int i=1; i<=12; i++) {
+            System.out.println((i - 1) % 6);
         }
-
-
-        int whiteEval = evaluate(s, w, true);
-        int blackEval = evaluate(s, w, false);
-        assert whiteEval == -blackEval;
-
 
     }
 }
