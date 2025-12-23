@@ -41,4 +41,6 @@ puzzle.py
 config.json
 sprt.bat
 
-*.lichess_db_puzzles.csv
+.puzzles/*
+
+*.csv
