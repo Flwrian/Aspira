@@ -73,6 +73,7 @@ public final class NNUEEvaluator {
         int pieceType,
         int square0to63
     ) {
+        System.out.println("Removing piece: color=" + color01 + " type=" + pieceType + " square=" + square0to63);
         int f = FeatureMapper.featureIndex(color01, pieceType, square0to63);
         short[] row = weights.w1[f];
 
@@ -116,6 +117,7 @@ public final class NNUEEvaluator {
         NNUEEvaluator.nnueRemove(s, w, enemy, capturedType, to);
 
         // move piece
+        System.out.println("s:" + s + " w:" + w + " color:" + color + " movedType:" + movedType + " from:" + from + " to:" + to);
         NNUEEvaluator.nnueRemove(s, w, color, movedType, from);
         NNUEEvaluator.nnueAdd(s, w, color, movedType, to);
     }
@@ -213,13 +215,14 @@ public final class NNUEEvaluator {
     ) {
         int flags = PackedMove.getFlags(move);
 
-        if ((flags & Move.PROMOTION) != 0) {
+
+        if (flags == Move.PROMOTION) {
             nnueApplyPromotion(s, w, move, whiteTurn);
-        } else if ((flags & Move.EN_PASSENT) != 0) {
+        } else if (flags == Move.EN_PASSENT) {
             nnueApplyEnPassant(s, w, move, whiteTurn);
-        } else if ((flags & Move.CASTLING) != 0) {
+        } else if (flags == Move.CASTLING) {
             nnueApplyCastle(s, w, move, whiteTurn);
-        } else if ((flags & Move.CAPTURE) != 0) {
+        } else if (flags == Move.CAPTURE) {
             nnueApplyCapture(s, w, move, whiteTurn);
         } else {
             nnueApplyQuietMove(s, w, move, whiteTurn);

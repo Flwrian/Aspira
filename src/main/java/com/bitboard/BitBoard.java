@@ -1288,7 +1288,6 @@ public class BitBoard {
     public final void makeMove(long move) {
         // Save the current board state
         saveBoardHistory(move);
-        
         // Update NNUE state
         NNUEEvaluator.nnueApplyMove(nnueState, NNUE.WEIGHTS, move, whiteTurn);
 
