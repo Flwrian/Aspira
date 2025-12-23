@@ -58,7 +58,6 @@ public final class NNUEEvaluator {
         int pieceType,
         int square0to63
     ) {
-        System.out.println("NNUE Add: color=" + color01 + " pieceType=" + pieceType + " square=" + square0to63);
         int f = FeatureMapper.featureIndex(color01, pieceType, square0to63);
         short[] row = weights.w1[f];
 
@@ -74,7 +73,6 @@ public final class NNUEEvaluator {
         int pieceType,
         int square0to63
     ) {
-        System.out.println("NNUE Remove: color=" + color01 + " pieceType=" + pieceType + " square=" + square0to63);
         int f = FeatureMapper.featureIndex(color01, pieceType, square0to63);
         short[] row = weights.w1[f];
 
