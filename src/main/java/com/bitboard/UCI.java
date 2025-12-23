@@ -22,8 +22,6 @@ public class UCI {
     // private static Engine engine;
     static Engine engine = new Engine(board);
     
-    private static int nbCommands = 0;
-
     public static void main(String[] args) {
 
 //         System.out.println("""
@@ -60,68 +58,67 @@ public class UCI {
         MoveGenerator.initSlidingAttacks();
 
         
-        Scanner scanner = new Scanner(System.in);
-        // Handle the UCI commands
-        while(true){
-            String input = scanner.nextLine();
-            String[] inputArray = input.split(" ");
-            String command = inputArray[0];
+        try (Scanner scanner = new Scanner(System.in)) {
+            // Handle the UCI commands
+            while(true){
+                String input = scanner.nextLine();
+                String[] inputArray = input.split(" ");
+                String command = inputArray[0];
 
-            nbCommands++;
-
-            
-
-
-            switch(command){
-                case "uci":
-                    uci();
-                    break;
-                case "isready":
-                    isReady();
-                    break;
-                case "ucinewgame":
-                    uciNewGame();
-                    break;
-                case "position":
-                    position(inputArray);
-                    break;
-                case "go":
-                    go(inputArray);
-                    break;
-                case "stop":
-                    engine.getAlgorithm().setStopSearch(true);
-                    break;
-                case "perft-test":
-                    Perft.perftSuiteTest("./perft-suite/standard.epd", Integer.parseInt(inputArray[1]));
-                    break;
-                case "quit":
-                    quit();
-                    break;
-                case "option":
-                    option(inputArray);
-                    break;
-                case "setdepth":
-                    setDepth(Integer.parseInt(inputArray[1]));
-                    break;
-                case "setrazordepth":
-                    // setRazorDepth(Integer.parseInt(inputArray[1]));
-                    break;
-                case "setnpm":
-                    // setNPM(Integer.parseInt(inputArray[1]));
-                    break;
-                case "d":
-                    d();
-                    break;
-                case "calculateNPS":
-                    System.out.println(calculateNPS(Integer.parseInt(inputArray[1])));
-                    break;
-                case "help":
-                    help();
-                    break;
-                default:
-                    System.out.println("Unknown command: " + command);
-                    break;
+                switch(command){
+                    case "uci":
+                        uci();
+                        break;
+                    case "isready":
+                        isReady();
+                        break;
+                    case "ucinewgame":
+                        uciNewGame();
+                        break;
+                    case "position":
+                        position(inputArray);
+                        break;
+                    case "go":
+                        go(inputArray);
+                        break;
+                    case "stop":
+                        engine.getAlgorithm().setStopSearch(true);
+                        break;
+                    case "perft-test":
+                        Perft.perftSuiteTest("./perft-suite/standard.epd", Integer.parseInt(inputArray[1]));
+                        break;
+                    case "quit":
+                        quit();
+                        break;
+                    case "option":
+                        option(inputArray);
+                        break;
+                    case "setdepth":
+                        setDepth(Integer.parseInt(inputArray[1]));
+                        break;
+                    case "setrazordepth":
+                        // setRazorDepth(Integer.parseInt(inputArray[1]));
+                        break;
+                    case "setnpm":
+                        // setNPM(Integer.parseInt(inputArray[1]));
+                        break;
+                    case "d":
+                        d();
+                        break;
+                    case "calculateNPS":
+                        System.out.println(calculateNPS(Integer.parseInt(inputArray[1])));
+                        break;
+                    case "help":
+                        help();
+                        break;
+                    default:
+                        System.out.println("Unknown command: " + command);
+                        break;
+                }
             }
+        } catch (NumberFormatException e) {
+            System.out.println("Invalid number format: " + e.getMessage());
+            System.exit(1);
         }
     }
 
