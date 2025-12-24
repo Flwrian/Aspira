@@ -510,7 +510,7 @@ public class BitBoard {
 
     public static final String INITIAL_STARTING_POSITION = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
-    public static final int NNUE_HIDDEN = 256;
+    public static final int NNUE_HIDDEN = 64;
     public NNUEState nnueState = new NNUEState(NNUE_HIDDEN);
     
 
@@ -1288,6 +1288,7 @@ public class BitBoard {
         // Save the current board state
         saveBoardHistory(move);
         // Update NNUE state
+
         NNUEEvaluator.nnueApplyMove(nnueState, NNUE.WEIGHTS, move, whiteTurn);
 
         // Convert squares to bitboards

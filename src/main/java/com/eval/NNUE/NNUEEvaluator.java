@@ -247,7 +247,8 @@ public final class NNUEEvaluator {
         sum += w.b2;
 
         // convention side-to-move
-        return whiteToMove ? sum : -sum;
+        int scaled = sum / 64;   // même SCALE que Python
+        return whiteToMove ? scaled : -scaled;
     }
 
 

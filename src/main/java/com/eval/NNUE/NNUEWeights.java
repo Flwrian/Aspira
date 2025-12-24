@@ -73,6 +73,8 @@ public final class NNUEWeights {
             int hidden = in.readInt();
             int features = in.readInt();
 
+            System.out.println("NNUE header: hidden=" + hidden + " features=" + features);
+
             if (features != FeatureMapper.FEATURES) {
                 throw new IllegalStateException(
                         "Invalid feature count: " + features);

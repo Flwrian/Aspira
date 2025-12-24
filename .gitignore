@@ -30,6 +30,9 @@ fastchess-windows-latest/
 
 *.exe
 
+*lichess_db_eval.jsonl
+*.bin
+
 private.pem
 public.pem
 dev_version.txt

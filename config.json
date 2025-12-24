@@ -48,7 +48,7 @@
     },
     "config_name": "",
     "output": 0,
-    "seed": 9912142703733799272,
+    "seed": 1802715219328727916,
     "variant": 0,
     "ratinginterval": 10,
     "scoreinterval": 1,
@@ -78,9 +78,9 @@
             "options": [],
             "limit": {
                 "tc": {
-                    "increment": 50,
+                    "increment": 100,
                     "fixed_time": 0,
-                    "time": 1000,
+                    "time": 10000,
                     "moves": 0,
                     "timemargin": 0
                 },
@@ -92,14 +92,14 @@
         {
             "name": "main",
             "dir": "",
-            "cmd": "Aspira_main.exe",
+            "cmd": "Aspira_dev_noNNUE.exe",
             "args": "",
             "options": [],
             "limit": {
                 "tc": {
-                    "increment": 50,
+                    "increment": 100,
                     "fixed_time": 0,
-                    "time": 1000,
+                    "time": 10000,
                     "moves": 0,
                     "timemargin": 0
                 },
@@ -111,26 +111,26 @@
     ],
     "stats": {
         "main vs dev": {
-            "wins": 62,
-            "losses": 67,
-            "draws": 83,
-            "penta_WW": 8,
-            "penta_WD": 23,
-            "penta_WL": 23,
-            "penta_DD": 18,
-            "penta_LD": 24,
-            "penta_LL": 10
+            "wins": 20,
+            "losses": 0,
+            "draws": 0,
+            "penta_WW": 10,
+            "penta_WD": 0,
+            "penta_WL": 0,
+            "penta_DD": 0,
+            "penta_LD": 0,
+            "penta_LL": 0
         },
         "dev vs main": {
-            "wins": 39,
-            "losses": 36,
-            "draws": 73,
-            "penta_WW": 5,
-            "penta_WD": 19,
-            "penta_WL": 10,
-            "penta_DD": 17,
-            "penta_LD": 20,
-            "penta_LL": 3
+            "wins": 0,
+            "losses": 14,
+            "draws": 0,
+            "penta_WW": 0,
+            "penta_WD": 0,
+            "penta_WL": 0,
+            "penta_DD": 0,
+            "penta_LD": 0,
+            "penta_LL": 7
         }
     }
 }
