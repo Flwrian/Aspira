@@ -32,6 +32,9 @@ fastchess-windows-latest/
 
 nnue/*
 
+failed.csv
+failedv2.csv
+
 private.pem
 public.pem
 dev_version.txt
