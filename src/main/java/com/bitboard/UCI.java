@@ -318,11 +318,8 @@ public class UCI {
         System.out.println("id name " + ENGINE_NAME);
         System.out.println("id author " + AUTHOR);
         System.out.println("id version " + VERSION);
-        System.out.println("option name Hash type spin default 16 min 1 max 1024");
-        System.out.println("option name Threads type spin default 1 min 1 max 1024");
-        System.out.println("option name Ponder type check default false");
-        // System.out.println("option razoring" + engine.getRazorDepth());
-        // System.out.println("option npm" + engine.getNPM());
+        System.out.println("option name Hash type spin default 1 min 1 max 1");
+        System.out.println("option name Threads type spin default 1 min 1 max 1");
         System.out.println();
         System.out.println("uciok");
     }
