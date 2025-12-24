@@ -18,14 +18,14 @@
 *.zip
 *.tar.gz
 *.rar
-
+*.properties
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
 
 *.vscode
 *.lst
 
-engines/
+engines/*
 fastchess-windows-latest/
 
 *.exe
@@ -39,3 +39,5 @@ private.pem
 public.pem
 dev_version.txt
 config.json
+
+Aspira_dev

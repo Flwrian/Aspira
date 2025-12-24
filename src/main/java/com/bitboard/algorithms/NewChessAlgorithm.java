@@ -9,6 +9,17 @@ import java.util.Locale;
 
 public class NewChessAlgorithm implements ChessAlgorithm {
 
+    private long lastNodeCount = 0;
+    private long lastNPS = 0;
+
+    public long getLastNPS() {
+        return lastNPS;
+    }
+
+    public long getLastNodeCount() {
+        return lastNodeCount;
+    }
+
     private long nodes = 0;
     private long cutoffs = 0;
 
@@ -103,6 +114,8 @@ public class NewChessAlgorithm implements ChessAlgorithm {
             prevScore = result.value;
 
             printSearchInfo(currentDepth, result.value, nodes, endTime - startTime, cutoffs, ttHits, ttStores, result.pv);
+            lastNodeCount = nodes;
+            lastNPS = (nodes * 1_000_000_000L) / (endTime - startTime);
         }
 
         if (bestPackedMove == 0L) {
