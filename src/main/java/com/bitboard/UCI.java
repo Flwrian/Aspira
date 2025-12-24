@@ -26,30 +26,7 @@ public class UCI {
 
     public static void main(String[] args) {
 
-//         System.out.println("""
-//  _______________________________________________________________________________________
-
-// |  ███████╗██╗      ██████╗ ██╗    ██╗ ██████╗ ██╗███╗   ██╗███████╗██╗   ██╗██████╗   |
-// |  ██╔════╝██║     ██╔═══██╗██║    ██║██╔════╝ ██║████╗  ██║██╔════╝██║   ██║╚════██╗  |
-// |  █████╗  ██║     ██║   ██║██║ █╗ ██║██║  ███╗██║██╔██╗ ██║█████╗  ██║   ██║ █████╔╝  |
-// |  ██╔══╝  ██║     ██║   ██║██║███╗██║██║   ██║██║██║╚██╗██║██╔══╝  ╚██╗ ██╔╝██╔═══╝   |
-// |  ██║     ███████╗╚██████╔╝╚███╔███╔╝╚██████╔╝██║██║ ╚████║███████╗ ╚████╔╝ ███████╗  |
-// |  ╚═╝     ╚══════╝ ╚═════╝  ╚══╝╚══╝  ╚═════╝ ╚═╝╚═╝  ╚═══╝╚══════╝  ╚═══╝  ╚══════╝  |
-// _______________________________________________________________________________________
-
-//         """);
-
-        // // print available commands
-        // System.out.println("Available commands:");
-        // System.out.println("uci - start the engine");
-        // System.out.println("isready - check if the engine is ready");
-        // System.out.println("ucinewgame - start a new game");
-        // System.out.println("position - set up the position");
-        // System.out.println("go - start calculating the best move");
-        // System.out.println("quit - stop the engine");
-        // System.out.println("stop - stop calculating the best move");
-        // System.out.println("option - set engine options");
-        // System.out.println();
+        
 
         NewChessAlgorithm advancedChessAlgorithm = new NewChessAlgorithm();
         engine.setAlgorithm(advancedChessAlgorithm);
@@ -58,6 +35,16 @@ public class UCI {
 
         // init movegenerator
         MoveGenerator.initSlidingAttacks();
+
+        if (args.length == 1 && args[0].equals("bench"))
+		{
+			for(String fen : Bench.benchPositions) {
+                board.loadFromFen(fen);
+                engine.getAlgorithm().search(board, 1000, 1000, 100, 100, 1000, 5);
+                System.out.println(engine.getAlgorithm().getLastNodeCount() + " nodes " + engine.getAlgorithm().getLastNPS() + " nps");
+            }
+            return;
+		}
 
         
         Scanner scanner = new Scanner(System.in);

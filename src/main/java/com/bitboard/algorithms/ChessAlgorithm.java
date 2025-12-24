@@ -5,13 +5,17 @@ import com.bitboard.Move;
 
 public interface ChessAlgorithm {
 
-    public Move search(BitBoard board, int wtime, int btime, int winc, int binc, int movestogo, int depth);
+    public Move search(BitBoard board, int wtime, int btime, int winc, int binc, int movetime, int depth);
 
     public int evaluate(BitBoard board);
 
     public String getName();
 
     public void setStopSearch(boolean b);
+
+    public long getLastNodeCount();
+
+    public long getLastNPS();
 
     // public void setDepth(int depth);
 
