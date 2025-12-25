@@ -15,14 +15,21 @@
         "move_count": 1,
         "enabled": false
     },
+    "tb_adjudication": {
+        "syzygy_dirs": "",
+        "max_pieces": 0,
+        "ignore_50_move_rule": false,
+        "enabled": false
+    },
     "opening": {
-        "file": "C:\\Users\\flofl\\Desktop\\Code\\chess-java\\Nouveau dossier\\fastchess-windows-latest\\8moves_v3.epd",
+        "file": "8moves.epd",
         "format": 0,
         "order": 1,
         "plies": -1,
         "start": 1
     },
     "pgn": {
+        "additional_lines_rgx": [],
         "event_name": "Fastchess Tournament",
         "site": "?",
         "file": "",
@@ -33,7 +40,10 @@
         "track_hashfull": false,
         "track_tbhits": false,
         "track_timeleft": false,
-        "min": false
+        "track_latency": false,
+        "track_pv": false,
+        "min": false,
+        "crc": false
     },
     "epd": {
         "file": ""
@@ -46,16 +56,18 @@
         "model": "normalized",
         "enabled": true
     },
-    "config_name": "",
+    "config_name": "config.json",
     "output": 0,
-    "seed": 15069259893684593624,
+    "seed": 11438256541750934216,
     "variant": 0,
+    "type": 0,
+    "gauntlet_seeds": 1,
     "ratinginterval": 10,
     "scoreinterval": 1,
     "wait": 0,
     "autosaveinterval": 20,
     "games": 2,
-    "rounds": 15000,
+    "rounds": 200,
     "concurrency": 6,
     "force_concurrency": false,
     "recover": true,
@@ -63,18 +75,21 @@
     "reverse": false,
     "report_penta": true,
     "affinity": false,
+    "show_latency": false,
     "log": {
         "file": "",
         "level": 2,
         "compress": false,
-        "realtime": true
+        "realtime": true,
+        "engine_coms": false
     },
     "engines": [
         {
             "name": "dev",
             "dir": "",
-            "cmd": "Aspira_dev.exe",
+            "cmd": "Aspira_dev",
             "args": "",
+            "restart": false,
             "options": [],
             "limit": {
                 "tc": {
@@ -92,8 +107,9 @@
         {
             "name": "main",
             "dir": "",
-            "cmd": "Aspira_dev2.exe",
+            "cmd": "Aspira_dev_before",
             "args": "",
+            "restart": false,
             "options": [],
             "limit": {
                 "tc": {
@@ -111,26 +127,26 @@
     ],
     "stats": {
         "main vs dev": {
-            "wins": 211,
-            "losses": 150,
-            "draws": 305,
-            "penta_WW": 32,
-            "penta_WD": 89,
-            "penta_WL": 58,
-            "penta_DD": 77,
-            "penta_LD": 62,
-            "penta_LL": 15
+            "wins": 17,
+            "losses": 23,
+            "draws": 62,
+            "penta_WW": 3,
+            "penta_WD": 8,
+            "penta_WL": 3,
+            "penta_DD": 19,
+            "penta_LD": 16,
+            "penta_LL": 2
         },
         "dev vs main": {
-            "wins": 58,
-            "losses": 102,
-            "draws": 134,
-            "penta_WW": 5,
-            "penta_WD": 23,
-            "penta_WL": 25,
-            "penta_DD": 32,
-            "penta_LD": 47,
-            "penta_LL": 15
+            "wins": 13,
+            "losses": 12,
+            "draws": 21,
+            "penta_WW": 1,
+            "penta_WD": 6,
+            "penta_WL": 5,
+            "penta_DD": 5,
+            "penta_LD": 5,
+            "penta_LL": 1
         }
     }
 }

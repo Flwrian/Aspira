@@ -1,15 +1,17 @@
 EXE ?= Aspira_dev
-MAVEN_EXE ?= mvn
+MAVEN ?= mvn
 
-MAVEN_COMMAND_PREFIX :=
-ifdef JAVA_HOME
-    MAVEN_COMMAND_PREFIX := JAVA_HOME=$(JAVA_HOME)
-endif
-
-.PHONY: all
+.PHONY: all bench clean
 
 all:
-	$(MAVEN_COMMAND_PREFIX) $(MAVEN_EXE) -f ./pom.xml package
-	cat stub.sh ./target/aspira-1.0.0.jar > $(EXE)
+	$(MAVEN) clean package
+	cat stub.sh target/chess-engine.jar > $(EXE)
 	chmod +x $(EXE)
-	cp ./target/aspira-1.0.0.jar ./Aspira_dev.jar
+
+bench:
+	$(MAVEN) clean package -Pbench
+	java -jar target/benchmarks.jar
+
+clean:
+	$(MAVEN) clean
+	rm -f $(EXE)
