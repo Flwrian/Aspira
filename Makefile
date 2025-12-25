@@ -12,4 +12,4 @@ all:
 	$(MAVEN_COMMAND_PREFIX) $(MAVEN_EXE) -f ./pom.xml package
 	cat stub.sh ./target/aspira-1.0.0.jar > $(EXE)
 	chmod +x $(EXE)
-	cp ./target/aspira-1.0.0.jar ./engines/Aspira_dev.jar
+	cp ./target/aspira-1.0.0.jar ./Aspira_dev.jar
