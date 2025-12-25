@@ -40,7 +40,7 @@ public class UCI {
 		{
 			for(String fen : Bench.benchPositions) {
                 board.loadFromFen(fen);
-                engine.getAlgorithm().search(board, 1000, 1000, 100, 100, 1000, 5);
+                engine.getAlgorithm().search(board, 100000, 1000, 100, 100, 67_0000, 6);
                 System.out.println(engine.getAlgorithm().getLastNodeCount() + " nodes " + engine.getAlgorithm().getLastNPS() + " nps");
             }
             return;
