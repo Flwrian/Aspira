@@ -1,5 +1,7 @@
 package fr.flwrian.aspira.move;
 
+import fr.flwrian.aspira.board.Board;
+
 public class PackedMove {
 
     // Bit layout (64 bits):
@@ -14,14 +16,14 @@ public class PackedMove {
 
     public static long encode(
         int from, int to,
-        int pieceFrom, int pieceTo,
+        int pieceFrom, int capturedPiece,
         int promotion, int flag,
         int seeScore
     ) {
         return ((long) to & 0x3FL)
              | (((long) from & 0x3FL) << 6)
              | (((long) promotion & 0xFL) << 12)
-             | (((long) pieceTo & 0xFL) << 16)
+             | (((long) capturedPiece & 0xFL) << 16)
              | (((long) pieceFrom & 0xFL) << 20)
              | (((long) flag & 0xFL) << 24)
              | (((long) seeScore & 0xFFFFF) << 28); // 20 bits
@@ -32,10 +34,10 @@ public class PackedMove {
             move.from,
             move.to,
             move.pieceFrom,
-            move.pieceTo,
-            move.getPieceTo(),
-            move.getType(),
-            move.getSeeScore()
+            move.capturedPiece,
+            move.promotion,
+            move.flags,
+            move.seeScore
         );
     }
 
@@ -48,7 +50,7 @@ public class PackedMove {
     public static int getScore(long move)       { return (int)((move >> 28) & 0xFFFFF); }
 
     public static boolean isCapture(long move) {
-        return (getFlags(move) & Move.CAPTURE) != 0;
+        return (getCaptured(move) != Board.EMPTY);
     }
 
     public static long setScore(long move, int newScore) {
@@ -56,14 +58,14 @@ public class PackedMove {
     }
 
     public static Move unpack(long packedMove) {
-        Move m = new Move(
-            PackedMove.getFrom(packedMove),
-            PackedMove.getTo(packedMove),
-            PackedMove.getPieceFrom(packedMove),
-            PackedMove.getPromotion(packedMove)
+        return new Move(
+            getFrom(packedMove),
+            getTo(packedMove),
+            getPieceFrom(packedMove),
+            getCaptured(packedMove),
+            getPromotion(packedMove),
+            getFlags(packedMove),
+            getScore(packedMove)
         );
-        m.setType((byte) PackedMove.getFlags(packedMove));
-        m.setSeeScore(PackedMove.getScore(packedMove));
-        return m;
     }
 }

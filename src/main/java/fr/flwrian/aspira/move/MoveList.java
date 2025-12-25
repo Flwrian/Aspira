@@ -192,25 +192,6 @@ public class MoveList implements List<Move> {
     }
 
 
-    public Move add(int from, int to, Board board) {
-        return this.add(from,to,board.getPiece(from),board.getPiece(to));
-    }
-
-    public Move add(int from, int to, int pieceFrom, int pieceTo) {
-        if(this.size == moves.length){
-            this.setCapacity(moves.length * 2);
-        }
-        Move m = this.moves[size];
-        m.from = from;
-        m.to = to;
-        m.pieceFrom = pieceFrom;
-        m.pieceTo = pieceTo;
-        m.type = 0;
-        this.size ++;
-        return m;
-    }
-
-
     @Override
     public int size() {
         return size;
@@ -327,15 +308,6 @@ public class MoveList implements List<Move> {
     @Override
     public Spliterator<Move> spliterator() {
         throw new RuntimeException("Not yet implemented");
-    }
-
-    public static void main(String[] args) {
-        MoveList moves = new MoveList(10);
-        for(int i = 0; i < 10; i++){
-            moves.add(i,6,3,4).setOrderPriority(i);
-        }
-        moves.sort(null);
-        System.out.println(moves);
     }
 
     

@@ -315,14 +315,14 @@ public class Board {
     };
 
     private static final int[] PAWN_TABLE_MG = {
-            0,    0,    0,    0,    0,    0,    0,    0,
-           -11,   34,  126,   68,   95,   61,  134,   98,
-           -20,   25,   56,   65,   31,   26,    7,   -6,
-           -23,   17,   12,   23,   21,    6,   13,  -14,
-           -25,   10,    6,   17,   18,   -5,   -2,  -27,
-           -12,   33,    3,    3,  -10,   -4,   -4,  -26,
-           -22,   38,   24,  -15,  -23,  -20,   -1,  -35,
-             0,    0,    0,    0,    0,    0,    0,    0,
+            0, 0, 0, 0, 0, 0, 0, 0,
+            -11, 34, 126, 68, 95, 61, 134, 98,
+            -20, 25, 56, 65, 31, 26, 7, -6,
+            -23, 17, 12, 23, 21, 6, 13, -14,
+            -25, 10, 6, 17, 18, -5, -2, -27,
+            -12, 33, 3, 3, -10, -4, -4, -26,
+            -22, 38, 24, -15, -23, -20, -1, -35,
+            0, 0, 0, 0, 0, 0, 0, 0,
     };
 
     private static final int[] PAWN_TABLE_EG = {
@@ -478,13 +478,13 @@ public class Board {
     public static final long BLACK_KING_SIDE_CASTLE_NEED_TO_NOT_BE_ATTACKED_MASK = G8 | F8 | E8;
     public static final long BLACK_QUEEN_SIDE_CASTLE_NEED_TO_NOT_BE_ATTACKED_MASK = D8 | C8 | E8;
 
-    public static final int EMPTY = 0;
-    public static final int PAWN = 1;
-    public static final int KNIGHT = 2;
-    public static final int BISHOP = 3;
-    public static final int ROOK = 4;
-    public static final int QUEEN = 5;
-    public static final int KING = 6;
+    public static final int PAWN = 0;
+    public static final int KNIGHT = 1;
+    public static final int BISHOP = 2;
+    public static final int ROOK = 3;
+    public static final int QUEEN = 4;
+    public static final int KING = 5;
+    public static final int EMPTY = 6;
 
     public static final int WHITE_PAWN = 0;
     public static final int WHITE_KNIGHT = 1;
@@ -557,13 +557,15 @@ public class Board {
     }
 
     public boolean isThreefoldRepetition() {
-        // to check for repetition, we need to check if the current position has been seen (we will check in the history stack if it appears 3 times)
+        // to check for repetition, we need to check if the current position has been
+        // seen (we will check in the history stack if it appears 3 times)
         if (history.isEmpty() || plyCount < 8) {
             return false;
-        }
-        else{
-            // If the position before the last move is the same as the current position, we can return true
-            if ((history.stack[plyCount - 4].zobristKey == this.zobristKey) && (history.stack[plyCount - 8].zobristKey == this.zobristKey)) {
+        } else {
+            // If the position before the last move is the same as the current position, we
+            // can return true
+            if ((history.stack[plyCount - 4].zobristKey == this.zobristKey)
+                    && (history.stack[plyCount - 8].zobristKey == this.zobristKey)) {
                 return true;
             }
 
@@ -765,7 +767,6 @@ public class Board {
         // Clamp phase
         phase = Math.min(phase, 24);
 
-
         // PSQT
         long wPawns = whitePawns;
         long wKnights = whiteKnights;
@@ -870,27 +871,134 @@ public class Board {
         this.zobristKey = generateZobristKey();
     }
 
+    final int WHITE = 0;
+    final int BLACK = 1;
+
     public final long generateZobristKey() {
-        // On hash la position actuelle
         long zobristKey = 0L;
 
-        // On commence par hash toutes les pieces et leur positions
-        for (int square = 0; square < 64; square++) {
-            int piece = getPiece(square);
-            if (piece != Board.EMPTY) {
-                zobristKey ^= Zobrist.PIECE_KEYS[piece - 1][square]; // piece - 1 pour l'acces au tableau
-            }
+        // =========================
+        // WHITE PIECES
+        // =========================
+
+        long bb = whitePawns;
+        while (bb != 0L) {
+            long p = bb & -bb;
+            bb &= bb - 1;
+            int sq = Board.getSquare(p);
+            zobristKey ^= Zobrist.PIECE_KEYS[WHITE][PAWN][sq];
         }
 
-        // Side to move
-        if(whiteTurn) zobristKey ^= Zobrist.SIDE_TO_MOVE_KEY;
+        bb = whiteKnights;
+        while (bb != 0L) {
+            long p = bb & -bb;
+            bb &= bb - 1;
+            int sq = Board.getSquare(p);
+            zobristKey ^= Zobrist.PIECE_KEYS[WHITE][KNIGHT][sq];
+        }
 
-        // roque
+        bb = whiteBishops;
+        while (bb != 0L) {
+            long p = bb & -bb;
+            bb &= bb - 1;
+            int sq = Board.getSquare(p);
+            zobristKey ^= Zobrist.PIECE_KEYS[WHITE][BISHOP][sq];
+        }
+
+        bb = whiteRooks;
+        while (bb != 0L) {
+            long p = bb & -bb;
+            bb &= bb - 1;
+            int sq = Board.getSquare(p);
+            zobristKey ^= Zobrist.PIECE_KEYS[WHITE][ROOK][sq];
+        }
+
+        bb = whiteQueens;
+        while (bb != 0L) {
+            long p = bb & -bb;
+            bb &= bb - 1;
+            int sq = Board.getSquare(p);
+            zobristKey ^= Zobrist.PIECE_KEYS[WHITE][QUEEN][sq];
+        }
+
+        bb = whiteKing;
+        while (bb != 0L) {
+            long p = bb & -bb;
+            bb &= bb - 1;
+            int sq = Board.getSquare(p);
+            zobristKey ^= Zobrist.PIECE_KEYS[WHITE][KING][sq];
+        }
+
+        // =========================
+        // BLACK PIECES
+        // =========================
+
+        bb = blackPawns;
+        while (bb != 0L) {
+            long p = bb & -bb;
+            bb &= bb - 1;
+            int sq = Board.getSquare(p);
+            zobristKey ^= Zobrist.PIECE_KEYS[BLACK][PAWN][sq];
+        }
+
+        bb = blackKnights;
+        while (bb != 0L) {
+            long p = bb & -bb;
+            bb &= bb - 1;
+            int sq = Board.getSquare(p);
+            zobristKey ^= Zobrist.PIECE_KEYS[BLACK][KNIGHT][sq];
+        }
+
+        bb = blackBishops;
+        while (bb != 0L) {
+            long p = bb & -bb;
+            bb &= bb - 1;
+            int sq = Board.getSquare(p);
+            zobristKey ^= Zobrist.PIECE_KEYS[BLACK][BISHOP][sq];
+        }
+
+        bb = blackRooks;
+        while (bb != 0L) {
+            long p = bb & -bb;
+            bb &= bb - 1;
+            int sq = Board.getSquare(p);
+            zobristKey ^= Zobrist.PIECE_KEYS[BLACK][ROOK][sq];
+        }
+
+        bb = blackQueens;
+        while (bb != 0L) {
+            long p = bb & -bb;
+            bb &= bb - 1;
+            int sq = Board.getSquare(p);
+            zobristKey ^= Zobrist.PIECE_KEYS[BLACK][QUEEN][sq];
+        }
+
+        bb = blackKing;
+        while (bb != 0L) {
+            long p = bb & -bb;
+            bb &= bb - 1;
+            int sq = Board.getSquare(p);
+            zobristKey ^= Zobrist.PIECE_KEYS[BLACK][KING][sq];
+        }
+
+        // =========================
+        // SIDE TO MOVE
+        // =========================
+        if (whiteTurn) {
+            zobristKey ^= Zobrist.SIDE_TO_MOVE_KEY;
+        }
+
+        // =========================
+        // CASTLING RIGHTS
+        // =========================
         zobristKey ^= Zobrist.CASTLING_KEYS[getCastlingRights()];
 
-        // en passant (hash only if there is en passant)
+        // =========================
+        // EN PASSANT
+        // =========================
         if (enPassantSquare != 0L) {
-            zobristKey ^= Zobrist.EN_PASSANT_KEYS[Long.numberOfTrailingZeros(this.enPassantSquare)];
+            int file = Long.numberOfTrailingZeros(enPassantSquare) & 7;
+            zobristKey ^= Zobrist.EN_PASSANT_KEYS[file];
         }
 
         return zobristKey;
@@ -1257,534 +1365,459 @@ public class Board {
     }
 
     public void undoNullMove() {
-        
+
     }
 
     public final void makeMove(long move) {
-        // Save the current board state
         saveBoardHistory(move);
-        // saveBoardHistoryLONG();
 
-        // Convert squares to bitboards
-        final long fromBitboard = 1L << PackedMove.getFrom(move);
-        final long toBitboard = 1L << PackedMove.getTo(move);
+        final int from = PackedMove.getFrom(move);
+        final int to = PackedMove.getTo(move);
+        final int flags = PackedMove.getFlags(move);
+        final long fromBB = 1L << from;
+        final long toBB = 1L << to;
 
-        final int squareFrom;
-        final int squareTo;
+        // Pre-calculate common values
+        final int fromFlipped = from ^ 56;
+        final int toFlipped = to ^ 56;
 
-        // Separate logic for white and black moves
         if (whiteTurn) {
-
-            squareFrom = PackedMove.getFrom(move);
-            squareTo = PackedMove.getTo(move);
-
-            handleCaptureWhite(toBitboard);
-            // Pions blancs
-            if ((whitePawns & fromBitboard) != 0) {
-
-                // Handle en passant capture
-                if (PackedMove.getFlags(move) == Move.EN_PASSANT) {
-                    final long capturedPawn = enPassantSquare >> 8;
-                    blackPawns &= ~capturedPawn;
-
-                    this.zobristKey ^= Zobrist.PIECE_KEYS[BLACK_PAWN][Long.numberOfTrailingZeros(capturedPawn)];
-
-                    // Move pawn
-                    whitePawns &= ~fromBitboard;
-                    whitePawns |= toBitboard;
-
-                    // Update evaluations for both phases
-                    currentEvalMG += PAWN_TABLE_MG[Long.numberOfTrailingZeros(toBitboard) ^ 56]
-                            - PAWN_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
-                    currentEvalEG += PAWN_TABLE_EG[Long.numberOfTrailingZeros(toBitboard) ^ 56]
-                            - PAWN_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
-
-                    // === Update ZobristKey ===
-                    // Remove
-                    this.zobristKey ^= Zobrist.PIECE_KEYS[WHITE_PAWN][squareFrom];
-                    // Add
-                    this.zobristKey ^= Zobrist.PIECE_KEYS[WHITE_PAWN][squareTo];
-                }
-
-                // Handle double pawn push
-                else if (PackedMove.getFlags(move) == Move.DOUBLE_PAWN_PUSH) {
-                    if (enPassantSquare != 0) {
-                        this.zobristKey ^= Zobrist.EN_PASSANT_KEYS[Long.numberOfTrailingZeros(enPassantSquare)];
-                    }
-                    this.enPassantSquare = toBitboard >> 8;
-
-                    // Move pawn
-                    whitePawns &= ~fromBitboard;
-                    whitePawns |= toBitboard;
-
-                    // Update evaluations for both phases
-                    currentEvalMG += PAWN_TABLE_MG[Long.numberOfTrailingZeros(toBitboard) ^ 56]
-                            - PAWN_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
-                    currentEvalEG += PAWN_TABLE_EG[Long.numberOfTrailingZeros(toBitboard) ^ 56]
-                            - PAWN_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
-
-                    // Update ZobristKey
-                    this.zobristKey ^= Zobrist.EN_PASSANT_KEYS[Long.numberOfTrailingZeros(this.enPassantSquare)];
-
-                    // === Update ZobristKey ===
-                    // Remove
-                    this.zobristKey ^= Zobrist.PIECE_KEYS[WHITE_PAWN][squareFrom];
-                    // Add
-                    this.zobristKey ^= Zobrist.PIECE_KEYS[WHITE_PAWN][squareTo];
-                    
-                } else {
-                    if (enPassantSquare != 0) {
-                        this.zobristKey ^= Zobrist.EN_PASSANT_KEYS[Long.numberOfTrailingZeros(enPassantSquare)];
-                    }
-                    enPassantSquare = 0L; // Reset en passant square
-
-                    // Handle promotion
-                    if (PackedMove.getFlags(move) == Move.PROMOTION) {
-                        switch (PackedMove.getPromotion(move)) {
-                            case KNIGHT:
-                                // Update evaluations for promotion to knight
-                                currentEvalMG += KNIGHT_SCORE
-                                        + KNIGHT_TABLE_MG[Long.numberOfTrailingZeros(toBitboard) ^ 56] - PAWN_SCORE
-                                        - PAWN_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
-                                currentEvalEG += KNIGHT_SCORE
-                                        + KNIGHT_TABLE_EG[Long.numberOfTrailingZeros(toBitboard) ^ 56] - PAWN_SCORE
-                                        - PAWN_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
-                                phase += 1; // Knights add 1 to phase
-                                whiteKnights |= toBitboard;
-                                this.zobristKey ^= Zobrist.PIECE_KEYS[WHITE_PAWN][squareFrom];
-                                this.zobristKey ^= Zobrist.PIECE_KEYS[WHITE_KNIGHT][squareTo];
-                                break;
-                            case BISHOP:
-                                // Update evaluations for promotion to bishop
-                                currentEvalMG += BISHOP_SCORE
-                                        + BISHOP_TABLE_MG[Long.numberOfTrailingZeros(toBitboard) ^ 56] - PAWN_SCORE
-                                        - PAWN_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
-                                currentEvalEG += BISHOP_SCORE
-                                        + BISHOP_TABLE_EG[Long.numberOfTrailingZeros(toBitboard) ^ 56] - PAWN_SCORE
-                                        - PAWN_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
-                                phase += 1; // Bishops add 1 to phase
-                                whiteBishops |= toBitboard;
-                                this.zobristKey ^= Zobrist.PIECE_KEYS[WHITE_PAWN][squareFrom];
-                                this.zobristKey ^= Zobrist.PIECE_KEYS[WHITE_BISHOP][squareTo];
-                                break;
-                            case ROOK:
-                                // Update evaluations for promotion to rook
-                                currentEvalMG += ROOK_SCORE + ROOK_TABLE_MG[Long.numberOfTrailingZeros(toBitboard) ^ 56]
-                                        - PAWN_SCORE - PAWN_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
-                                currentEvalEG += ROOK_SCORE + ROOK_TABLE_EG[Long.numberOfTrailingZeros(toBitboard) ^ 56]
-                                        - PAWN_SCORE - PAWN_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
-                                phase += 2; // Rooks add 2 to phase
-                                whiteRooks |= toBitboard;
-                                this.zobristKey ^= Zobrist.PIECE_KEYS[WHITE_PAWN][squareFrom];
-                                this.zobristKey ^= Zobrist.PIECE_KEYS[WHITE_ROOK][squareTo];
-                                break;
-                            case QUEEN:
-                                // Update evaluations for promotion to queen
-                                currentEvalMG += QUEEN_SCORE
-                                        + QUEEN_TABLE_MG[Long.numberOfTrailingZeros(toBitboard) ^ 56] - PAWN_SCORE
-                                        - PAWN_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
-                                currentEvalEG += QUEEN_SCORE
-                                        + QUEEN_TABLE_EG[Long.numberOfTrailingZeros(toBitboard) ^ 56] - PAWN_SCORE
-                                        - PAWN_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
-                                phase += 4; // Queens add 4 to phase
-                                whiteQueens |= toBitboard;
-                                this.zobristKey ^= Zobrist.PIECE_KEYS[WHITE_PAWN][squareFrom];
-                                this.zobristKey ^= Zobrist.PIECE_KEYS[WHITE_QUEEN][squareTo];
-                                break;
-                        }
-
-                        // remove pawn
-                        whitePawns &= ~fromBitboard;
-
-                    } else {
-                        // Move pawn
-                        whitePawns &= ~fromBitboard;
-                        whitePawns |= toBitboard;
-
-                        // Update evaluations for both phases
-                        currentEvalMG += PAWN_TABLE_MG[Long.numberOfTrailingZeros(toBitboard) ^ 56]
-                                - PAWN_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
-                        currentEvalEG += PAWN_TABLE_EG[Long.numberOfTrailingZeros(toBitboard) ^ 56]
-                                - PAWN_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
-
-                        // === Update ZobristKey ===
-                        // Remove
-                        this.zobristKey ^= Zobrist.PIECE_KEYS[WHITE_PAWN][squareFrom];
-                        // Add
-                        this.zobristKey ^= Zobrist.PIECE_KEYS[WHITE_PAWN][squareTo];
-                    }
-
-                }
-
-                // Cavaliers blancs
-            } else if ((whiteKnights & fromBitboard) != 0) {
-                whiteKnights &= ~fromBitboard;
-                whiteKnights |= toBitboard;
-
-                // Update evaluations for both phases
-                currentEvalMG += KNIGHT_TABLE_MG[Long.numberOfTrailingZeros(toBitboard) ^ 56]
-                        - KNIGHT_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
-                currentEvalEG += KNIGHT_TABLE_EG[Long.numberOfTrailingZeros(toBitboard) ^ 56]
-                        - KNIGHT_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
-
-                // Update ZobristKey
-                this.zobristKey ^= Zobrist.PIECE_KEYS[WHITE_KNIGHT][squareFrom];
-                this.zobristKey ^= Zobrist.PIECE_KEYS[WHITE_KNIGHT][squareTo];
-
-                // Fous blancs
-            } else if ((whiteBishops & fromBitboard) != 0) {
-                whiteBishops &= ~fromBitboard;
-                whiteBishops |= toBitboard;
-
-                // Update evaluations for both phases
-                currentEvalMG += BISHOP_TABLE_MG[Long.numberOfTrailingZeros(toBitboard) ^ 56]
-                        - BISHOP_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
-                currentEvalEG += BISHOP_TABLE_EG[Long.numberOfTrailingZeros(toBitboard) ^ 56]
-                        - BISHOP_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
-
-                // Update ZobristKey
-                this.zobristKey ^= Zobrist.PIECE_KEYS[WHITE_BISHOP][squareFrom];
-                this.zobristKey ^= Zobrist.PIECE_KEYS[WHITE_BISHOP][squareTo];
-
-                // Tours blanches
-            } else if ((whiteRooks & fromBitboard) != 0) {
-                
-                if ((A1 & fromBitboard) != 0 && whiteCastleQueenSide != 0) {
-                    this.zobristKey ^= Zobrist.CASTLING_KEYS[getCastlingRights()];
-                    whiteCastleQueenSide = 0L;
-                    this.zobristKey ^= Zobrist.CASTLING_KEYS[getCastlingRights()];
-
-                }
-                if ((H1 & fromBitboard) != 0 && whiteCastleKingSide != 0) {
-                    this.zobristKey ^= Zobrist.CASTLING_KEYS[getCastlingRights()];
-                    whiteCastleKingSide = 0L;
-                    this.zobristKey ^= Zobrist.CASTLING_KEYS[getCastlingRights()];
-
-                }
-                whiteRooks &= ~fromBitboard;
-                whiteRooks |= toBitboard;
-                
-                // Update ZobristKey
-                this.zobristKey ^= Zobrist.PIECE_KEYS[WHITE_ROOK][squareFrom];
-                this.zobristKey ^= Zobrist.PIECE_KEYS[WHITE_ROOK][squareTo];
-
-                // Update evaluations for both phases
-                currentEvalMG += ROOK_TABLE_MG[Long.numberOfTrailingZeros(toBitboard) ^ 56]
-                        - ROOK_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
-                currentEvalEG += ROOK_TABLE_EG[Long.numberOfTrailingZeros(toBitboard) ^ 56]
-                        - ROOK_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
-
-
-                // Dames blanches
-            } else if ((whiteQueens & fromBitboard) != 0) {
-                whiteQueens &= ~fromBitboard;
-                whiteQueens |= toBitboard;
-
-                // Update evaluations for both phases
-                currentEvalMG += QUEEN_TABLE_MG[Long.numberOfTrailingZeros(toBitboard) ^ 56]
-                        - QUEEN_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
-                currentEvalEG += QUEEN_TABLE_EG[Long.numberOfTrailingZeros(toBitboard) ^ 56]
-                        - QUEEN_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
-
-                // Update ZobristKey
-                this.zobristKey ^= Zobrist.PIECE_KEYS[WHITE_QUEEN][squareFrom];
-                this.zobristKey ^= Zobrist.PIECE_KEYS[WHITE_QUEEN][squareTo];
-
-                // Roi blanc
-            } else if ((whiteKing & fromBitboard) != 0) {
-                if (((whiteCastleQueenSide != 0) && (C1 & toBitboard) != 0)
-                        || ((whiteCastleKingSide != 0) && (G1 & toBitboard) != 0)) {
-                    // Handle castling for white
-                    if (toBitboard == 1L << 2) {
-                        processWhiteCastleQueenSide(fromBitboard);
-                    } else if (toBitboard == 1L << 6) {
-                        processWhiteCastleKingSide(fromBitboard);
-                    }
-                } else {
-                    whiteKing &= ~fromBitboard;
-                    whiteKing |= toBitboard;
-
-                    // Reset castling rights
-                    if (whiteCastleKingSide != 0 || whiteCastleQueenSide != 0) {
-                        this.zobristKey ^= Zobrist.CASTLING_KEYS[getCastlingRights()];
-                        whiteCastleQueenSide = 0L;
-                        whiteCastleKingSide = 0L;
-                        this.zobristKey ^= Zobrist.CASTLING_KEYS[getCastlingRights()];
-                    }
-
-                    // Update evaluations for both phases
-                    currentEvalMG += KING_MIDDLE_GAME_TABLE_MG[Long.numberOfTrailingZeros(toBitboard) ^ 56]
-                            - KING_MIDDLE_GAME_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
-                    currentEvalEG += KING_END_GAME_TABLE_EG[Long.numberOfTrailingZeros(toBitboard) ^ 56]
-                            - KING_END_GAME_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard) ^ 56];
-                }
-
-                // Update ZobristKey
-                this.zobristKey ^= Zobrist.PIECE_KEYS[WHITE_KING][squareFrom];
-                this.zobristKey ^= Zobrist.PIECE_KEYS[WHITE_KING][squareTo];
-            }
+            makeMoveWhite(from, to, fromBB, toBB, flags, fromFlipped, toFlipped, move);
         } else {
-
-            squareFrom = PackedMove.getFrom(move);
-            squareTo = PackedMove.getTo(move);
-
-            handleCaptureBlack(toBitboard);
-            // Pions noirs
-            if ((blackPawns & fromBitboard) != 0) {
-
-                // Handle en passant capture
-                if (PackedMove.getFlags(move) == Move.EN_PASSANT) {
-                    final long capturedPawn = enPassantSquare << 8;
-                    whitePawns &= ~capturedPawn;
-
-                    this.zobristKey ^= Zobrist.PIECE_KEYS[WHITE_PAWN][Long.numberOfTrailingZeros(capturedPawn)];
-
-                    // Move pawn
-                    blackPawns &= ~fromBitboard;
-                    blackPawns |= toBitboard;
-
-                    // Update evaluations for both phases
-                    currentEvalMG -= PAWN_TABLE_MG[Long.numberOfTrailingZeros(toBitboard)]
-                            - PAWN_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard)];
-                    currentEvalEG -= PAWN_TABLE_EG[Long.numberOfTrailingZeros(toBitboard)]
-                            - PAWN_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard)];
-
-                    // Update ZobristKey
-                    this.zobristKey ^= Zobrist.PIECE_KEYS[BLACK_PAWN][squareFrom];
-                    this.zobristKey ^= Zobrist.PIECE_KEYS[BLACK_PAWN][squareTo];
-                }
-
-                // Handle double pawn push
-                else if (PackedMove.getFlags(move) == Move.DOUBLE_PAWN_PUSH) {
-                    if (enPassantSquare != 0) {
-                        this.zobristKey ^= Zobrist.EN_PASSANT_KEYS[Long.numberOfTrailingZeros(enPassantSquare)];
-                    }
-                    enPassantSquare = toBitboard << 8;
-
-                    // Move pawn
-                    blackPawns &= ~fromBitboard;
-                    blackPawns |= toBitboard;
-
-                    // Update evaluations for both phases
-                    currentEvalMG -= PAWN_TABLE_MG[Long.numberOfTrailingZeros(toBitboard)]
-                            - PAWN_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard)];
-                    currentEvalEG -= PAWN_TABLE_EG[Long.numberOfTrailingZeros(toBitboard)]
-                            - PAWN_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard)];
-
-                    // Update ZobirstKey
-                    this.zobristKey ^= Zobrist.EN_PASSANT_KEYS[Long.numberOfTrailingZeros(enPassantSquare)];
-
-                    // === Update ZobristKey ===
-                    // Remove
-                    this.zobristKey ^= Zobrist.PIECE_KEYS[BLACK_PAWN][squareFrom];
-                    // Add
-                    this.zobristKey ^= Zobrist.PIECE_KEYS[BLACK_PAWN][squareTo];
-
-                } else {
-                    if (enPassantSquare != 0) {
-                        this.zobristKey ^= Zobrist.EN_PASSANT_KEYS[Long.numberOfTrailingZeros(enPassantSquare)];
-                    }
-                    enPassantSquare = 0L; // Reset en passant square
-
-                    // Handle promotion
-                    if (PackedMove.getFlags(move) == Move.PROMOTION) {
-                        switch (PackedMove.getPromotion(move)) {
-                            case KNIGHT:
-                                // Update evaluations for both phases
-                                currentEvalMG -= KNIGHT_SCORE + KNIGHT_TABLE_MG[Long.numberOfTrailingZeros(toBitboard)]
-                                        - PAWN_SCORE - PAWN_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard)];
-                                currentEvalEG -= KNIGHT_SCORE + KNIGHT_TABLE_EG[Long.numberOfTrailingZeros(toBitboard)]
-                                        - PAWN_SCORE - PAWN_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard)];
-                                phase += 1; // Knights add 1 to phase
-                                blackKnights |= toBitboard;
-                                
-                                this.zobristKey ^= Zobrist.PIECE_KEYS[BLACK_KNIGHT][squareTo];
-                                this.zobristKey ^= Zobrist.PIECE_KEYS[BLACK_PAWN][squareFrom];
-                                break;
-                            case BISHOP:
-                                // Update evaluations for both phases
-                                currentEvalMG -= BISHOP_SCORE + BISHOP_TABLE_MG[Long.numberOfTrailingZeros(toBitboard)]
-                                        - PAWN_SCORE - PAWN_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard)];
-                                currentEvalEG -= BISHOP_SCORE + BISHOP_TABLE_EG[Long.numberOfTrailingZeros(toBitboard)]
-                                        - PAWN_SCORE - PAWN_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard)];
-                                phase += 1; // Bishops add 1 to phase
-                                blackBishops |= toBitboard;
-
-                                this.zobristKey ^= Zobrist.PIECE_KEYS[BLACK_BISHOP][squareTo];
-                                this.zobristKey ^= Zobrist.PIECE_KEYS[BLACK_PAWN][squareFrom];
-                                break;
-                            case ROOK:
-                                // Update evaluations for both phases
-                                currentEvalMG -= ROOK_SCORE + ROOK_TABLE_MG[Long.numberOfTrailingZeros(toBitboard)]
-                                        - PAWN_SCORE - PAWN_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard)];
-                                currentEvalEG -= ROOK_SCORE + ROOK_TABLE_EG[Long.numberOfTrailingZeros(toBitboard)]
-                                        - PAWN_SCORE - PAWN_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard)];
-                                phase += 2; // Rooks add 2 to phase
-                                blackRooks |= toBitboard;
-
-                                this.zobristKey ^= Zobrist.PIECE_KEYS[BLACK_ROOK][squareTo];
-                                this.zobristKey ^= Zobrist.PIECE_KEYS[BLACK_PAWN][squareFrom];
-                                break;
-                            case QUEEN:
-                                // Update evaluations for both phases
-                                currentEvalMG -= QUEEN_SCORE + QUEEN_TABLE_MG[Long.numberOfTrailingZeros(toBitboard)]
-                                        - PAWN_SCORE - PAWN_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard)];
-                                currentEvalEG -= QUEEN_SCORE + QUEEN_TABLE_EG[Long.numberOfTrailingZeros(toBitboard)]
-                                        - PAWN_SCORE - PAWN_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard)];
-                                phase += 4; // Queens add 4 to phase
-                                blackQueens |= toBitboard;
-
-                                this.zobristKey ^= Zobrist.PIECE_KEYS[BLACK_QUEEN][squareTo];
-                                this.zobristKey ^= Zobrist.PIECE_KEYS[BLACK_PAWN][squareFrom];
-                                break;
-                        }
-
-                        // remove pawn
-                        blackPawns &= ~fromBitboard;
-
-                    } else {
-                        // Move pawn
-                        blackPawns &= ~fromBitboard;
-                        blackPawns |= toBitboard;
-
-                        // Update evaluations for both phases
-                        currentEvalMG -= PAWN_TABLE_MG[Long.numberOfTrailingZeros(toBitboard)]
-                                - PAWN_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard)];
-                        currentEvalEG -= PAWN_TABLE_EG[Long.numberOfTrailingZeros(toBitboard)]
-                                - PAWN_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard)];
-
-                        // Update ZobristKey
-                        this.zobristKey ^= Zobrist.PIECE_KEYS[BLACK_PAWN][squareFrom];
-                        this.zobristKey ^= Zobrist.PIECE_KEYS[BLACK_PAWN][squareTo];
-                    }
-                }
-
-                // Cavaliers noirs
-            } else if ((blackKnights & fromBitboard) != 0) {
-                blackKnights &= ~fromBitboard;
-                blackKnights |= toBitboard;
-
-                // Update evaluations for both phases
-                currentEvalMG -= KNIGHT_TABLE_MG[Long.numberOfTrailingZeros(toBitboard)]
-                        - KNIGHT_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard)];
-                currentEvalEG -= KNIGHT_TABLE_EG[Long.numberOfTrailingZeros(toBitboard)]
-                        - KNIGHT_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard)];
-
-                // Update ZobristKey
-                this.zobristKey ^= Zobrist.PIECE_KEYS[BLACK_KNIGHT][squareFrom];
-                this.zobristKey ^= Zobrist.PIECE_KEYS[BLACK_KNIGHT][squareTo];
-
-                // Fous noirs
-            } else if ((blackBishops & fromBitboard) != 0) {
-                blackBishops &= ~fromBitboard;
-                blackBishops |= toBitboard;
-
-                // Update evaluations for both phases
-                currentEvalMG -= BISHOP_TABLE_MG[Long.numberOfTrailingZeros(toBitboard)]
-                        - BISHOP_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard)];
-                currentEvalEG -= BISHOP_TABLE_EG[Long.numberOfTrailingZeros(toBitboard)]
-                        - BISHOP_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard)];
-
-                // Update ZobristKey
-                this.zobristKey ^= Zobrist.PIECE_KEYS[BLACK_BISHOP][squareFrom];
-                this.zobristKey ^= Zobrist.PIECE_KEYS[BLACK_BISHOP][squareTo];
-
-                // Tours noires
-            } else if ((blackRooks & fromBitboard) != 0) {
-                
-                if ((A8 & fromBitboard) != 0 && blackCastleQueenSide != 0) {
-                    this.zobristKey ^= Zobrist.CASTLING_KEYS[getCastlingRights()];
-                    blackCastleQueenSide = 0L;
-                    this.zobristKey ^= Zobrist.CASTLING_KEYS[getCastlingRights()];
-                }
-                if ((H8 & fromBitboard) != 0 && blackCastleKingSide != 0) {
-                    this.zobristKey ^= Zobrist.CASTLING_KEYS[getCastlingRights()];
-                    blackCastleKingSide = 0L;
-                    this.zobristKey ^= Zobrist.CASTLING_KEYS[getCastlingRights()];
-                }
-
-                // Update ZobristKey
-                this.zobristKey ^= Zobrist.PIECE_KEYS[BLACK_ROOK][squareFrom];
-                this.zobristKey ^= Zobrist.PIECE_KEYS[BLACK_ROOK][squareTo];
-
-                blackRooks &= ~fromBitboard;
-                blackRooks |= toBitboard;
-
-                // Update evaluations for both phases
-                currentEvalMG -= ROOK_TABLE_MG[Long.numberOfTrailingZeros(toBitboard)]
-                        - ROOK_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard)];
-                currentEvalEG -= ROOK_TABLE_EG[Long.numberOfTrailingZeros(toBitboard)]
-                        - ROOK_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard)];
-
-                // Dames noires
-            } else if ((blackQueens & fromBitboard) != 0) {
-                blackQueens &= ~fromBitboard;
-                blackQueens |= toBitboard;
-
-                // Update evaluations for both phases
-                currentEvalMG -= QUEEN_TABLE_MG[Long.numberOfTrailingZeros(toBitboard)]
-                        - QUEEN_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard)];
-                currentEvalEG -= QUEEN_TABLE_EG[Long.numberOfTrailingZeros(toBitboard)]
-                        - QUEEN_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard)];
-
-                // Update ZobristKey
-                this.zobristKey ^= Zobrist.PIECE_KEYS[BLACK_QUEEN][squareFrom];
-                this.zobristKey ^= Zobrist.PIECE_KEYS[BLACK_QUEEN][squareTo];
-
-                // Roi noir
-            } else if ((blackKing & fromBitboard) != 0) {
-                if (((blackCastleQueenSide != 0) && (C8 & toBitboard) != 0)
-                        || ((blackCastleKingSide != 0) && (G8 & toBitboard) != 0)) {
-                    // Handle castling for black
-                    if (toBitboard == 1L << 58) {
-                        processBlackCastleQueenSide(fromBitboard);
-                    } else if (toBitboard == 1L << 62) {
-                        processBlackCastleKingSide(fromBitboard);
-                    }
-                } else {
-                    blackKing &= ~fromBitboard;
-                    blackKing |= toBitboard;
-
-                    // Reset castling rights
-                    if (blackCastleKingSide != 0 || blackCastleQueenSide != 0) {
-                        this.zobristKey ^= Zobrist.CASTLING_KEYS[getCastlingRights()];
-                        blackCastleQueenSide = 0L;
-                        blackCastleKingSide = 0L;
-                        this.zobristKey ^= Zobrist.CASTLING_KEYS[getCastlingRights()];
-                    }
-
-                    // Update evaluations for both phases
-                    currentEvalMG -= KING_MIDDLE_GAME_TABLE_MG[Long.numberOfTrailingZeros(toBitboard)]
-                            - KING_MIDDLE_GAME_TABLE_MG[Long.numberOfTrailingZeros(fromBitboard)];
-                    currentEvalEG -= KING_END_GAME_TABLE_EG[Long.numberOfTrailingZeros(toBitboard)]
-                            - KING_END_GAME_TABLE_EG[Long.numberOfTrailingZeros(fromBitboard)];
-                }
-
-                // Update ZobristKey
-                this.zobristKey ^= Zobrist.PIECE_KEYS[BLACK_KING][squareFrom];
-                this.zobristKey ^= Zobrist.PIECE_KEYS[BLACK_KING][squareTo];
-            }
+            makeMoveBlack(from, to, fromBB, toBB, flags, move);
         }
 
-        // Update turn and reset en passant square if not a double pawn push
+        // Toggle side to move
         whiteTurn = !whiteTurn;
-        if (PackedMove.getFlags(move) != Move.DOUBLE_PAWN_PUSH) {
-            if (enPassantSquare != 0) {
-                this.zobristKey ^= Zobrist.EN_PASSANT_KEYS[Long.numberOfTrailingZeros(enPassantSquare)];
-            }
+        zobristKey ^= Zobrist.SIDE_TO_MOVE_KEY;
+
+        // Handle en passant cleanup
+        if (flags != Move.DOUBLE_PAWN_PUSH && enPassantSquare != 0) {
+            zobristKey ^= Zobrist.EN_PASSANT_KEYS[Long.numberOfTrailingZeros(enPassantSquare)];
             enPassantSquare = 0L;
         }
-        
-        this.zobristKey ^= Zobrist.SIDE_TO_MOVE_KEY;
 
         plyCount++;
-
-        
-        // Update the bitboard representation
         updateBitBoard();
-
-        // Ensure phase doesn't exceed 24
         phase = Math.min(phase, 24);
+    }
+
+    private void makeMoveWhite(int from, int to, long fromBB, long toBB, int flags, int fromFlipped, int toFlipped,
+            long move) {
+        // Handle captures first (branch prediction optimization)
+        if ((blackPieces & toBB) != 0) {
+            handleCaptureWhite(toBB);
+        }
+
+        // Determine piece type using bitwise operations for speed
+        long piece = fromBB;
+
+        if ((whitePawns & piece) != 0) {
+            handleWhitePawnMove(from, to, fromBB, toBB, flags, fromFlipped, toFlipped, move);
+        } else if ((whiteKnights & piece) != 0) {
+            movePieceSimple(from, to, fromBB, toBB, fromFlipped, toFlipped,
+                    KNIGHT_TABLE_MG, KNIGHT_TABLE_EG, WHITE, KNIGHT);
+            whiteKnights = (whiteKnights & ~fromBB) | toBB;
+        } else if ((whiteBishops & piece) != 0) {
+            movePieceSimple(from, to, fromBB, toBB, fromFlipped, toFlipped,
+                    BISHOP_TABLE_MG, BISHOP_TABLE_EG, WHITE, BISHOP);
+            whiteBishops = (whiteBishops & ~fromBB) | toBB;
+        } else if ((whiteRooks & piece) != 0) {
+            handleWhiteRookMove(from, to, fromBB, toBB, fromFlipped, toFlipped);
+        } else if ((whiteQueens & piece) != 0) {
+            movePieceSimple(from, to, fromBB, toBB, fromFlipped, toFlipped,
+                    QUEEN_TABLE_MG, QUEEN_TABLE_EG, WHITE, QUEEN);
+            whiteQueens = (whiteQueens & ~fromBB) | toBB;
+        } else if ((whiteKing & piece) != 0) {
+            handleWhiteKingMove(from, to, fromBB, toBB, fromFlipped, toFlipped, flags);
+        }
+    }
+
+    private void makeMoveBlack(int from, int to, long fromBB, long toBB, int flags, long move) {
+        if ((whitePieces & toBB) != 0) {
+            handleCaptureBlack(toBB);
+        }
+
+        long piece = fromBB;
+
+        if ((blackPawns & piece) != 0) {
+            handleBlackPawnMove(from, to, fromBB, toBB, flags, move);
+        } else if ((blackKnights & piece) != 0) {
+            movePieceSimple(from, to, fromBB, toBB, from, to,
+                    KNIGHT_TABLE_MG, KNIGHT_TABLE_EG, BLACK, KNIGHT);
+            blackKnights = (blackKnights & ~fromBB) | toBB;
+        } else if ((blackBishops & piece) != 0) {
+            movePieceSimple(from, to, fromBB, toBB, from, to,
+                    BISHOP_TABLE_MG, BISHOP_TABLE_EG, BLACK, BISHOP);
+            blackBishops = (blackBishops & ~fromBB) | toBB;
+        } else if ((blackRooks & piece) != 0) {
+            handleBlackRookMove(from, to, fromBB, toBB);
+        } else if ((blackQueens & piece) != 0) {
+            movePieceSimple(from, to, fromBB, toBB, from, to,
+                    QUEEN_TABLE_MG, QUEEN_TABLE_EG, BLACK, QUEEN);
+            blackQueens = (blackQueens & ~fromBB) | toBB;
+        } else if ((blackKing & piece) != 0) {
+            handleBlackKingMove(from, to, fromBB, toBB, flags);
+        }
+    }
+
+    // Optimized helper for simple piece moves
+    private void movePieceSimple(int from, int to, long fromBB, long toBB,
+            int fromIdx, int toIdx,
+            int[] tableMG, int[] tableEG,
+            int color, int pieceType) {
+        int sign = (color == WHITE) ? 1 : -1;
+        currentEvalMG += sign * (tableMG[toIdx] - tableMG[fromIdx]);
+        currentEvalEG += sign * (tableEG[toIdx] - tableEG[fromIdx]);
+        zobristKey ^= Zobrist.PIECE_KEYS[color][pieceType][from] ^
+                Zobrist.PIECE_KEYS[color][pieceType][to];
+    }
+
+    private void handleWhitePawnMove(int from, int to, long fromBB, long toBB,
+            int flags, int fromFlipped, int toFlipped, long move) {
+        if (flags == Move.EN_PASSANT) {
+            long capturedPawn = enPassantSquare >> 8;
+            blackPawns &= ~capturedPawn;
+            zobristKey ^= Zobrist.PIECE_KEYS[BLACK][PAWN][Long.numberOfTrailingZeros(capturedPawn)];
+
+            whitePawns = (whitePawns & ~fromBB) | toBB;
+            currentEvalMG += PAWN_TABLE_MG[toFlipped] - PAWN_TABLE_MG[fromFlipped];
+            currentEvalEG += PAWN_TABLE_EG[toFlipped] - PAWN_TABLE_EG[fromFlipped];
+            zobristKey ^= Zobrist.PIECE_KEYS[WHITE][PAWN][from] ^
+                    Zobrist.PIECE_KEYS[WHITE][PAWN][to];
+        } else if (flags == Move.DOUBLE_PAWN_PUSH) {
+            if (enPassantSquare != 0) {
+                zobristKey ^= Zobrist.EN_PASSANT_KEYS[Long.numberOfTrailingZeros(enPassantSquare)];
+            }
+            enPassantSquare = toBB >> 8;
+
+            whitePawns = (whitePawns & ~fromBB) | toBB;
+            currentEvalMG += PAWN_TABLE_MG[toFlipped] - PAWN_TABLE_MG[fromFlipped];
+            currentEvalEG += PAWN_TABLE_EG[toFlipped] - PAWN_TABLE_EG[fromFlipped];
+            zobristKey ^= Zobrist.EN_PASSANT_KEYS[Long.numberOfTrailingZeros(enPassantSquare)] ^
+                    Zobrist.PIECE_KEYS[WHITE][PAWN][from] ^
+                    Zobrist.PIECE_KEYS[WHITE][PAWN][to];
+        } else if (flags == Move.PROMOTION) {
+            handleWhitePromotion(from, to, fromBB, toBB, toFlipped, fromFlipped, move);
+        } else {
+            whitePawns = (whitePawns & ~fromBB) | toBB;
+            currentEvalMG += PAWN_TABLE_MG[toFlipped] - PAWN_TABLE_MG[fromFlipped];
+            currentEvalEG += PAWN_TABLE_EG[toFlipped] - PAWN_TABLE_EG[fromFlipped];
+            zobristKey ^= Zobrist.PIECE_KEYS[WHITE][PAWN][from] ^
+                    Zobrist.PIECE_KEYS[WHITE][PAWN][to];
+        }
+    }
+
+    private void handleWhitePromotion(int from, int to, long fromBB, long toBB,
+            int toFlipped, int fromFlipped, long move) {
+        int promoType = PackedMove.getPromotion(move);
+
+        // Remove pawn
+        whitePawns &= ~fromBB;
+        zobristKey ^= Zobrist.PIECE_KEYS[WHITE][PAWN][from];
+
+        // Common eval update for removing pawn
+        currentEvalMG -= PAWN_SCORE + PAWN_TABLE_MG[fromFlipped];
+        currentEvalEG -= PAWN_SCORE + PAWN_TABLE_EG[fromFlipped];
+
+        // Add promoted piece - using lookup tables would be faster here
+        switch (promoType) {
+            case KNIGHT:
+                whiteKnights |= toBB;
+                currentEvalMG += KNIGHT_SCORE + KNIGHT_TABLE_MG[toFlipped];
+                currentEvalEG += KNIGHT_SCORE + KNIGHT_TABLE_EG[toFlipped];
+                phase += 1;
+                zobristKey ^= Zobrist.PIECE_KEYS[WHITE][KNIGHT][to];
+                break;
+            case BISHOP:
+                whiteBishops |= toBB;
+                currentEvalMG += BISHOP_SCORE + BISHOP_TABLE_MG[toFlipped];
+                currentEvalEG += BISHOP_SCORE + BISHOP_TABLE_EG[toFlipped];
+                phase += 1;
+                zobristKey ^= Zobrist.PIECE_KEYS[WHITE][BISHOP][to];
+                break;
+            case ROOK:
+                whiteRooks |= toBB;
+                currentEvalMG += ROOK_SCORE + ROOK_TABLE_MG[toFlipped];
+                currentEvalEG += ROOK_SCORE + ROOK_TABLE_EG[toFlipped];
+                phase += 2;
+                zobristKey ^= Zobrist.PIECE_KEYS[WHITE][ROOK][to];
+                break;
+            case QUEEN:
+                whiteQueens |= toBB;
+                currentEvalMG += QUEEN_SCORE + QUEEN_TABLE_MG[toFlipped];
+                currentEvalEG += QUEEN_SCORE + QUEEN_TABLE_EG[toFlipped];
+                phase += 4;
+                zobristKey ^= Zobrist.PIECE_KEYS[WHITE][QUEEN][to];
+                break;
+        }
+    }
+
+    private void handleWhiteRookMove(int from, int to, long fromBB, long toBB,
+            int fromFlipped, int toFlipped) {
+        // Check castling rights with bitwise comparison
+        if ((fromBB & A1) != 0 && whiteCastleQueenSide != 0) {
+            zobristKey ^= Zobrist.CASTLING_KEYS[getCastlingRights()];
+            whiteCastleQueenSide = 0L;
+            zobristKey ^= Zobrist.CASTLING_KEYS[getCastlingRights()];
+        } else if ((fromBB & H1) != 0 && whiteCastleKingSide != 0) {
+            zobristKey ^= Zobrist.CASTLING_KEYS[getCastlingRights()];
+            whiteCastleKingSide = 0L;
+            zobristKey ^= Zobrist.CASTLING_KEYS[getCastlingRights()];
+        }
+
+        whiteRooks = (whiteRooks & ~fromBB) | toBB;
+        currentEvalMG += ROOK_TABLE_MG[toFlipped] - ROOK_TABLE_MG[fromFlipped];
+        currentEvalEG += ROOK_TABLE_EG[toFlipped] - ROOK_TABLE_EG[fromFlipped];
+        zobristKey ^= Zobrist.PIECE_KEYS[WHITE][ROOK][from] ^
+                Zobrist.PIECE_KEYS[WHITE][ROOK][to];
+    }
+
+    private void handleWhiteKingMove(int from, int to, long fromBB, long toBB,
+            int fromFlipped, int toFlipped, int flags) {
+        // Check for castling
+        if ((toBB & (C1 | G1)) != 0 &&
+                (whiteCastleQueenSide != 0 || whiteCastleKingSide != 0)) {
+            if ((toBB & C1) != 0) {
+                processWhiteCastleQueenSide(fromBB);
+            } else {
+                processWhiteCastleKingSide(fromBB);
+            }
+        } else {
+            whiteKing = toBB;
+
+            // Update castling rights if they exist
+            if ((whiteCastleKingSide | whiteCastleQueenSide) != 0) {
+                zobristKey ^= Zobrist.CASTLING_KEYS[getCastlingRights()];
+                whiteCastleQueenSide = 0L;
+                whiteCastleKingSide = 0L;
+                zobristKey ^= Zobrist.CASTLING_KEYS[getCastlingRights()];
+            }
+
+            currentEvalMG += KING_MIDDLE_GAME_TABLE_MG[toFlipped] -
+                    KING_MIDDLE_GAME_TABLE_MG[fromFlipped];
+            currentEvalEG += KING_END_GAME_TABLE_EG[toFlipped] -
+                    KING_END_GAME_TABLE_EG[fromFlipped];
+        }
+
+        zobristKey ^= Zobrist.PIECE_KEYS[WHITE][KING][from] ^
+                Zobrist.PIECE_KEYS[WHITE][KING][to];
+    }
+
+    private void handleBlackPawnMove(int from, int to, long fromBB, long toBB,
+            int flags, long move) {
+        if (flags == Move.EN_PASSANT) {
+            long capturedPawn = enPassantSquare << 8;
+            whitePawns &= ~capturedPawn;
+            zobristKey ^= Zobrist.PIECE_KEYS[WHITE][PAWN][Long.numberOfTrailingZeros(capturedPawn)];
+
+            blackPawns = (blackPawns & ~fromBB) | toBB;
+            currentEvalMG -= PAWN_TABLE_MG[to] - PAWN_TABLE_MG[from];
+            currentEvalEG -= PAWN_TABLE_EG[to] - PAWN_TABLE_EG[from];
+            zobristKey ^= Zobrist.PIECE_KEYS[BLACK][PAWN][from] ^
+                    Zobrist.PIECE_KEYS[BLACK][PAWN][to];
+        } else if (flags == Move.DOUBLE_PAWN_PUSH) {
+            if (enPassantSquare != 0) {
+                zobristKey ^= Zobrist.EN_PASSANT_KEYS[Long.numberOfTrailingZeros(enPassantSquare)];
+            }
+            enPassantSquare = toBB << 8;
+
+            blackPawns = (blackPawns & ~fromBB) | toBB;
+            currentEvalMG -= PAWN_TABLE_MG[to] - PAWN_TABLE_MG[from];
+            currentEvalEG -= PAWN_TABLE_EG[to] - PAWN_TABLE_EG[from];
+            zobristKey ^= Zobrist.EN_PASSANT_KEYS[Long.numberOfTrailingZeros(enPassantSquare)] ^
+                    Zobrist.PIECE_KEYS[BLACK][PAWN][from] ^
+                    Zobrist.PIECE_KEYS[BLACK][PAWN][to];
+        } else if (flags == Move.PROMOTION) {
+            handleBlackPromotion(from, to, fromBB, toBB, move);
+        } else {
+            blackPawns = (blackPawns & ~fromBB) | toBB;
+            currentEvalMG -= PAWN_TABLE_MG[to] - PAWN_TABLE_MG[from];
+            currentEvalEG -= PAWN_TABLE_EG[to] - PAWN_TABLE_EG[from];
+            zobristKey ^= Zobrist.PIECE_KEYS[BLACK][PAWN][from] ^
+                    Zobrist.PIECE_KEYS[BLACK][PAWN][to];
+        }
+    }
+
+    private void handleBlackPromotion(int from, int to, long fromBB, long toBB, long move) {
+        int promoType = PackedMove.getPromotion(move);
+
+        // Remove pawn
+        blackPawns &= ~fromBB;
+        zobristKey ^= Zobrist.PIECE_KEYS[BLACK][PAWN][from];
+
+        // Common eval update for removing pawn
+        currentEvalMG += PAWN_SCORE + PAWN_TABLE_MG[from];
+        currentEvalEG += PAWN_SCORE + PAWN_TABLE_EG[from];
+
+        // Add promoted piece
+        switch (promoType) {
+            case KNIGHT:
+                blackKnights |= toBB;
+                currentEvalMG -= KNIGHT_SCORE + KNIGHT_TABLE_MG[to];
+                currentEvalEG -= KNIGHT_SCORE + KNIGHT_TABLE_EG[to];
+                phase += 1;
+                zobristKey ^= Zobrist.PIECE_KEYS[BLACK][KNIGHT][to];
+                break;
+            case BISHOP:
+                blackBishops |= toBB;
+                currentEvalMG -= BISHOP_SCORE + BISHOP_TABLE_MG[to];
+                currentEvalEG -= BISHOP_SCORE + BISHOP_TABLE_EG[to];
+                phase += 1;
+                zobristKey ^= Zobrist.PIECE_KEYS[BLACK][BISHOP][to];
+                break;
+            case ROOK:
+                blackRooks |= toBB;
+                currentEvalMG -= ROOK_SCORE + ROOK_TABLE_MG[to];
+                currentEvalEG -= ROOK_SCORE + ROOK_TABLE_EG[to];
+                phase += 2;
+                zobristKey ^= Zobrist.PIECE_KEYS[BLACK][ROOK][to];
+                break;
+            case QUEEN:
+                blackQueens |= toBB;
+                currentEvalMG -= QUEEN_SCORE + QUEEN_TABLE_MG[to];
+                currentEvalEG -= QUEEN_SCORE + QUEEN_TABLE_EG[to];
+                phase += 4;
+                zobristKey ^= Zobrist.PIECE_KEYS[BLACK][QUEEN][to];
+                break;
+        }
+    }
+
+    private void handleBlackRookMove(int from, int to, long fromBB, long toBB) {
+        // Check castling rights with bitwise comparison
+        if ((fromBB & A8) != 0 && blackCastleQueenSide != 0) {
+            zobristKey ^= Zobrist.CASTLING_KEYS[getCastlingRights()];
+            blackCastleQueenSide = 0L;
+            zobristKey ^= Zobrist.CASTLING_KEYS[getCastlingRights()];
+        } else if ((fromBB & H8) != 0 && blackCastleKingSide != 0) {
+            zobristKey ^= Zobrist.CASTLING_KEYS[getCastlingRights()];
+            blackCastleKingSide = 0L;
+            zobristKey ^= Zobrist.CASTLING_KEYS[getCastlingRights()];
+        }
+
+        blackRooks = (blackRooks & ~fromBB) | toBB;
+        currentEvalMG -= ROOK_TABLE_MG[to] - ROOK_TABLE_MG[from];
+        currentEvalEG -= ROOK_TABLE_EG[to] - ROOK_TABLE_EG[from];
+        zobristKey ^= Zobrist.PIECE_KEYS[BLACK][ROOK][from] ^
+                Zobrist.PIECE_KEYS[BLACK][ROOK][to];
+    }
+
+    private void handleBlackKingMove(int from, int to, long fromBB, long toBB, int flags) {
+        // Check for castling
+        if ((toBB & (C8 | G8)) != 0 &&
+                (blackCastleQueenSide != 0 || blackCastleKingSide != 0)) {
+            if ((toBB & C8) != 0) {
+                processBlackCastleQueenSide(fromBB);
+            } else {
+                processBlackCastleKingSide(fromBB);
+            }
+        } else {
+            blackKing = toBB;
+
+            // Update castling rights if they exist
+            if ((blackCastleKingSide | blackCastleQueenSide) != 0) {
+                zobristKey ^= Zobrist.CASTLING_KEYS[getCastlingRights()];
+                blackCastleQueenSide = 0L;
+                blackCastleKingSide = 0L;
+                zobristKey ^= Zobrist.CASTLING_KEYS[getCastlingRights()];
+            }
+
+            currentEvalMG -= KING_MIDDLE_GAME_TABLE_MG[to] -
+                    KING_MIDDLE_GAME_TABLE_MG[from];
+            currentEvalEG -= KING_END_GAME_TABLE_EG[to] -
+                    KING_END_GAME_TABLE_EG[from];
+        }
+
+        zobristKey ^= Zobrist.PIECE_KEYS[BLACK][KING][from] ^
+                Zobrist.PIECE_KEYS[BLACK][KING][to];
+    }
+
+    // Optimized capture handlers with early returns
+    public final void handleCaptureWhite(long toBB) {
+        final int toSquare = Long.numberOfTrailingZeros(toBB);
+
+        if ((blackPawns & toBB) != 0) {
+            blackPawns &= ~toBB;
+            currentEvalMG += PAWN_SCORE + PAWN_TABLE_MG[toSquare];
+            currentEvalEG += PAWN_SCORE + PAWN_TABLE_EG[toSquare];
+            zobristKey ^= Zobrist.PIECE_KEYS[BLACK][PAWN][toSquare];
+            return;
+        }
+        if ((blackKnights & toBB) != 0) {
+            blackKnights &= ~toBB;
+            currentEvalMG += KNIGHT_SCORE + KNIGHT_TABLE_MG[toSquare];
+            currentEvalEG += KNIGHT_SCORE + KNIGHT_TABLE_EG[toSquare];
+            phase -= 1;
+            zobristKey ^= Zobrist.PIECE_KEYS[BLACK][KNIGHT][toSquare];
+            return;
+        }
+        if ((blackBishops & toBB) != 0) {
+            blackBishops &= ~toBB;
+            currentEvalMG += BISHOP_SCORE + BISHOP_TABLE_MG[toSquare];
+            currentEvalEG += BISHOP_SCORE + BISHOP_TABLE_EG[toSquare];
+            phase -= 1;
+            zobristKey ^= Zobrist.PIECE_KEYS[BLACK][BISHOP][toSquare];
+            return;
+        }
+        if ((blackRooks & toBB) != 0) {
+            blackRooks &= ~toBB;
+            currentEvalMG += ROOK_SCORE + ROOK_TABLE_MG[toSquare];
+            currentEvalEG += ROOK_SCORE + ROOK_TABLE_EG[toSquare];
+            phase -= 2;
+            zobristKey ^= Zobrist.PIECE_KEYS[BLACK][ROOK][toSquare];
+            return;
+        }
+        if ((blackQueens & toBB) != 0) {
+            blackQueens &= ~toBB;
+            currentEvalMG += QUEEN_SCORE + QUEEN_TABLE_MG[toSquare];
+            currentEvalEG += QUEEN_SCORE + QUEEN_TABLE_EG[toSquare];
+            phase -= 4;
+            zobristKey ^= Zobrist.PIECE_KEYS[BLACK][QUEEN][toSquare];
+        }
+    }
+
+    public final void handleCaptureBlack(long toBB) {
+        final int toSquare = Long.numberOfTrailingZeros(toBB);
+        final int toSquareFlipped = toSquare ^ 56;
+
+        if ((whitePawns & toBB) != 0) {
+            whitePawns &= ~toBB;
+            currentEvalMG -= PAWN_SCORE + PAWN_TABLE_MG[toSquareFlipped];
+            currentEvalEG -= PAWN_SCORE + PAWN_TABLE_EG[toSquareFlipped];
+            zobristKey ^= Zobrist.PIECE_KEYS[WHITE][PAWN][toSquare];
+            return;
+        }
+        if ((whiteKnights & toBB) != 0) {
+            whiteKnights &= ~toBB;
+            currentEvalMG -= KNIGHT_SCORE + KNIGHT_TABLE_MG[toSquareFlipped];
+            currentEvalEG -= KNIGHT_SCORE + KNIGHT_TABLE_EG[toSquareFlipped];
+            phase -= 1;
+            zobristKey ^= Zobrist.PIECE_KEYS[WHITE][KNIGHT][toSquare];
+            return;
+        }
+        if ((whiteBishops & toBB) != 0) {
+            whiteBishops &= ~toBB;
+            currentEvalMG -= BISHOP_SCORE + BISHOP_TABLE_MG[toSquareFlipped];
+            currentEvalEG -= BISHOP_SCORE + BISHOP_TABLE_EG[toSquareFlipped];
+            phase -= 1;
+            zobristKey ^= Zobrist.PIECE_KEYS[WHITE][BISHOP][toSquare];
+            return;
+        }
+        if ((whiteRooks & toBB) != 0) {
+            whiteRooks &= ~toBB;
+            currentEvalMG -= ROOK_SCORE + ROOK_TABLE_MG[toSquareFlipped];
+            currentEvalEG -= ROOK_SCORE + ROOK_TABLE_EG[toSquareFlipped];
+            phase -= 2;
+            zobristKey ^= Zobrist.PIECE_KEYS[WHITE][ROOK][toSquare];
+            return;
+        }
+        if ((whiteQueens & toBB) != 0) {
+            whiteQueens &= ~toBB;
+            currentEvalMG -= QUEEN_SCORE + QUEEN_TABLE_MG[toSquareFlipped];
+            currentEvalEG -= QUEEN_SCORE + QUEEN_TABLE_EG[toSquareFlipped];
+            phase -= 4;
+            zobristKey ^= Zobrist.PIECE_KEYS[WHITE][QUEEN][toSquare];
+        }
     }
 
     public void undoMove() {
@@ -1797,7 +1830,7 @@ public class Board {
             throw new IllegalStateException("No move to undo");
         }
     }
-    
+
 
     public final void restoreBoardHistory(BoardHistory boardHistory) {
         bitboard = boardHistory.bitboard;
@@ -1830,86 +1863,6 @@ public class Board {
         blackPieces = blackPawns | blackKnights | blackBishops | blackRooks | blackQueens | blackKing;
     }
 
-    public void handleCaptureWhite(long toBitboard) {
-        if ((blackPawns & toBitboard) != 0) {
-            blackPawns &= ~toBitboard;
-            currentEvalMG += PAWN_SCORE + PAWN_TABLE_MG[Long.numberOfTrailingZeros(toBitboard)];
-            currentEvalEG += PAWN_SCORE + PAWN_TABLE_EG[Long.numberOfTrailingZeros(toBitboard)];
-            // phase -= 0; // Pawns don't contribute to phase
-            this.zobristKey ^= Zobrist.PIECE_KEYS[6][Long.numberOfTrailingZeros(toBitboard)];
-        } else if ((blackKnights & toBitboard) != 0) {
-            blackKnights &= ~toBitboard;
-            currentEvalMG += KNIGHT_SCORE + KNIGHT_TABLE_MG[Long.numberOfTrailingZeros(toBitboard)];
-            currentEvalEG += KNIGHT_SCORE + KNIGHT_TABLE_EG[Long.numberOfTrailingZeros(toBitboard)];
-            phase -= 1; // Knights contribute 1 to phase
-            this.zobristKey ^= Zobrist.PIECE_KEYS[7][Long.numberOfTrailingZeros(toBitboard)];
-        } else if ((blackBishops & toBitboard) != 0) {
-            blackBishops &= ~toBitboard;
-            currentEvalMG += BISHOP_SCORE + BISHOP_TABLE_MG[Long.numberOfTrailingZeros(toBitboard)];
-            currentEvalEG += BISHOP_SCORE + BISHOP_TABLE_EG[Long.numberOfTrailingZeros(toBitboard)];
-            phase -= 1; // Bishops contribute 1 to phase
-            this.zobristKey ^= Zobrist.PIECE_KEYS[8][Long.numberOfTrailingZeros(toBitboard)];
-        } else if ((blackRooks & toBitboard) != 0) {
-            blackRooks &= ~toBitboard;
-            currentEvalMG += ROOK_SCORE + ROOK_TABLE_MG[Long.numberOfTrailingZeros(toBitboard)];
-            currentEvalEG += ROOK_SCORE + ROOK_TABLE_EG[Long.numberOfTrailingZeros(toBitboard)];
-            phase -= 2; // Rooks contribute 2 to phase
-            this.zobristKey ^= Zobrist.PIECE_KEYS[9][Long.numberOfTrailingZeros(toBitboard)];
-        } else if ((blackQueens & toBitboard) != 0) {
-            blackQueens &= ~toBitboard;
-            currentEvalMG += QUEEN_SCORE + QUEEN_TABLE_MG[Long.numberOfTrailingZeros(toBitboard)];
-            currentEvalEG += QUEEN_SCORE + QUEEN_TABLE_EG[Long.numberOfTrailingZeros(toBitboard)];
-            phase -= 4; // Queens contribute 4 to phase
-            this.zobristKey ^= Zobrist.PIECE_KEYS[10][Long.numberOfTrailingZeros(toBitboard)];
-        } else if ((blackKing & toBitboard) != 0) {
-            blackKing &= ~toBitboard;
-            currentEvalMG += KING_SCORE + KING_MIDDLE_GAME_TABLE_MG[Long.numberOfTrailingZeros(toBitboard)];
-            currentEvalEG += KING_SCORE + KING_END_GAME_TABLE_EG[Long.numberOfTrailingZeros(toBitboard)];
-            phase -= 6; // King contributes 6 to phase
-            this.zobristKey ^= Zobrist.PIECE_KEYS[11][Long.numberOfTrailingZeros(toBitboard)];
-        }
-    }
-
-    public void handleCaptureBlack(long toBitboard) {
-        if ((whitePawns & toBitboard) != 0) {
-            whitePawns &= ~toBitboard;
-            currentEvalMG -= PAWN_SCORE + PAWN_TABLE_MG[Long.numberOfTrailingZeros(toBitboard) ^ 56];
-            currentEvalEG -= PAWN_SCORE + PAWN_TABLE_EG[Long.numberOfTrailingZeros(toBitboard) ^ 56];
-            // phase -= 0; // Pawns don't contribute to phase
-            this.zobristKey ^= Zobrist.PIECE_KEYS[0][Long.numberOfTrailingZeros(toBitboard)];
-        } else if ((whiteKnights & toBitboard) != 0) {
-            whiteKnights &= ~toBitboard;
-            currentEvalMG -= KNIGHT_SCORE + KNIGHT_TABLE_MG[Long.numberOfTrailingZeros(toBitboard) ^ 56];
-            currentEvalEG -= KNIGHT_SCORE + KNIGHT_TABLE_EG[Long.numberOfTrailingZeros(toBitboard) ^ 56];
-            phase -= 1; // Knights contribute 1 to phase
-            this.zobristKey ^= Zobrist.PIECE_KEYS[1][Long.numberOfTrailingZeros(toBitboard)];
-        } else if ((whiteBishops & toBitboard) != 0) {
-            whiteBishops &= ~toBitboard;
-            currentEvalMG -= BISHOP_SCORE + BISHOP_TABLE_MG[Long.numberOfTrailingZeros(toBitboard) ^ 56];
-            currentEvalEG -= BISHOP_SCORE + BISHOP_TABLE_EG[Long.numberOfTrailingZeros(toBitboard) ^ 56];
-            phase -= 1; // Bishops contribute 1 to phase
-            this.zobristKey ^= Zobrist.PIECE_KEYS[2][Long.numberOfTrailingZeros(toBitboard)];
-        } else if ((whiteRooks & toBitboard) != 0) {
-            whiteRooks &= ~toBitboard;
-            currentEvalMG -= ROOK_SCORE + ROOK_TABLE_MG[Long.numberOfTrailingZeros(toBitboard) ^ 56];
-            currentEvalEG -= ROOK_SCORE + ROOK_TABLE_EG[Long.numberOfTrailingZeros(toBitboard) ^ 56];
-            phase -= 2; // Rooks contribute 2 to phase
-            this.zobristKey ^= Zobrist.PIECE_KEYS[3][Long.numberOfTrailingZeros(toBitboard)];
-        } else if ((whiteQueens & toBitboard) != 0) {
-            whiteQueens &= ~toBitboard;
-            currentEvalMG -= QUEEN_SCORE + QUEEN_TABLE_MG[Long.numberOfTrailingZeros(toBitboard) ^ 56];
-            currentEvalEG -= QUEEN_SCORE + QUEEN_TABLE_EG[Long.numberOfTrailingZeros(toBitboard) ^ 56];
-            phase -= 4; // Queens contribute 4 to phase
-            this.zobristKey ^= Zobrist.PIECE_KEYS[4][Long.numberOfTrailingZeros(toBitboard)];
-        } else if ((whiteKing & toBitboard) != 0) {
-            whiteKing &= ~toBitboard;
-            currentEvalMG -= KING_SCORE + KING_MIDDLE_GAME_TABLE_MG[Long.numberOfTrailingZeros(toBitboard) ^ 56];
-            currentEvalEG -= KING_SCORE + KING_END_GAME_TABLE_EG[Long.numberOfTrailingZeros(toBitboard) ^ 56];
-            phase -= 6; // King contributes 6 to phase
-            this.zobristKey ^= Zobrist.PIECE_KEYS[5][Long.numberOfTrailingZeros(toBitboard)];
-        }
-    }
-
     public void processWhiteCastleKingSide(long fromBitboard) {
         // Roque du côté du roi
         whiteKing &= ~fromBitboard;
@@ -1933,8 +1886,8 @@ public class Board {
         currentEvalEG += ROOK_TABLE_EG[Long.numberOfTrailingZeros(whiteRooks & (1L << 5)) ^ 56] - ROOK_TABLE_EG[7 ^ 56];
 
         // Update ZobristKey for the rook (before and after)
-        this.zobristKey ^= Zobrist.PIECE_KEYS[3][7]; // Remove the rook from H1
-        this.zobristKey ^= Zobrist.PIECE_KEYS[3][5];
+        this.zobristKey ^= Zobrist.PIECE_KEYS[WHITE][ROOK][7]; // Remove the rook from H1
+        this.zobristKey ^= Zobrist.PIECE_KEYS[WHITE][ROOK][5];
 
         // castling rights
         this.zobristKey ^= Zobrist.CASTLING_KEYS[getCastlingRights()];
@@ -1963,8 +1916,8 @@ public class Board {
         currentEvalEG += ROOK_TABLE_EG[Long.numberOfTrailingZeros(whiteRooks & (1L << 3)) ^ 56] - ROOK_TABLE_EG[0 ^ 56];
 
         // Update ZobristKey for the rook (before and after)
-        this.zobristKey ^= Zobrist.PIECE_KEYS[3][0]; // Remove the rook from A1
-        this.zobristKey ^= Zobrist.PIECE_KEYS[3][3];
+        this.zobristKey ^= Zobrist.PIECE_KEYS[WHITE][ROOK][0]; // Remove the rook from A1
+        this.zobristKey ^= Zobrist.PIECE_KEYS[WHITE][ROOK][3];
 
         // castling rights
         this.zobristKey ^= Zobrist.CASTLING_KEYS[getCastlingRights()];
@@ -1993,8 +1946,8 @@ public class Board {
         currentEvalEG -= ROOK_TABLE_EG[Long.numberOfTrailingZeros(blackRooks & (1L << 61))] - ROOK_TABLE_EG[63];
 
         // Update ZobristKey for the rook (before and after)
-        this.zobristKey ^= Zobrist.PIECE_KEYS[9][63]; // Remove the rook from H8
-        this.zobristKey ^= Zobrist.PIECE_KEYS[9][61];
+        this.zobristKey ^= Zobrist.PIECE_KEYS[BLACK][ROOK][63]; // Remove the rook from H8
+        this.zobristKey ^= Zobrist.PIECE_KEYS[BLACK][ROOK][61];
 
         // castling rights
         this.zobristKey ^= Zobrist.CASTLING_KEYS[getCastlingRights()];
@@ -2023,8 +1976,8 @@ public class Board {
         currentEvalEG -= ROOK_TABLE_EG[Long.numberOfTrailingZeros(blackRooks & (1L << 59))] - ROOK_TABLE_EG[56];
 
         // Update ZobristKey for the rook (before and after)
-        this.zobristKey ^= Zobrist.PIECE_KEYS[9][56]; // Remove the rook from A8
-        this.zobristKey ^= Zobrist.PIECE_KEYS[9][59];
+        this.zobristKey ^= Zobrist.PIECE_KEYS[BLACK][ROOK][56]; // Remove the rook from A8
+        this.zobristKey ^= Zobrist.PIECE_KEYS[BLACK][ROOK][59];
 
         // castling rights
         this.zobristKey ^= Zobrist.CASTLING_KEYS[getCastlingRights()];
@@ -2154,54 +2107,59 @@ public class Board {
         return Long.highestOneBit(bitboard);
     }
 
-    // Get piece method
+    /**
+     * <p>
+     * Returns the piece type on the given square.
+     * </p>
+     * 
+     * <strong>PAWN:</strong> 0<br>
+     * <strong>KNIGHT:</strong> 1<br>
+     * <strong>BISHOP:</strong> 2<br>
+     * <strong>ROOK:</strong> 3<br>
+     * <strong>QUEEN:</strong> 4<br>
+     * <strong>KING:</strong> 5<br>
+     * 
+     * @param square The square index (0-63).
+     * @return The piece type constant (e.g., PAWN, KNIGHT) or EMPTY if no piece is
+     *         present.
+     */
     public int getPiece(int square) {
-        long bitboard = 1L << square;
-        if ((whitePawns & bitboard) != 0) {
-            return 1;
-        } else if ((whiteKnights & bitboard) != 0) {
-            return 2;
-        } else if ((whiteBishops & bitboard) != 0) {
-            return 3;
-        } else if ((whiteRooks & bitboard) != 0) {
-            return 4;
-        } else if ((whiteQueens & bitboard) != 0) {
-            return 5;
-        } else if ((whiteKing & bitboard) != 0) {
-            return 6;
-        } else if ((blackPawns & bitboard) != 0) {
-            return 7;
-        } else if ((blackKnights & bitboard) != 0) {
-            return 8;
-        } else if ((blackBishops & bitboard) != 0) {
-            return 9;
-        } else if ((blackRooks & bitboard) != 0) {
-            return 10;
-        } else if ((blackQueens & bitboard) != 0) {
-            return 11;
-        } else if ((blackKing & bitboard) != 0) {
-            return 12;
-        } else {
-            return Board.EMPTY;
-        }
-    }
+        long mask = 1L << square;
 
-    public static int getPieceType(int piece) {
-        if (piece == 1 || piece == 7) {
-            return PAWN;
-        } else if (piece == 2 || piece == 8) {
-            return KNIGHT;
-        } else if (piece == 3 || piece == 9) {
-            return BISHOP;
-        } else if (piece == 4 || piece == 10) {
-            return ROOK;
-        } else if (piece == 5 || piece == 11) {
-            return QUEEN;
-        } else if (piece == 6 || piece == 12) {
-            return KING;
-        } else {
+        // Fast reject: if no piece on the square
+        if ((bitboard & mask) == 0L) {
             return EMPTY;
         }
+
+        // White pieces
+        if ((whitePawns & mask) != 0L)
+            return PAWN;
+        if ((whiteKnights & mask) != 0L)
+            return KNIGHT;
+        if ((whiteBishops & mask) != 0L)
+            return BISHOP;
+        if ((whiteRooks & mask) != 0L)
+            return ROOK;
+        if ((whiteQueens & mask) != 0L)
+            return QUEEN;
+        if ((whiteKing & mask) != 0L)
+            return KING;
+
+        // Black pieces
+        if ((blackPawns & mask) != 0L)
+            return PAWN;
+        if ((blackKnights & mask) != 0L)
+            return KNIGHT;
+        if ((blackBishops & mask) != 0L)
+            return BISHOP;
+        if ((blackRooks & mask) != 0L)
+            return ROOK;
+        if ((blackQueens & mask) != 0L)
+            return QUEEN;
+        if ((blackKing & mask) != 0L)
+            return KING;
+
+        return EMPTY;
     }
 
     public void printBitBoardRaw() {
@@ -2311,67 +2269,6 @@ public class Board {
         return (blackPieces & piece) != 0;
     }
 
-    public int getPieceAt(int to) {
-        long toBitboard = 1L << to;
-        if ((whitePawns & toBitboard) != 0) {
-            return PAWN;
-        } else if ((whiteKnights & toBitboard) != 0) {
-            return KNIGHT;
-        } else if ((whiteBishops & toBitboard) != 0) {
-            return BISHOP;
-        } else if ((whiteRooks & toBitboard) != 0) {
-            return ROOK;
-        } else if ((whiteQueens & toBitboard) != 0) {
-            return QUEEN;
-        } else if ((whiteKing & toBitboard) != 0) {
-            return KING;
-        } else if ((blackPawns & toBitboard) != 0) {
-            return PAWN;
-        } else if ((blackKnights & toBitboard) != 0) {
-            return KNIGHT;
-        } else if ((blackBishops & toBitboard) != 0) {
-            return BISHOP;
-        } else if ((blackRooks & toBitboard) != 0) {
-            return ROOK;
-        } else if ((blackQueens & toBitboard) != 0) {
-            return QUEEN;
-        } else if ((blackKing & toBitboard) != 0) {
-            return KING;
-        } else {
-            return 0;
-        }
-    }
-
-    public int getPieceAt(long to) {
-        if ((whitePawns & to) != 0) {
-            return PAWN;
-        } else if ((whiteKnights & to) != 0) {
-            return KNIGHT;
-        } else if ((whiteBishops & to) != 0) {
-            return BISHOP;
-        } else if ((whiteRooks & to) != 0) {
-            return ROOK;
-        } else if ((whiteQueens & to) != 0) {
-            return QUEEN;
-        } else if ((whiteKing & to) != 0) {
-            return KING;
-        } else if ((blackPawns & to) != 0) {
-            return PAWN;
-        } else if ((blackKnights & to) != 0) {
-            return KNIGHT;
-        } else if ((blackBishops & to) != 0) {
-            return BISHOP;
-        } else if ((blackRooks & to) != 0) {
-            return ROOK;
-        } else if ((blackQueens & to) != 0) {
-            return QUEEN;
-        } else if ((blackKing & to) != 0) {
-            return KING;
-        } else {
-            return 0;
-        }
-    }
-
     private int getCastlingRights() {
         int rights = 0;
         if (whiteCastleKingSide != 0) {
@@ -2433,37 +2330,37 @@ public class Board {
 
     public void copyFrom(Board other) {
         this.whiteTurn = other.whiteTurn;
-    
+
         this.whitePawns = other.whitePawns;
         this.whiteKnights = other.whiteKnights;
         this.whiteBishops = other.whiteBishops;
         this.whiteRooks = other.whiteRooks;
         this.whiteQueens = other.whiteQueens;
         this.whiteKing = other.whiteKing;
-    
+
         this.blackPawns = other.blackPawns;
         this.blackKnights = other.blackKnights;
         this.blackBishops = other.blackBishops;
         this.blackRooks = other.blackRooks;
         this.blackQueens = other.blackQueens;
         this.blackKing = other.blackKing;
-    
+
         this.whitePieces = other.whitePieces;
         this.blackPieces = other.blackPieces;
         this.bitboard = other.bitboard;
-    
+
         this.whiteCastleQueenSide = other.whiteCastleQueenSide;
         this.whiteCastleKingSide = other.whiteCastleKingSide;
         this.blackCastleQueenSide = other.blackCastleQueenSide;
         this.blackCastleKingSide = other.blackCastleKingSide;
-    
+
         this.enPassantSquare = other.enPassantSquare;
-    
+
         this.currentEvalMG = other.currentEvalMG;
         this.currentEvalEG = other.currentEvalEG;
         this.phase = other.phase;
-    
+
         this.zobristKey = other.zobristKey;
-    }    
+    }
 
 }

@@ -263,243 +263,305 @@ public class MoveGenerator {
         return count;
     }
 
-    public static int isCaptureMove(long to, Board board) {
-        if ((to & board.bitboard) != 0L) {
-            // we now get the piece on the destination square
-            return board.getPieceAt(to);
-        }
-        return 0;
-    }
+    private static final int[] PROMO_PIECES = {
+            Board.QUEEN, Board.ROOK, Board.BISHOP, Board.KNIGHT
+    };
 
     public static PackedMoveList generatePseudoLegalMoves(Board board) {
         PackedMoveList moves = new PackedMoveList(218);
 
+        // =========================
         // PAWNS
+        // =========================
         long pawns = board.whiteTurn ? board.whitePawns : board.blackPawns;
+
         while (pawns != 0L) {
-            long pawn = Board.getLSB(pawns);
+            long pawn = pawns & -pawns;
             pawns &= pawns - 1;
 
             int from = Board.getSquare(pawn);
             long pawnMoves = generatePawnMoves(pawn, board);
 
             while (pawnMoves != 0L) {
-                long move = Board.getLSB(pawnMoves);
+                long move = pawnMoves & -pawnMoves;
                 pawnMoves &= pawnMoves - 1;
 
                 int to = Board.getSquare(move);
-                int capturedPiece = board.getPiece(to);
+                boolean isPromotion = (to >= 56 || to <= 7);
+                boolean isEnPassant = (move & board.enPassantSquare) != 0L;
 
-                // Double pawn push
-                if ((pawn << 16) == move || (pawn >> 16) == move) {
-                    long packed = PackedMove.encode(from, to, Board.PAWN, capturedPiece, 0, Move.DOUBLE_PAWN_PUSH,
-                            Move.DOUBLE_PAWN_PUSH_SCORE);
-                    moves.add(packed);
+                // double pawn push
+                if (((pawn << 16) == move) || ((pawn >> 16) == move)) {
+                    moves.add(PackedMove.encode(
+                            from, to,
+                            Board.PAWN,
+                            Board.EMPTY,
+                            0,
+                            Move.DOUBLE_PAWN_PUSH,
+                            Move.DOUBLE_PAWN_PUSH_SCORE));
                     continue;
                 }
 
-                // Promotions
-                if (to >= 56 || to <= 7) {
-                    int[] promoPieces = { Board.QUEEN, Board.ROOK, Board.BISHOP, Board.KNIGHT };
-                    for (int promoPiece : promoPieces) {
-                        long packed = PackedMove.encode(from, to, Board.PAWN, capturedPiece, promoPiece,
-                                Move.PROMOTION, Move.PROMOTION_SCORE + promoPiece + capturedPiece);
-                        moves.add(packed);
+                int captured = isEnPassant
+                        ? Board.PAWN
+                        : board.getPiece(to);
+
+                boolean isCapture = isEnPassant || captured != Board.EMPTY;
+
+                // promotion
+                if (isPromotion) {
+                    for (int promo : PROMO_PIECES) {
+                        int score = isCapture
+                                ? Move.PROMOTION_SCORE + mvvLva[promo][captured]
+                                : Move.PROMOTION_SCORE;
+                        moves.add(PackedMove.encode(
+                                from, to,
+                                Board.PAWN,
+                                captured,
+                                promo,
+                                Move.PROMOTION,
+                                score));
                     }
                     continue;
                 }
 
-                // En Passant
-                if (to == Board.getSquare(board.enPassantSquare)) {
-                    // System.out.println("En Passant: " + from + " -> " + to);
-                    long packed = PackedMove.encode(from, to, Board.PAWN, capturedPiece, 0, Move.EN_PASSANT,
-                            Move.EN_PASSANT);
-                    moves.add(packed);
+                // en passant
+                if (isEnPassant) {
+                    moves.add(PackedMove.encode(
+                            from, to,
+                            Board.PAWN,
+                            Board.PAWN,
+                            0,
+                            Move.EN_PASSANT,
+                            Move.CAPTURE_SCORE));
                     continue;
                 }
 
-                // Normal move or capture
-                int flag = (capturedPiece != Board.EMPTY) ? Move.CAPTURE : Move.DEFAULT;
-                int score;
-
-                if (capturedPiece != Board.EMPTY) {
-                    // MVV-LVA calculation
-                    int attackerType = Board.PAWN - 1;
-                    int capturedType = Board.getPieceType(capturedPiece) - 1;
-                    score = mvvLva[attackerType][capturedType];
+                // normal move / capture
+                if (captured != Board.EMPTY) {
+                    moves.add(PackedMove.encode(
+                            from, to,
+                            Board.PAWN,
+                            captured,
+                            0,
+                            Move.CAPTURE,
+                            mvvLva[Board.PAWN][captured]));
                 } else {
-                    score = 0;
+                    moves.add(PackedMove.encode(
+                            from, to,
+                            Board.PAWN,
+                            Board.EMPTY,
+                            0,
+                            Move.DEFAULT,
+                            0));
                 }
-
-                long packed = PackedMove.encode(from, to, Board.PAWN, capturedPiece, 0, flag, score);
-                moves.add(packed);
             }
         }
 
+        // =========================
         // KNIGHTS
+        // =========================
         long knights = board.whiteTurn ? board.whiteKnights : board.blackKnights;
+
         while (knights != 0L) {
-            long knight = Board.getLSB(knights);
+            long knight = knights & -knights;
             knights &= knights - 1;
 
             int from = Board.getSquare(knight);
-            long knightMoves = board.whiteTurn ? generateWhiteKnightMoves(knight, board)
+            long movesBB = board.whiteTurn
+                    ? generateWhiteKnightMoves(knight, board)
                     : generateBlackKnightMoves(knight, board);
 
-            while (knightMoves != 0L) {
-                long move = Board.getLSB(knightMoves);
-                knightMoves &= knightMoves - 1;
+            while (movesBB != 0L) {
+                long move = movesBB & -movesBB;
+                movesBB &= movesBB - 1;
 
                 int to = Board.getSquare(move);
                 int captured = board.getPiece(to);
-                int flag = (captured != Board.EMPTY) ? Move.CAPTURE : Move.DEFAULT;
-                int score;
 
                 if (captured != Board.EMPTY) {
-                    // MVV-LVA calculation
-                    int attackerType = Board.KNIGHT - 1;
-                    int capturedType = Board.getPieceType(captured) - 1;
-                    score = mvvLva[attackerType][capturedType];
+                    moves.add(PackedMove.encode(
+                            from, to,
+                            Board.KNIGHT,
+                            captured,
+                            0,
+                            Move.CAPTURE,
+                            mvvLva[Board.KNIGHT][captured]));
                 } else {
-                    score = 0;
+                    moves.add(PackedMove.encode(
+                            from, to,
+                            Board.KNIGHT,
+                            Board.EMPTY,
+                            0,
+                            Move.DEFAULT,
+                            0));
                 }
-
-                long packed = PackedMove.encode(from, to, Board.KNIGHT, captured, 0, flag, score);
-                moves.add(packed);
             }
         }
 
+        // =========================
         // BISHOPS
+        // =========================
         long bishops = board.whiteTurn ? board.whiteBishops : board.blackBishops;
+
         while (bishops != 0L) {
-            long bishop = Board.getLSB(bishops);
+            long bishop = bishops & -bishops;
             bishops &= bishops - 1;
 
             int from = Board.getSquare(bishop);
-            long bishopMoves = board.whiteTurn ? generateWhiteBishopMoves(bishop, board)
+            long movesBB = board.whiteTurn
+                    ? generateWhiteBishopMoves(bishop, board)
                     : generateBlackBishopMoves(bishop, board);
 
-            while (bishopMoves != 0L) {
-                long move = Board.getLSB(bishopMoves);
-                bishopMoves &= bishopMoves - 1;
+            while (movesBB != 0L) {
+                long move = movesBB & -movesBB;
+                movesBB &= movesBB - 1;
 
                 int to = Board.getSquare(move);
                 int captured = board.getPiece(to);
-                int flag = (captured != Board.EMPTY) ? Move.CAPTURE : Move.DEFAULT;
-                int score;
 
                 if (captured != Board.EMPTY) {
-                    // MVV-LVA calculation
-                    int attackerType = Board.BISHOP - 1;
-                    int capturedType = Board.getPieceType(captured) - 1;
-                    score = mvvLva[attackerType][capturedType];
+                    moves.add(PackedMove.encode(
+                            from, to,
+                            Board.BISHOP,
+                            captured,
+                            0,
+                            Move.CAPTURE,
+                            mvvLva[Board.BISHOP][captured]));
                 } else {
-                    score = 0;
+                    moves.add(PackedMove.encode(
+                            from, to,
+                            Board.BISHOP,
+                            Board.EMPTY,
+                            0,
+                            Move.DEFAULT,
+                            0));
                 }
-
-                long packed = PackedMove.encode(from, to, Board.BISHOP, captured, 0, flag, score);
-                moves.add(packed);
             }
         }
 
+        // =========================
         // ROOKS
+        // =========================
         long rooks = board.whiteTurn ? board.whiteRooks : board.blackRooks;
+
         while (rooks != 0L) {
-            long rook = Board.getLSB(rooks);
+            long rook = rooks & -rooks;
             rooks &= rooks - 1;
 
             int from = Board.getSquare(rook);
-            long rookMoves = board.whiteTurn ? generateWhiteRookMoves(rook, board)
+            long movesBB = board.whiteTurn
+                    ? generateWhiteRookMoves(rook, board)
                     : generateBlackRookMoves(rook, board);
 
-            while (rookMoves != 0L) {
-                long move = Board.getLSB(rookMoves);
-                rookMoves &= rookMoves - 1;
+            while (movesBB != 0L) {
+                long move = movesBB & -movesBB;
+                movesBB &= movesBB - 1;
 
                 int to = Board.getSquare(move);
                 int captured = board.getPiece(to);
-                int flag = (captured != Board.EMPTY) ? Move.CAPTURE : Move.DEFAULT;
-                int score;
 
                 if (captured != Board.EMPTY) {
-                    // MVV-LVA calculation
-                    int attackerType = Board.ROOK - 1;
-                    int capturedType = Board.getPieceType(captured) - 1;
-                    score = mvvLva[attackerType][capturedType];
+                    moves.add(PackedMove.encode(
+                            from, to,
+                            Board.ROOK,
+                            captured,
+                            0,
+                            Move.CAPTURE,
+                            mvvLva[Board.ROOK][captured]));
                 } else {
-                    score = 0;
+                    moves.add(PackedMove.encode(
+                            from, to,
+                            Board.ROOK,
+                            Board.EMPTY,
+                            0,
+                            Move.DEFAULT,
+                            0));
                 }
-
-                long packed = PackedMove.encode(from, to, Board.ROOK, captured, 0, flag, score);
-                moves.add(packed);
             }
         }
 
+        // =========================
         // QUEENS
+        // =========================
         long queens = board.whiteTurn ? board.whiteQueens : board.blackQueens;
+
         while (queens != 0L) {
-            long queen = Board.getLSB(queens);
+            long queen = queens & -queens;
             queens &= queens - 1;
 
             int from = Board.getSquare(queen);
-            long queenMoves = board.whiteTurn ? generateWhiteQueenMoves(queen, board)
+            long movesBB = board.whiteTurn
+                    ? generateWhiteQueenMoves(queen, board)
                     : generateBlackQueenMoves(queen, board);
 
-            while (queenMoves != 0L) {
-                long move = Board.getLSB(queenMoves);
-                queenMoves &= queenMoves - 1;
+            while (movesBB != 0L) {
+                long move = movesBB & -movesBB;
+                movesBB &= movesBB - 1;
 
                 int to = Board.getSquare(move);
                 int captured = board.getPiece(to);
-                int flag = (captured != Board.EMPTY) ? Move.CAPTURE : Move.DEFAULT;
-                int score;
 
                 if (captured != Board.EMPTY) {
-                    // MVV-LVA calculation
-                    int attackerType = Board.QUEEN - 1;
-                    int capturedType = Board.getPieceType(captured) - 1;
-                    score = mvvLva[attackerType][capturedType];
+                    moves.add(PackedMove.encode(
+                            from, to,
+                            Board.QUEEN,
+                            captured,
+                            0,
+                            Move.CAPTURE,
+                            mvvLva[Board.QUEEN][captured]));
                 } else {
-                    score = 0;
+                    moves.add(PackedMove.encode(
+                            from, to,
+                            Board.QUEEN,
+                            Board.EMPTY,
+                            0,
+                            Move.DEFAULT,
+                            0));
                 }
-
-                long packed = PackedMove.encode(from, to, Board.QUEEN, captured, 0, flag, score);
-                moves.add(packed);
             }
         }
 
+        // =========================
         // KING
-        long kings = board.whiteTurn ? board.whiteKing : board.blackKing;
-        long king = Board.getLSB(kings);
+        // =========================
+        long king = board.whiteTurn ? board.whiteKing : board.blackKing;
         int from = Board.getSquare(king);
-        long kingMoves = board.whiteTurn ? generateWhiteKingMoves(king, board) : generateBlackKingMoves(king, board);
+
+        long kingMoves = board.whiteTurn
+                ? generateWhiteKingMoves(king, board)
+                : generateBlackKingMoves(king, board);
 
         while (kingMoves != 0L) {
-            long move = Board.getLSB(kingMoves);
+            long move = kingMoves & -kingMoves;
             kingMoves &= kingMoves - 1;
 
             int to = Board.getSquare(move);
             int captured = board.getPiece(to);
-            int flag = (Math.abs(from - to) == 2) ? Move.CASTLING
-                    : (captured != Board.EMPTY ? Move.CAPTURE : Move.DEFAULT);
+
+            int flag;
             int score;
 
-            if (flag == Move.CASTLING) {
+            if (Math.abs(from - to) == 2) {
+                flag = Move.CASTLING;
                 score = Move.CASTLING_SCORE;
             } else if (captured != Board.EMPTY) {
-                // MVV-LVA calculation
-                int attackerType = Board.KING - 1;
-                int capturedType = Board.getPieceType(captured) - 1;
-                score = mvvLva[attackerType][capturedType];
+                flag = Move.CAPTURE;
+                score = mvvLva[Board.KING][captured];
             } else {
+                flag = Move.DEFAULT;
                 score = 0;
             }
 
-            long packed = PackedMove.encode(from, to, Board.KING, captured, 0, flag, score);
-            moves.add(packed);
+            moves.add(PackedMove.encode(
+                    from, to,
+                    Board.KING,
+                    captured,
+                    0,
+                    flag,
+                    score));
         }
 
-        // System.out.println("Generated " + moves.size() + " moves");
         return moves;
     }
 
@@ -509,39 +571,49 @@ public class MoveGenerator {
 
         // Pawns
         long pawns = board.whiteTurn ? board.getWhitePawns() : board.getBlackPawns();
+
         while (pawns != 0L) {
-            long pawn = Board.getLSB(pawns);
+            long pawn = pawns & -pawns;
             pawns &= pawns - 1;
+
             int from = Board.getSquare(pawn);
             long pawnMoves = generatePawnMoves(pawn, board);
 
             while (pawnMoves != 0L) {
-                long move = Board.getLSB(pawnMoves);
+                long move = pawnMoves & -pawnMoves;
                 pawnMoves &= pawnMoves - 1;
+
                 int to = Board.getSquare(move);
+                final boolean isPromotion = (to >= 56 || to <= 7);
+                final boolean isEnPassant = (move & board.enPassantSquare) != 0L;
 
-                // Only consider captures
-                if ((move & board.bitboard) != 0L) {
-                    int capturedPiece = board.getPieceAt(move);
-                    int attackerPiece = Board.PAWN;
-
-                    // MVV-LVA calculation
-                    int attackerType = Board.getPieceType(attackerPiece) - 1;
-                    int capturedType = Board.getPieceType(capturedPiece) - 1;
-
-                    if (attackerType >= 0 && attackerType <= 5 && capturedType >= 0 && capturedType <= 5) {
-                        int mvvLvaScore = mvvLva[attackerType][capturedType];
-                        long packed = PackedMove.encode(from, to, attackerPiece, capturedPiece, 0, Move.CAPTURE,
-                                mvvLvaScore);
-                        moves.add(packed);
-                    }
+                int capturedPiece;
+                if (isEnPassant) {
+                    capturedPiece = Board.PAWN;
+                } else {
+                    capturedPiece = board.getPiece(to);
+                    if (capturedPiece == Board.EMPTY)
+                        continue;
                 }
 
-                // Check for en passant captures
-                if (to == Board.getSquare(board.enPassantSquare)) {
-                    long packed = PackedMove.encode(from, to, Board.PAWN, Board.PAWN, 0, Move.EN_PASSANT,
-                            Move.EN_PASSANT);
-                    moves.add(packed);
+                if (isPromotion) {
+                    for (int promo : PROMO_PIECES) {
+                        moves.add(PackedMove.encode(
+                                from, to,
+                                Board.PAWN,
+                                capturedPiece,
+                                promo,
+                                Move.PROMOTION,
+                                Move.PROMOTION_SCORE + mvvLva[Board.PAWN][capturedPiece]));
+                    }
+                } else {
+                    moves.add(PackedMove.encode(
+                            from, to,
+                            Board.PAWN,
+                            capturedPiece,
+                            0,
+                            isEnPassant ? Move.EN_PASSANT : Move.CAPTURE,
+                            mvvLva[Board.PAWN][capturedPiece]));
                 }
             }
         }
@@ -549,7 +621,7 @@ public class MoveGenerator {
         // Knights
         long knights = board.whiteTurn ? board.getWhiteKnights() : board.getBlackKnights();
         while (knights != 0L) {
-            long knight = Board.getLSB(knights);
+            long knight = knights & -knights;
             knights &= knights - 1;
             int from = Board.getSquare(knight);
             long knightMoves = board.whiteTurn ? generateWhiteKnightMoves(knight, board)
@@ -561,153 +633,136 @@ public class MoveGenerator {
                 int to = Board.getSquare(move);
 
                 if ((move & board.bitboard) != 0L) {
-                    int capturedPiece = board.getPieceAt(move);
-                    int attackerPiece = Board.KNIGHT;
+                    int capturedPiece = board.getPiece(to);
 
                     // MVV-LVA calculation
-                    int attackerType = Board.getPieceType(attackerPiece) - 1;
-                    int capturedType = Board.getPieceType(capturedPiece) - 1;
-
-                    if (attackerType >= 0 && attackerType <= 5 && capturedType >= 0 && capturedType <= 5) {
-                        int mvvLvaScore = mvvLva[attackerType][capturedType];
-                        long packed = PackedMove.encode(from, to, attackerPiece, capturedPiece, 0, Move.CAPTURE,
-                                mvvLvaScore);
-                        moves.add(packed);
-                    }
+                    int mvvLvaScore = mvvLva[Board.KNIGHT][capturedPiece];
+                    long packed = PackedMove.encode(from, to, Board.KNIGHT, capturedPiece, 0, 0, mvvLvaScore);
+                    moves.add(packed);
                 }
             }
         }
 
         // Bishops
         long bishops = board.whiteTurn ? board.getWhiteBishops() : board.getBlackBishops();
+
         while (bishops != 0L) {
-            long bishop = Board.getLSB(bishops);
+            long bishop = bishops & -bishops;
             bishops &= bishops - 1;
+
             int from = Board.getSquare(bishop);
-            long bishopMoves = board.whiteTurn ? generateWhiteBishopMoves(bishop, board)
+            long movesBB = board.whiteTurn
+                    ? generateWhiteBishopMoves(bishop, board)
                     : generateBlackBishopMoves(bishop, board);
 
-            while (bishopMoves != 0L) {
-                long move = Board.getLSB(bishopMoves);
-                bishopMoves &= bishopMoves - 1;
+            // capture-only filter
+            movesBB &= board.bitboard;
+
+            while (movesBB != 0L) {
+                long move = movesBB & -movesBB;
+                movesBB &= movesBB - 1;
+
                 int to = Board.getSquare(move);
+                int captured = board.getPiece(to);
 
-                if ((move & board.bitboard) != 0L) {
-                    int capturedPiece = board.getPieceAt(move);
-                    int attackerPiece = Board.BISHOP;
+                int score = mvvLva[Board.BISHOP][captured];
 
-                    // MVV-LVA calculation
-                    int attackerType = Board.getPieceType(attackerPiece) - 1;
-                    int capturedType = Board.getPieceType(capturedPiece) - 1;
-
-                    if (attackerType >= 0 && attackerType <= 5 && capturedType >= 0 && capturedType <= 5) {
-                        int mvvLvaScore = mvvLva[attackerType][capturedType];
-                        long packed = PackedMove.encode(from, to, attackerPiece, capturedPiece, 0, Move.CAPTURE,
-                                mvvLvaScore);
-                        moves.add(packed);
-                    }
-                }
+                moves.add(PackedMove.encode(
+                        from, to,
+                        Board.BISHOP,
+                        captured,
+                        0,
+                        Move.CAPTURE,
+                        score));
             }
         }
 
         // Rooks
         long rooks = board.whiteTurn ? board.getWhiteRooks() : board.getBlackRooks();
+
         while (rooks != 0L) {
-            long rook = Board.getLSB(rooks);
+            long rook = rooks & -rooks;
             rooks &= rooks - 1;
+
             int from = Board.getSquare(rook);
-            long rookMoves = board.whiteTurn ? generateWhiteRookMoves(rook, board)
+            long movesBB = board.whiteTurn
+                    ? generateWhiteRookMoves(rook, board)
                     : generateBlackRookMoves(rook, board);
 
-            while (rookMoves != 0L) {
-                long move = Board.getLSB(rookMoves);
-                rookMoves &= rookMoves - 1;
+            movesBB &= board.bitboard;
+
+            while (movesBB != 0L) {
+                long move = movesBB & -movesBB;
+                movesBB &= movesBB - 1;
+
                 int to = Board.getSquare(move);
+                int captured = board.getPiece(to);
 
-                if ((move & board.bitboard) != 0L) {
-                    int capturedPiece = board.getPieceAt(move);
-                    int attackerPiece = Board.ROOK;
-
-                    // MVV-LVA calculation
-                    int attackerType = Board.getPieceType(attackerPiece) - 1;
-                    int capturedType = Board.getPieceType(capturedPiece) - 1;
-
-                    if (attackerType >= 0 && attackerType <= 5 && capturedType >= 0 && capturedType <= 5) {
-                        int mvvLvaScore = mvvLva[attackerType][capturedType];
-                        long packed = PackedMove.encode(from, to, attackerPiece, capturedPiece, 0, Move.CAPTURE,
-                                mvvLvaScore);
-                        moves.add(packed);
-                    }
-                }
+                moves.add(PackedMove.encode(
+                        from, to,
+                        Board.ROOK,
+                        captured,
+                        0,
+                        Move.CAPTURE,
+                        mvvLva[Board.ROOK][captured]));
             }
         }
 
         // Queens
         long queens = board.whiteTurn ? board.getWhiteQueens() : board.getBlackQueens();
+
         while (queens != 0L) {
-            long queen = Board.getLSB(queens);
+            long queen = queens & -queens;
             queens &= queens - 1;
+
             int from = Board.getSquare(queen);
-            long queenMoves = board.whiteTurn ? generateWhiteQueenMoves(queen, board)
+            long movesBB = board.whiteTurn
+                    ? generateWhiteQueenMoves(queen, board)
                     : generateBlackQueenMoves(queen, board);
 
-            while (queenMoves != 0L) {
-                long move = Board.getLSB(queenMoves);
-                queenMoves &= queenMoves - 1;
+            movesBB &= board.bitboard;
+
+            while (movesBB != 0L) {
+                long move = movesBB & -movesBB;
+                movesBB &= movesBB - 1;
+
                 int to = Board.getSquare(move);
+                int captured = board.getPiece(to);
 
-                if ((move & board.bitboard) != 0L) {
-                    int capturedPiece = board.getPieceAt(move);
-                    int attackerPiece = Board.QUEEN;
-
-                    // MVV-LVA calculation
-                    int attackerType = Board.getPieceType(attackerPiece) - 1;
-                    int capturedType = Board.getPieceType(capturedPiece) - 1;
-
-                    if (attackerType >= 0 && attackerType <= 5 && capturedType >= 0 && capturedType <= 5) {
-                        int mvvLvaScore = mvvLva[attackerType][capturedType];
-                        long packed = PackedMove.encode(from, to, attackerPiece, capturedPiece, 0, Move.CAPTURE,
-                                mvvLvaScore);
-                        moves.add(packed);
-                    }
-                }
-
-                // if check move is possible, add it to the list
-                // long king = board.whiteTurn ? board.blackKing : board.whiteKing;
-                // if((generateRookAttacks(from, board.bitboard) & king) != 0L) {
-                //     long packed = PackedMove.encode(from, to, BitBoard.QUEEN, BitBoard.EMPTY, 0, Move.DEFAULT,
-                //             Move.IS_CHECK_SCORE);
-                //     moves.add(packed);
-                // }
+                moves.add(PackedMove.encode(
+                        from, to,
+                        Board.QUEEN,
+                        captured,
+                        0,
+                        Move.CAPTURE,
+                        mvvLva[Board.QUEEN][captured]));
             }
         }
 
         // Kings
-        long kings = board.whiteTurn ? board.getWhiteKing() : board.getBlackKing();
-        long king = Board.getLSB(kings);
+        long king = board.whiteTurn ? board.getWhiteKing() : board.getBlackKing();
         int from = Board.getSquare(king);
-        long kingMoves = board.whiteTurn ? generateWhiteKingMoves(king, board) : generateBlackKingMoves(king, board);
+
+        long kingMoves = board.whiteTurn
+                ? generateWhiteKingMoves(king, board)
+                : generateBlackKingMoves(king, board);
+
+        kingMoves &= board.bitboard;
 
         while (kingMoves != 0L) {
-            long move = Board.getLSB(kingMoves);
+            long move = kingMoves & -kingMoves;
             kingMoves &= kingMoves - 1;
+
             int to = Board.getSquare(move);
+            int captured = board.getPiece(to);
 
-            if ((move & board.bitboard) != 0L) {
-                int capturedPiece = board.getPieceAt(move);
-                int attackerPiece = Board.KING;
-
-                // MVV-LVA calculation
-                int attackerType = Board.getPieceType(attackerPiece) - 1;
-                int capturedType = Board.getPieceType(capturedPiece) - 1;
-
-                if (attackerType >= 0 && attackerType <= 5 && capturedType >= 0 && capturedType <= 5) {
-                    int mvvLvaScore = mvvLva[attackerType][capturedType];
-                    long packed = PackedMove.encode(from, to, attackerPiece, capturedPiece, 0, Move.CAPTURE,
-                            mvvLvaScore);
-                    moves.add(packed);
-                }
-            }
+            moves.add(PackedMove.encode(
+                    from, to,
+                    Board.KING,
+                    captured,
+                    0,
+                    Move.CAPTURE,
+                    mvvLva[Board.KING][captured]));
         }
 
         return moves;
@@ -849,7 +904,6 @@ public class MoveGenerator {
         return pawnAttacks;
     }
 
-
     public static long generatePawnMoves(long pawns, Board board) {
         long pawnMoves = 0L;
 
@@ -874,10 +928,10 @@ public class MoveGenerator {
         } else {
             long singlePush = (pawns >> 8) & ~board.getBoard(); // Avancer d'une case
             long doublePush = ((pawns >> 16) & ~board.getBoard() & (singlePush >> 8) & Board.RANK_5); // Avancer de
-                                                                                                         // deux cases
-                                                                                                         // depuis la
-                                                                                                         // rangée
-                                                                                                         // initiale
+                                                                                                      // deux cases
+                                                                                                      // depuis la
+                                                                                                      // rangée
+                                                                                                      // initiale
             pawnMoves |= singlePush | doublePush;
             // Captures diagonales, gauche et droite
             long capturesLeft = (pawns >> 7) & board.getWhitePieces() & ~Board.FILE_H;
