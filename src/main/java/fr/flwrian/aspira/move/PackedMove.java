@@ -1,4 +1,4 @@
-package com.bitboard;
+package fr.flwrian.aspira.move;
 
 public class PackedMove {
 

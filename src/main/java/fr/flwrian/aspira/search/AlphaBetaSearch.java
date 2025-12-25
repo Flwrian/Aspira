@@ -1,13 +1,14 @@
-package com.bitboard.algorithms;
-
-import com.bitboard.BitBoard;
-import com.bitboard.Move;
-import com.bitboard.PackedMove;
-import com.bitboard.PackedMoveList;
+package fr.flwrian.aspira.search;
 
 import java.util.Locale;
 
-public class NewChessAlgorithm implements ChessAlgorithm {
+import fr.flwrian.aspira.board.Board;
+import fr.flwrian.aspira.hash.TranspositionTable;
+import fr.flwrian.aspira.move.Move;
+import fr.flwrian.aspira.move.PackedMove;
+import fr.flwrian.aspira.move.PackedMoveList;
+
+public class AlphaBetaSearch implements SearchAlgorithm {
 
     private long lastNodeCount = 0;
     private long lastNPS = 0;
@@ -58,13 +59,13 @@ public class NewChessAlgorithm implements ChessAlgorithm {
         return s;
     }
 
-    private int evalSideToMove(BitBoard b) {
+    private int evalSideToMove(Board b) {
         int e = evaluate(b);           // + = bon pour Blanc
         return b.whiteTurn ? e : -e;   // orienté côté trait
     }
 
     @Override
-    public Move search(BitBoard board, int wtime, int btime, int winc, int binc, int movetime, int depth) {
+    public Move search(Board board, int wtime, int btime, int winc, int binc, int movetime, int depth) {
         long bestPackedMove = 0L;
         searchStartTime = System.nanoTime();
 
@@ -158,7 +159,7 @@ public class NewChessAlgorithm implements ChessAlgorithm {
     // =========================
     //        NEGAMAX + PVS
     // =========================
-    private MoveValue negamax(BitBoard board, int depth, int alpha, int beta, int ply, boolean isPV) {
+    private MoveValue negamax(Board board, int depth, int alpha, int beta, int ply, boolean isPV) {
         // TIME
         if (System.nanoTime() - searchStartTime > timeLimitNanos || stopSearch) {
             timeExceeded = true;
@@ -291,7 +292,7 @@ public class NewChessAlgorithm implements ChessAlgorithm {
     // =========================
     //          QS
     // =========================
-    private MoveValue qsearch(BitBoard board, int alpha, int beta, int ply) {
+    private MoveValue qsearch(Board board, int alpha, int beta, int ply) {
         if (System.nanoTime() - searchStartTime > timeLimitNanos || stopSearch) {
             timeExceeded = true;
             return new MoveValue(0L, 0);
@@ -360,7 +361,7 @@ public class NewChessAlgorithm implements ChessAlgorithm {
     }
 
     @Override
-    public int evaluate(BitBoard board) {
+    public int evaluate(Board board) {
         return board.evaluate();
     }
 
