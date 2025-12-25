@@ -1,8 +1,15 @@
-package com.bitboard;
+package fr.flwrian.aspira.uci;
 import java.util.*;
 
 
-import com.bitboard.algorithms.NewChessAlgorithm;
+import fr.flwrian.aspira.bench.BenchRunner;
+import fr.flwrian.aspira.board.Board;
+import fr.flwrian.aspira.engine.Engine;
+import fr.flwrian.aspira.move.Move;
+import fr.flwrian.aspira.move.MoveGenerator;
+import fr.flwrian.aspira.move.PackedMove;
+import fr.flwrian.aspira.perft.Perft;
+import fr.flwrian.aspira.search.AlphaBetaSearch;
 
 
 /**
@@ -18,7 +25,7 @@ public class UCI {
 
     private static String STARTING_POSITION = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
-    private static BitBoard board = new BitBoard();
+    private static Board board = new Board();
     // private static Engine engine;
     static Engine engine = new Engine(board);
     
@@ -28,7 +35,7 @@ public class UCI {
 
         
 
-        NewChessAlgorithm advancedChessAlgorithm = new NewChessAlgorithm();
+        AlphaBetaSearch advancedChessAlgorithm = new AlphaBetaSearch();
         engine.setAlgorithm(advancedChessAlgorithm);
 
         board.loadFromFen(STARTING_POSITION);
@@ -38,12 +45,7 @@ public class UCI {
 
         if (args.length == 1 && args[0].equals("bench"))
 		{
-			for(String fen : Bench.benchPositions) {
-                board.loadFromFen(fen);
-                engine.getAlgorithm().search(board, 100000, 1000, 100, 100, 67_0000, 6);
-                System.out.println(engine.getAlgorithm().getLastNodeCount() + " nodes " + engine.getAlgorithm().getLastNPS() + " nps");
-            }
-            return;
+			BenchRunner.run(engine, board);
 		}
 
         
@@ -76,7 +78,7 @@ public class UCI {
                     go(inputArray);
                     break;
                 case "stop":
-                    engine.getAlgorithm().setStopSearch(true);
+                    engine.getSearchAlgorithm().setStopSearch(true);
                     break;
                 case "perft-test":
                     Perft.perftSuiteTest("./perft-suite/standard.epd", Integer.parseInt(inputArray[1]));
@@ -238,8 +240,8 @@ public class UCI {
         final int finalDepth = depth;
         
         Thread searchThread = new Thread(() -> {
-            engine.getAlgorithm().setStopSearch(false);
-            engine.getAlgorithm().search(board, finalWtime, finalBtime, finalWinc, finalBinc, finalMovetime, finalDepth);
+            engine.getSearchAlgorithm().setStopSearch(false);
+            engine.getSearchAlgorithm().search(board, finalWtime, finalBtime, finalWinc, finalBinc, finalMovetime, finalDepth);
         });
         searchThread.start();
     }
@@ -294,7 +296,7 @@ public class UCI {
     }
 
     private static void uciNewGame() {
-        board = new BitBoard();
+        board = new Board();
     }
 
     private static void isReady() {

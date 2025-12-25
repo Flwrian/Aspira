@@ -1,10 +1,14 @@
-package com.bitboard;
+package fr.flwrian.aspira.board;
 
 import java.io.PrintWriter;
 
-import com.bitboard.algorithms.Zobrist;
+import fr.flwrian.aspira.hash.Zobrist;
+import fr.flwrian.aspira.move.Move;
+import fr.flwrian.aspira.move.MoveGenerator;
+import fr.flwrian.aspira.move.PackedMove;
+import fr.flwrian.aspira.move.PackedMoveList;
 
-public class BitBoard {
+public class Board {
 
     public boolean whiteTurn;
 
@@ -506,7 +510,7 @@ public class BitBoard {
 
     public static final String INITIAL_STARTING_POSITION = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
-    public BitBoard() {
+    public Board() {
 
         whiteTurn = true;
 
@@ -873,7 +877,7 @@ public class BitBoard {
         // On commence par hash toutes les pieces et leur positions
         for (int square = 0; square < 64; square++) {
             int piece = getPiece(square);
-            if (piece != BitBoard.EMPTY) {
+            if (piece != Board.EMPTY) {
                 zobristKey ^= Zobrist.PIECE_KEYS[piece - 1][square]; // piece - 1 pour l'acces au tableau
             }
         }
@@ -1279,7 +1283,7 @@ public class BitBoard {
             if ((whitePawns & fromBitboard) != 0) {
 
                 // Handle en passant capture
-                if (PackedMove.getFlags(move) == Move.EN_PASSENT) {
+                if (PackedMove.getFlags(move) == Move.EN_PASSANT) {
                     final long capturedPawn = enPassantSquare >> 8;
                     blackPawns &= ~capturedPawn;
 
@@ -1529,7 +1533,7 @@ public class BitBoard {
             if ((blackPawns & fromBitboard) != 0) {
 
                 // Handle en passant capture
-                if (PackedMove.getFlags(move) == Move.EN_PASSENT) {
+                if (PackedMove.getFlags(move) == Move.EN_PASSANT) {
                     final long capturedPawn = enPassantSquare << 8;
                     whitePawns &= ~capturedPawn;
 
@@ -2178,7 +2182,7 @@ public class BitBoard {
         } else if ((blackKing & bitboard) != 0) {
             return 12;
         } else {
-            return BitBoard.EMPTY;
+            return Board.EMPTY;
         }
     }
 
@@ -2386,9 +2390,9 @@ public class BitBoard {
     }
 
     @Override
-    public BitBoard clone() {
+    public Board clone() {
         try {
-            BitBoard copy = (BitBoard) super.clone();
+            Board copy = (Board) super.clone();
 
             copy.whitePawns = this.whitePawns;
             copy.whiteKnights = this.whiteKnights;
@@ -2427,7 +2431,7 @@ public class BitBoard {
         }
     }
 
-    public void copyFrom(BitBoard other) {
+    public void copyFrom(Board other) {
         this.whiteTurn = other.whiteTurn;
     
         this.whitePawns = other.whitePawns;

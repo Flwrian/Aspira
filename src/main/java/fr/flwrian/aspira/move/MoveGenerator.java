@@ -1,6 +1,8 @@
-package com.bitboard;
+package fr.flwrian.aspira.move;
 
 import java.util.Random;
+
+import fr.flwrian.aspira.board.Board;
 
 public class MoveGenerator {
 
@@ -220,7 +222,7 @@ public class MoveGenerator {
 
     }
 
-    public static long generateMask(BitBoard board, boolean white) {
+    public static long generateMask(Board board, boolean white) {
 
         if (white) {
             return generateWhiteMask(board);
@@ -230,7 +232,7 @@ public class MoveGenerator {
 
     }
 
-    public static long generateOpponentMask(BitBoard board) {
+    public static long generateOpponentMask(Board board) {
         if (board.whiteTurn) {
             return generateBlackMask(board);
         } else {
@@ -238,16 +240,16 @@ public class MoveGenerator {
         }
     }
 
-    public static long generateMask(BitBoard board) {
+    public static long generateMask(Board board) {
         return generateMask(board, board.whiteTurn);
     }
 
-    public static void printMask(BitBoard board) {
+    public static void printMask(Board board) {
         long mask = generateOpponentMask(board);
         board.printBitBoard(mask);
     }
 
-    public static void printMask(BitBoard board, boolean white) {
+    public static void printMask(Board board, boolean white) {
         long mask = generateMask(board, white);
         board.printBitBoard(mask);
     }
@@ -261,7 +263,7 @@ public class MoveGenerator {
         return count;
     }
 
-    public static int isCaptureMove(long to, BitBoard board) {
+    public static int isCaptureMove(long to, Board board) {
         if ((to & board.bitboard) != 0L) {
             // we now get the piece on the destination square
             return board.getPieceAt(to);
@@ -269,28 +271,28 @@ public class MoveGenerator {
         return 0;
     }
 
-    public static PackedMoveList generatePseudoLegalMoves(BitBoard board) {
+    public static PackedMoveList generatePseudoLegalMoves(Board board) {
         PackedMoveList moves = new PackedMoveList(218);
 
         // PAWNS
         long pawns = board.whiteTurn ? board.whitePawns : board.blackPawns;
         while (pawns != 0L) {
-            long pawn = BitBoard.getLSB(pawns);
+            long pawn = Board.getLSB(pawns);
             pawns &= pawns - 1;
 
-            int from = BitBoard.getSquare(pawn);
+            int from = Board.getSquare(pawn);
             long pawnMoves = generatePawnMoves(pawn, board);
 
             while (pawnMoves != 0L) {
-                long move = BitBoard.getLSB(pawnMoves);
+                long move = Board.getLSB(pawnMoves);
                 pawnMoves &= pawnMoves - 1;
 
-                int to = BitBoard.getSquare(move);
+                int to = Board.getSquare(move);
                 int capturedPiece = board.getPiece(to);
 
                 // Double pawn push
                 if ((pawn << 16) == move || (pawn >> 16) == move) {
-                    long packed = PackedMove.encode(from, to, BitBoard.PAWN, capturedPiece, 0, Move.DOUBLE_PAWN_PUSH,
+                    long packed = PackedMove.encode(from, to, Board.PAWN, capturedPiece, 0, Move.DOUBLE_PAWN_PUSH,
                             Move.DOUBLE_PAWN_PUSH_SCORE);
                     moves.add(packed);
                     continue;
@@ -298,9 +300,9 @@ public class MoveGenerator {
 
                 // Promotions
                 if (to >= 56 || to <= 7) {
-                    int[] promoPieces = { BitBoard.QUEEN, BitBoard.ROOK, BitBoard.BISHOP, BitBoard.KNIGHT };
+                    int[] promoPieces = { Board.QUEEN, Board.ROOK, Board.BISHOP, Board.KNIGHT };
                     for (int promoPiece : promoPieces) {
-                        long packed = PackedMove.encode(from, to, BitBoard.PAWN, capturedPiece, promoPiece,
+                        long packed = PackedMove.encode(from, to, Board.PAWN, capturedPiece, promoPiece,
                                 Move.PROMOTION, Move.PROMOTION_SCORE + promoPiece + capturedPiece);
                         moves.add(packed);
                     }
@@ -308,28 +310,28 @@ public class MoveGenerator {
                 }
 
                 // En Passant
-                if (to == BitBoard.getSquare(board.enPassantSquare)) {
+                if (to == Board.getSquare(board.enPassantSquare)) {
                     // System.out.println("En Passant: " + from + " -> " + to);
-                    long packed = PackedMove.encode(from, to, BitBoard.PAWN, capturedPiece, 0, Move.EN_PASSENT,
-                            Move.EN_PASSENT);
+                    long packed = PackedMove.encode(from, to, Board.PAWN, capturedPiece, 0, Move.EN_PASSANT,
+                            Move.EN_PASSANT);
                     moves.add(packed);
                     continue;
                 }
 
                 // Normal move or capture
-                int flag = (capturedPiece != BitBoard.EMPTY) ? Move.CAPTURE : Move.DEFAULT;
+                int flag = (capturedPiece != Board.EMPTY) ? Move.CAPTURE : Move.DEFAULT;
                 int score;
 
-                if (capturedPiece != BitBoard.EMPTY) {
+                if (capturedPiece != Board.EMPTY) {
                     // MVV-LVA calculation
-                    int attackerType = BitBoard.PAWN - 1;
-                    int capturedType = BitBoard.getPieceType(capturedPiece) - 1;
+                    int attackerType = Board.PAWN - 1;
+                    int capturedType = Board.getPieceType(capturedPiece) - 1;
                     score = mvvLva[attackerType][capturedType];
                 } else {
                     score = 0;
                 }
 
-                long packed = PackedMove.encode(from, to, BitBoard.PAWN, capturedPiece, 0, flag, score);
+                long packed = PackedMove.encode(from, to, Board.PAWN, capturedPiece, 0, flag, score);
                 moves.add(packed);
             }
         }
@@ -337,32 +339,32 @@ public class MoveGenerator {
         // KNIGHTS
         long knights = board.whiteTurn ? board.whiteKnights : board.blackKnights;
         while (knights != 0L) {
-            long knight = BitBoard.getLSB(knights);
+            long knight = Board.getLSB(knights);
             knights &= knights - 1;
 
-            int from = BitBoard.getSquare(knight);
+            int from = Board.getSquare(knight);
             long knightMoves = board.whiteTurn ? generateWhiteKnightMoves(knight, board)
                     : generateBlackKnightMoves(knight, board);
 
             while (knightMoves != 0L) {
-                long move = BitBoard.getLSB(knightMoves);
+                long move = Board.getLSB(knightMoves);
                 knightMoves &= knightMoves - 1;
 
-                int to = BitBoard.getSquare(move);
+                int to = Board.getSquare(move);
                 int captured = board.getPiece(to);
-                int flag = (captured != BitBoard.EMPTY) ? Move.CAPTURE : Move.DEFAULT;
+                int flag = (captured != Board.EMPTY) ? Move.CAPTURE : Move.DEFAULT;
                 int score;
 
-                if (captured != BitBoard.EMPTY) {
+                if (captured != Board.EMPTY) {
                     // MVV-LVA calculation
-                    int attackerType = BitBoard.KNIGHT - 1;
-                    int capturedType = BitBoard.getPieceType(captured) - 1;
+                    int attackerType = Board.KNIGHT - 1;
+                    int capturedType = Board.getPieceType(captured) - 1;
                     score = mvvLva[attackerType][capturedType];
                 } else {
                     score = 0;
                 }
 
-                long packed = PackedMove.encode(from, to, BitBoard.KNIGHT, captured, 0, flag, score);
+                long packed = PackedMove.encode(from, to, Board.KNIGHT, captured, 0, flag, score);
                 moves.add(packed);
             }
         }
@@ -370,32 +372,32 @@ public class MoveGenerator {
         // BISHOPS
         long bishops = board.whiteTurn ? board.whiteBishops : board.blackBishops;
         while (bishops != 0L) {
-            long bishop = BitBoard.getLSB(bishops);
+            long bishop = Board.getLSB(bishops);
             bishops &= bishops - 1;
 
-            int from = BitBoard.getSquare(bishop);
+            int from = Board.getSquare(bishop);
             long bishopMoves = board.whiteTurn ? generateWhiteBishopMoves(bishop, board)
                     : generateBlackBishopMoves(bishop, board);
 
             while (bishopMoves != 0L) {
-                long move = BitBoard.getLSB(bishopMoves);
+                long move = Board.getLSB(bishopMoves);
                 bishopMoves &= bishopMoves - 1;
 
-                int to = BitBoard.getSquare(move);
+                int to = Board.getSquare(move);
                 int captured = board.getPiece(to);
-                int flag = (captured != BitBoard.EMPTY) ? Move.CAPTURE : Move.DEFAULT;
+                int flag = (captured != Board.EMPTY) ? Move.CAPTURE : Move.DEFAULT;
                 int score;
 
-                if (captured != BitBoard.EMPTY) {
+                if (captured != Board.EMPTY) {
                     // MVV-LVA calculation
-                    int attackerType = BitBoard.BISHOP - 1;
-                    int capturedType = BitBoard.getPieceType(captured) - 1;
+                    int attackerType = Board.BISHOP - 1;
+                    int capturedType = Board.getPieceType(captured) - 1;
                     score = mvvLva[attackerType][capturedType];
                 } else {
                     score = 0;
                 }
 
-                long packed = PackedMove.encode(from, to, BitBoard.BISHOP, captured, 0, flag, score);
+                long packed = PackedMove.encode(from, to, Board.BISHOP, captured, 0, flag, score);
                 moves.add(packed);
             }
         }
@@ -403,32 +405,32 @@ public class MoveGenerator {
         // ROOKS
         long rooks = board.whiteTurn ? board.whiteRooks : board.blackRooks;
         while (rooks != 0L) {
-            long rook = BitBoard.getLSB(rooks);
+            long rook = Board.getLSB(rooks);
             rooks &= rooks - 1;
 
-            int from = BitBoard.getSquare(rook);
+            int from = Board.getSquare(rook);
             long rookMoves = board.whiteTurn ? generateWhiteRookMoves(rook, board)
                     : generateBlackRookMoves(rook, board);
 
             while (rookMoves != 0L) {
-                long move = BitBoard.getLSB(rookMoves);
+                long move = Board.getLSB(rookMoves);
                 rookMoves &= rookMoves - 1;
 
-                int to = BitBoard.getSquare(move);
+                int to = Board.getSquare(move);
                 int captured = board.getPiece(to);
-                int flag = (captured != BitBoard.EMPTY) ? Move.CAPTURE : Move.DEFAULT;
+                int flag = (captured != Board.EMPTY) ? Move.CAPTURE : Move.DEFAULT;
                 int score;
 
-                if (captured != BitBoard.EMPTY) {
+                if (captured != Board.EMPTY) {
                     // MVV-LVA calculation
-                    int attackerType = BitBoard.ROOK - 1;
-                    int capturedType = BitBoard.getPieceType(captured) - 1;
+                    int attackerType = Board.ROOK - 1;
+                    int capturedType = Board.getPieceType(captured) - 1;
                     score = mvvLva[attackerType][capturedType];
                 } else {
                     score = 0;
                 }
 
-                long packed = PackedMove.encode(from, to, BitBoard.ROOK, captured, 0, flag, score);
+                long packed = PackedMove.encode(from, to, Board.ROOK, captured, 0, flag, score);
                 moves.add(packed);
             }
         }
@@ -436,64 +438,64 @@ public class MoveGenerator {
         // QUEENS
         long queens = board.whiteTurn ? board.whiteQueens : board.blackQueens;
         while (queens != 0L) {
-            long queen = BitBoard.getLSB(queens);
+            long queen = Board.getLSB(queens);
             queens &= queens - 1;
 
-            int from = BitBoard.getSquare(queen);
+            int from = Board.getSquare(queen);
             long queenMoves = board.whiteTurn ? generateWhiteQueenMoves(queen, board)
                     : generateBlackQueenMoves(queen, board);
 
             while (queenMoves != 0L) {
-                long move = BitBoard.getLSB(queenMoves);
+                long move = Board.getLSB(queenMoves);
                 queenMoves &= queenMoves - 1;
 
-                int to = BitBoard.getSquare(move);
+                int to = Board.getSquare(move);
                 int captured = board.getPiece(to);
-                int flag = (captured != BitBoard.EMPTY) ? Move.CAPTURE : Move.DEFAULT;
+                int flag = (captured != Board.EMPTY) ? Move.CAPTURE : Move.DEFAULT;
                 int score;
 
-                if (captured != BitBoard.EMPTY) {
+                if (captured != Board.EMPTY) {
                     // MVV-LVA calculation
-                    int attackerType = BitBoard.QUEEN - 1;
-                    int capturedType = BitBoard.getPieceType(captured) - 1;
+                    int attackerType = Board.QUEEN - 1;
+                    int capturedType = Board.getPieceType(captured) - 1;
                     score = mvvLva[attackerType][capturedType];
                 } else {
                     score = 0;
                 }
 
-                long packed = PackedMove.encode(from, to, BitBoard.QUEEN, captured, 0, flag, score);
+                long packed = PackedMove.encode(from, to, Board.QUEEN, captured, 0, flag, score);
                 moves.add(packed);
             }
         }
 
         // KING
         long kings = board.whiteTurn ? board.whiteKing : board.blackKing;
-        long king = BitBoard.getLSB(kings);
-        int from = BitBoard.getSquare(king);
+        long king = Board.getLSB(kings);
+        int from = Board.getSquare(king);
         long kingMoves = board.whiteTurn ? generateWhiteKingMoves(king, board) : generateBlackKingMoves(king, board);
 
         while (kingMoves != 0L) {
-            long move = BitBoard.getLSB(kingMoves);
+            long move = Board.getLSB(kingMoves);
             kingMoves &= kingMoves - 1;
 
-            int to = BitBoard.getSquare(move);
+            int to = Board.getSquare(move);
             int captured = board.getPiece(to);
             int flag = (Math.abs(from - to) == 2) ? Move.CASTLING
-                    : (captured != BitBoard.EMPTY ? Move.CAPTURE : Move.DEFAULT);
+                    : (captured != Board.EMPTY ? Move.CAPTURE : Move.DEFAULT);
             int score;
 
             if (flag == Move.CASTLING) {
                 score = Move.CASTLING_SCORE;
-            } else if (captured != BitBoard.EMPTY) {
+            } else if (captured != Board.EMPTY) {
                 // MVV-LVA calculation
-                int attackerType = BitBoard.KING - 1;
-                int capturedType = BitBoard.getPieceType(captured) - 1;
+                int attackerType = Board.KING - 1;
+                int capturedType = Board.getPieceType(captured) - 1;
                 score = mvvLva[attackerType][capturedType];
             } else {
                 score = 0;
             }
 
-            long packed = PackedMove.encode(from, to, BitBoard.KING, captured, 0, flag, score);
+            long packed = PackedMove.encode(from, to, Board.KING, captured, 0, flag, score);
             moves.add(packed);
         }
 
@@ -501,31 +503,31 @@ public class MoveGenerator {
         return moves;
     }
 
-    public static PackedMoveList generateCaptureMoves(BitBoard board) {
+    public static PackedMoveList generateCaptureMoves(Board board) {
         // maximum number of capture moves is 218
         PackedMoveList moves = new PackedMoveList(218);
 
         // Pawns
         long pawns = board.whiteTurn ? board.getWhitePawns() : board.getBlackPawns();
         while (pawns != 0L) {
-            long pawn = BitBoard.getLSB(pawns);
+            long pawn = Board.getLSB(pawns);
             pawns &= pawns - 1;
-            int from = BitBoard.getSquare(pawn);
+            int from = Board.getSquare(pawn);
             long pawnMoves = generatePawnMoves(pawn, board);
 
             while (pawnMoves != 0L) {
-                long move = BitBoard.getLSB(pawnMoves);
+                long move = Board.getLSB(pawnMoves);
                 pawnMoves &= pawnMoves - 1;
-                int to = BitBoard.getSquare(move);
+                int to = Board.getSquare(move);
 
                 // Only consider captures
                 if ((move & board.bitboard) != 0L) {
                     int capturedPiece = board.getPieceAt(move);
-                    int attackerPiece = BitBoard.PAWN;
+                    int attackerPiece = Board.PAWN;
 
                     // MVV-LVA calculation
-                    int attackerType = BitBoard.getPieceType(attackerPiece) - 1;
-                    int capturedType = BitBoard.getPieceType(capturedPiece) - 1;
+                    int attackerType = Board.getPieceType(attackerPiece) - 1;
+                    int capturedType = Board.getPieceType(capturedPiece) - 1;
 
                     if (attackerType >= 0 && attackerType <= 5 && capturedType >= 0 && capturedType <= 5) {
                         int mvvLvaScore = mvvLva[attackerType][capturedType];
@@ -536,9 +538,9 @@ public class MoveGenerator {
                 }
 
                 // Check for en passant captures
-                if (to == BitBoard.getSquare(board.enPassantSquare)) {
-                    long packed = PackedMove.encode(from, to, BitBoard.PAWN, BitBoard.PAWN, 0, Move.EN_PASSENT,
-                            Move.EN_PASSENT);
+                if (to == Board.getSquare(board.enPassantSquare)) {
+                    long packed = PackedMove.encode(from, to, Board.PAWN, Board.PAWN, 0, Move.EN_PASSANT,
+                            Move.EN_PASSANT);
                     moves.add(packed);
                 }
             }
@@ -547,24 +549,24 @@ public class MoveGenerator {
         // Knights
         long knights = board.whiteTurn ? board.getWhiteKnights() : board.getBlackKnights();
         while (knights != 0L) {
-            long knight = BitBoard.getLSB(knights);
+            long knight = Board.getLSB(knights);
             knights &= knights - 1;
-            int from = BitBoard.getSquare(knight);
+            int from = Board.getSquare(knight);
             long knightMoves = board.whiteTurn ? generateWhiteKnightMoves(knight, board)
                     : generateBlackKnightMoves(knight, board);
 
             while (knightMoves != 0L) {
-                long move = BitBoard.getLSB(knightMoves);
+                long move = Board.getLSB(knightMoves);
                 knightMoves &= knightMoves - 1;
-                int to = BitBoard.getSquare(move);
+                int to = Board.getSquare(move);
 
                 if ((move & board.bitboard) != 0L) {
                     int capturedPiece = board.getPieceAt(move);
-                    int attackerPiece = BitBoard.KNIGHT;
+                    int attackerPiece = Board.KNIGHT;
 
                     // MVV-LVA calculation
-                    int attackerType = BitBoard.getPieceType(attackerPiece) - 1;
-                    int capturedType = BitBoard.getPieceType(capturedPiece) - 1;
+                    int attackerType = Board.getPieceType(attackerPiece) - 1;
+                    int capturedType = Board.getPieceType(capturedPiece) - 1;
 
                     if (attackerType >= 0 && attackerType <= 5 && capturedType >= 0 && capturedType <= 5) {
                         int mvvLvaScore = mvvLva[attackerType][capturedType];
@@ -579,24 +581,24 @@ public class MoveGenerator {
         // Bishops
         long bishops = board.whiteTurn ? board.getWhiteBishops() : board.getBlackBishops();
         while (bishops != 0L) {
-            long bishop = BitBoard.getLSB(bishops);
+            long bishop = Board.getLSB(bishops);
             bishops &= bishops - 1;
-            int from = BitBoard.getSquare(bishop);
+            int from = Board.getSquare(bishop);
             long bishopMoves = board.whiteTurn ? generateWhiteBishopMoves(bishop, board)
                     : generateBlackBishopMoves(bishop, board);
 
             while (bishopMoves != 0L) {
-                long move = BitBoard.getLSB(bishopMoves);
+                long move = Board.getLSB(bishopMoves);
                 bishopMoves &= bishopMoves - 1;
-                int to = BitBoard.getSquare(move);
+                int to = Board.getSquare(move);
 
                 if ((move & board.bitboard) != 0L) {
                     int capturedPiece = board.getPieceAt(move);
-                    int attackerPiece = BitBoard.BISHOP;
+                    int attackerPiece = Board.BISHOP;
 
                     // MVV-LVA calculation
-                    int attackerType = BitBoard.getPieceType(attackerPiece) - 1;
-                    int capturedType = BitBoard.getPieceType(capturedPiece) - 1;
+                    int attackerType = Board.getPieceType(attackerPiece) - 1;
+                    int capturedType = Board.getPieceType(capturedPiece) - 1;
 
                     if (attackerType >= 0 && attackerType <= 5 && capturedType >= 0 && capturedType <= 5) {
                         int mvvLvaScore = mvvLva[attackerType][capturedType];
@@ -611,24 +613,24 @@ public class MoveGenerator {
         // Rooks
         long rooks = board.whiteTurn ? board.getWhiteRooks() : board.getBlackRooks();
         while (rooks != 0L) {
-            long rook = BitBoard.getLSB(rooks);
+            long rook = Board.getLSB(rooks);
             rooks &= rooks - 1;
-            int from = BitBoard.getSquare(rook);
+            int from = Board.getSquare(rook);
             long rookMoves = board.whiteTurn ? generateWhiteRookMoves(rook, board)
                     : generateBlackRookMoves(rook, board);
 
             while (rookMoves != 0L) {
-                long move = BitBoard.getLSB(rookMoves);
+                long move = Board.getLSB(rookMoves);
                 rookMoves &= rookMoves - 1;
-                int to = BitBoard.getSquare(move);
+                int to = Board.getSquare(move);
 
                 if ((move & board.bitboard) != 0L) {
                     int capturedPiece = board.getPieceAt(move);
-                    int attackerPiece = BitBoard.ROOK;
+                    int attackerPiece = Board.ROOK;
 
                     // MVV-LVA calculation
-                    int attackerType = BitBoard.getPieceType(attackerPiece) - 1;
-                    int capturedType = BitBoard.getPieceType(capturedPiece) - 1;
+                    int attackerType = Board.getPieceType(attackerPiece) - 1;
+                    int capturedType = Board.getPieceType(capturedPiece) - 1;
 
                     if (attackerType >= 0 && attackerType <= 5 && capturedType >= 0 && capturedType <= 5) {
                         int mvvLvaScore = mvvLva[attackerType][capturedType];
@@ -643,24 +645,24 @@ public class MoveGenerator {
         // Queens
         long queens = board.whiteTurn ? board.getWhiteQueens() : board.getBlackQueens();
         while (queens != 0L) {
-            long queen = BitBoard.getLSB(queens);
+            long queen = Board.getLSB(queens);
             queens &= queens - 1;
-            int from = BitBoard.getSquare(queen);
+            int from = Board.getSquare(queen);
             long queenMoves = board.whiteTurn ? generateWhiteQueenMoves(queen, board)
                     : generateBlackQueenMoves(queen, board);
 
             while (queenMoves != 0L) {
-                long move = BitBoard.getLSB(queenMoves);
+                long move = Board.getLSB(queenMoves);
                 queenMoves &= queenMoves - 1;
-                int to = BitBoard.getSquare(move);
+                int to = Board.getSquare(move);
 
                 if ((move & board.bitboard) != 0L) {
                     int capturedPiece = board.getPieceAt(move);
-                    int attackerPiece = BitBoard.QUEEN;
+                    int attackerPiece = Board.QUEEN;
 
                     // MVV-LVA calculation
-                    int attackerType = BitBoard.getPieceType(attackerPiece) - 1;
-                    int capturedType = BitBoard.getPieceType(capturedPiece) - 1;
+                    int attackerType = Board.getPieceType(attackerPiece) - 1;
+                    int capturedType = Board.getPieceType(capturedPiece) - 1;
 
                     if (attackerType >= 0 && attackerType <= 5 && capturedType >= 0 && capturedType <= 5) {
                         int mvvLvaScore = mvvLva[attackerType][capturedType];
@@ -682,22 +684,22 @@ public class MoveGenerator {
 
         // Kings
         long kings = board.whiteTurn ? board.getWhiteKing() : board.getBlackKing();
-        long king = BitBoard.getLSB(kings);
-        int from = BitBoard.getSquare(king);
+        long king = Board.getLSB(kings);
+        int from = Board.getSquare(king);
         long kingMoves = board.whiteTurn ? generateWhiteKingMoves(king, board) : generateBlackKingMoves(king, board);
 
         while (kingMoves != 0L) {
-            long move = BitBoard.getLSB(kingMoves);
+            long move = Board.getLSB(kingMoves);
             kingMoves &= kingMoves - 1;
-            int to = BitBoard.getSquare(move);
+            int to = Board.getSquare(move);
 
             if ((move & board.bitboard) != 0L) {
                 int capturedPiece = board.getPieceAt(move);
-                int attackerPiece = BitBoard.KING;
+                int attackerPiece = Board.KING;
 
                 // MVV-LVA calculation
-                int attackerType = BitBoard.getPieceType(attackerPiece) - 1;
-                int capturedType = BitBoard.getPieceType(capturedPiece) - 1;
+                int attackerType = Board.getPieceType(attackerPiece) - 1;
+                int capturedType = Board.getPieceType(capturedPiece) - 1;
 
                 if (attackerType >= 0 && attackerType <= 5 && capturedType >= 0 && capturedType <= 5) {
                     int mvvLvaScore = mvvLva[attackerType][capturedType];
@@ -711,7 +713,7 @@ public class MoveGenerator {
         return moves;
     }
 
-    public static long generateWhiteMask(BitBoard board) {
+    public static long generateWhiteMask(Board board) {
         long whiteAttacks = 0L;
 
         // Générer les mouvements des pions blancs
@@ -754,7 +756,7 @@ public class MoveGenerator {
         return whiteAttacks;
     }
 
-    private static long generateBlackMask(BitBoard board) {
+    private static long generateBlackMask(Board board) {
         long blackAttacks = 0L;
 
         // Générer les mouvements des pions noirs
@@ -802,14 +804,14 @@ public class MoveGenerator {
 
         if (white) {
             // Captures diagonales, gauche et droite
-            long capturesLeft = (pawns << 9) & ~BitBoard.FILE_H;
-            long capturesRight = (pawns << 7) & ~BitBoard.FILE_A;
+            long capturesLeft = (pawns << 9) & ~Board.FILE_H;
+            long capturesRight = (pawns << 7) & ~Board.FILE_A;
 
             pawnMask |= capturesLeft | capturesRight;
         } else {
             // Captures diagonales, gauche et droite
-            long capturesLeft = (pawns >> 7) & ~BitBoard.FILE_H;
-            long capturesRight = (pawns >> 9) & ~BitBoard.FILE_A;
+            long capturesLeft = (pawns >> 7) & ~Board.FILE_H;
+            long capturesRight = (pawns >> 9) & ~Board.FILE_A;
 
             pawnMask |= capturesLeft | capturesRight;
         }
@@ -822,70 +824,70 @@ public class MoveGenerator {
         long pawnAttacks = 0L;
         if (white) {
             // Captures diagonales, gauche et droite
-            long capturesLeft = (pawns << 9) & ~BitBoard.FILE_H;
-            long capturesRight = (pawns << 7) & ~BitBoard.FILE_A;
+            long capturesLeft = (pawns << 9) & ~Board.FILE_H;
+            long capturesRight = (pawns << 7) & ~Board.FILE_A;
 
             pawnAttacks |= capturesLeft | capturesRight;
         } else {
             // Captures diagonales, gauche et droite
-            long capturesLeft = (pawns >> 7) & ~BitBoard.FILE_H;
-            long capturesRight = (pawns >> 9) & ~BitBoard.FILE_A;
+            long capturesLeft = (pawns >> 7) & ~Board.FILE_H;
+            long capturesRight = (pawns >> 9) & ~Board.FILE_A;
 
             pawnAttacks |= capturesLeft | capturesRight;
         }
 
         // En passant
         if (white) {
-            long enPassantLeft = (pawns << 9) & BitBoard.FILE_H;
-            long enPassantRight = (pawns << 7) & BitBoard.FILE_A;
+            long enPassantLeft = (pawns << 9) & Board.FILE_H;
+            long enPassantRight = (pawns << 7) & Board.FILE_A;
             pawnAttacks |= enPassantLeft | enPassantRight;
         } else {
-            long enPassantLeft = (pawns >> 7) & BitBoard.FILE_H;
-            long enPassantRight = (pawns >> 9) & BitBoard.FILE_A;
+            long enPassantLeft = (pawns >> 7) & Board.FILE_H;
+            long enPassantRight = (pawns >> 9) & Board.FILE_A;
             pawnAttacks |= enPassantLeft | enPassantRight;
         }
         return pawnAttacks;
     }
 
 
-    public static long generatePawnMoves(long pawns, BitBoard board) {
+    public static long generatePawnMoves(long pawns, Board board) {
         long pawnMoves = 0L;
 
         if (board.whiteTurn) {
             long singlePush = (pawns << 8) & ~board.getBoard(); // Avancer d'une case
             // Avancer de deux cases depuis la rangée initiale mais seulement si les cases
             // sont vides
-            long doublePush = ((pawns << 16) & ~board.getBoard() & (singlePush << 8) & BitBoard.RANK_4);
+            long doublePush = ((pawns << 16) & ~board.getBoard() & (singlePush << 8) & Board.RANK_4);
             pawnMoves |= singlePush | doublePush;
             // Captures diagonales, gauche et droite
-            long capturesLeft = (pawns << 7) & board.getBlackPieces() & ~BitBoard.FILE_A;
-            long capturesRight = (pawns << 9) & board.getBlackPieces() & ~BitBoard.FILE_H;
+            long capturesLeft = (pawns << 7) & board.getBlackPieces() & ~Board.FILE_A;
+            long capturesRight = (pawns << 9) & board.getBlackPieces() & ~Board.FILE_H;
             pawnMoves |= capturesLeft | capturesRight;
 
             // en passant
             if (board.enPassantSquare != 0L) {
-                long enPassantLeft = (pawns << 7) & board.enPassantSquare & ~BitBoard.FILE_A;
-                long enPassantRight = (pawns << 9) & board.enPassantSquare & ~BitBoard.FILE_H;
+                long enPassantLeft = (pawns << 7) & board.enPassantSquare & ~Board.FILE_A;
+                long enPassantRight = (pawns << 9) & board.enPassantSquare & ~Board.FILE_H;
                 pawnMoves |= enPassantLeft | enPassantRight;
             }
 
         } else {
             long singlePush = (pawns >> 8) & ~board.getBoard(); // Avancer d'une case
-            long doublePush = ((pawns >> 16) & ~board.getBoard() & (singlePush >> 8) & BitBoard.RANK_5); // Avancer de
+            long doublePush = ((pawns >> 16) & ~board.getBoard() & (singlePush >> 8) & Board.RANK_5); // Avancer de
                                                                                                          // deux cases
                                                                                                          // depuis la
                                                                                                          // rangée
                                                                                                          // initiale
             pawnMoves |= singlePush | doublePush;
             // Captures diagonales, gauche et droite
-            long capturesLeft = (pawns >> 7) & board.getWhitePieces() & ~BitBoard.FILE_H;
-            long capturesRight = (pawns >> 9) & board.getWhitePieces() & ~BitBoard.FILE_A;
+            long capturesLeft = (pawns >> 7) & board.getWhitePieces() & ~Board.FILE_H;
+            long capturesRight = (pawns >> 9) & board.getWhitePieces() & ~Board.FILE_A;
             pawnMoves |= capturesLeft | capturesRight;
 
             // en passant
             if (board.enPassantSquare != 0L) {
-                long enPassantLeft = (pawns >> 7) & board.enPassantSquare & ~BitBoard.FILE_H;
-                long enPassantRight = (pawns >> 9) & board.enPassantSquare & ~BitBoard.FILE_A;
+                long enPassantLeft = (pawns >> 7) & board.enPassantSquare & ~Board.FILE_H;
+                long enPassantRight = (pawns >> 9) & board.enPassantSquare & ~Board.FILE_A;
                 pawnMoves |= enPassantLeft | enPassantRight;
             }
 
@@ -899,11 +901,11 @@ public class MoveGenerator {
         long knightMask = 0L;
 
         while (knights != 0L) {
-            long knight = BitBoard.getLSB(knights);
+            long knight = Board.getLSB(knights);
             knights &= knights - 1; //
 
             // run the knight through the precomputed knight moves
-            long knightMoves = BitBoard.KNIGHT_MOVES[Long.numberOfTrailingZeros(knight)];
+            long knightMoves = Board.KNIGHT_MOVES[Long.numberOfTrailingZeros(knight)];
 
             knightMask |= knightMoves;
         }
@@ -913,7 +915,7 @@ public class MoveGenerator {
     }
 
     // Generate knight legal moves
-    public static long generateWhiteKnightMoves(long knights, BitBoard board) {
+    public static long generateWhiteKnightMoves(long knights, Board board) {
         // Le cavalier peut se déplacer en L, 2 cases dans une direction et 1 case dans
         // une autre et ne peut pas aller sur une case occupée par une pièce de la même
         // couleur
@@ -1064,7 +1066,7 @@ public class MoveGenerator {
         return occupancy;
     }
 
-    private static long generateWhiteBishopMoves(long bishops, BitBoard board) {
+    private static long generateWhiteBishopMoves(long bishops, Board board) {
         // La seule différence entre les mouvements des fous et les masques des fous est
         // que selon la couleur, les fous ne peuvent pas capturer une pièce de la même
         // couleur
@@ -1085,7 +1087,7 @@ public class MoveGenerator {
         return bishopMoves;
     }
 
-    public static long generateWhiteRookMoves(long rooks, BitBoard board) {
+    public static long generateWhiteRookMoves(long rooks, Board board) {
         // La seule différence entre les mouvements des tours et les masques des tours
         // est que selon la couleur, les tours ne peuvent pas capturer une pièce de la
         // même couleur
@@ -1106,7 +1108,7 @@ public class MoveGenerator {
         return rookMoves;
     }
 
-    private static long generateWhiteQueenMoves(long queens, BitBoard board) {
+    private static long generateWhiteQueenMoves(long queens, Board board) {
         // La seule différence entre les mouvements des reines et les masques des reines
         // est que selon la couleur, les reines ne peuvent pas capturer une pièce de la
         // même couleur
@@ -1128,10 +1130,10 @@ public class MoveGenerator {
     }
 
     public static long generateKingMask(long king) {
-        return BitBoard.KING_MOVES[Long.numberOfTrailingZeros(king)];
+        return Board.KING_MOVES[Long.numberOfTrailingZeros(king)];
     }
 
-    public static long generateKingMoves(long king, BitBoard board) {
+    public static long generateKingMoves(long king, Board board) {
         // Le roi peut se déplacer d'une case dans toutes les directions et peut roquer
         long kingMoves = generateKingMask(king);
         // pas la meme couleur
@@ -1150,14 +1152,14 @@ public class MoveGenerator {
             // Si on a les droits de roquer du côté de du roi
             if (board.whiteCastleKingSide == 1L) {
                 // Si la tour est à sa place
-                if ((board.whiteRooks & BitBoard.WHITE_KING_SIDE_ROOK_SQUARE) != 0L) {
+                if ((board.whiteRooks & Board.WHITE_KING_SIDE_ROOK_SQUARE) != 0L) {
                     // Si il n'y a pas de pièces entre le roi et la tour
-                    if ((BitBoard.WHITE_KING_SIDE_CASTLE_EMPTY_SQUARES_MASK & board.getBoard()) == 0L) {
+                    if ((Board.WHITE_KING_SIDE_CASTLE_EMPTY_SQUARES_MASK & board.getBoard()) == 0L) {
                         // Si les cases ne sont pas attaquées
-                        if ((BitBoard.WHITE_KING_SIDE_CASTLE_NEED_TO_NOT_BE_ATTACKED_MASK
+                        if ((Board.WHITE_KING_SIDE_CASTLE_NEED_TO_NOT_BE_ATTACKED_MASK
                                 & generateOpponentMask(board)) == 0L) {
                             // On peut roquer
-                            kingMoves |= BitBoard.WHITE_KING_SIDE_CASTLE_KING_SQUARE;
+                            kingMoves |= Board.WHITE_KING_SIDE_CASTLE_KING_SQUARE;
                         }
                     }
                 }
@@ -1166,14 +1168,14 @@ public class MoveGenerator {
             // Si on a les droits de roquer du côté de la dame
             if (board.whiteCastleQueenSide == 1L) {
                 // Si la tour est à sa place
-                if ((board.whiteRooks & BitBoard.WHITE_QUEEN_SIDE_ROOK_SQUARE) != 0L) {
+                if ((board.whiteRooks & Board.WHITE_QUEEN_SIDE_ROOK_SQUARE) != 0L) {
                     // Si il n'y a pas de pièces entre le roi et la tour
-                    if ((BitBoard.WHITE_QUEEN_SIDE_CASTLE_EMPTY_SQUARES_MASK & board.getBoard()) == 0L) {
+                    if ((Board.WHITE_QUEEN_SIDE_CASTLE_EMPTY_SQUARES_MASK & board.getBoard()) == 0L) {
                         // Si les cases ne sont pas attaquées
-                        if ((BitBoard.WHITE_QUEEN_SIDE_CASTLE_NEED_TO_NOT_BE_ATTACKED_MASK
+                        if ((Board.WHITE_QUEEN_SIDE_CASTLE_NEED_TO_NOT_BE_ATTACKED_MASK
                                 & generateOpponentMask(board)) == 0L) {
                             // On peut roquer
-                            kingMoves |= BitBoard.WHITE_QUEEN_SIDE_CASTLE_KING_SQUARE;
+                            kingMoves |= Board.WHITE_QUEEN_SIDE_CASTLE_KING_SQUARE;
                         }
                     }
                 }
@@ -1184,14 +1186,14 @@ public class MoveGenerator {
             // Si on a les droits de roquer du côté de du roi
             if (board.blackCastleKingSide == 1L) {
                 // Si la tour est à sa place
-                if ((board.blackRooks & BitBoard.BLACK_KING_SIDE_ROOK_SQUARE) != 0L) {
+                if ((board.blackRooks & Board.BLACK_KING_SIDE_ROOK_SQUARE) != 0L) {
                     // Si il n'y a pas de pièces entre le roi et la tour
-                    if ((BitBoard.BLACK_KING_SIDE_CASTLE_EMPTY_SQUARES_MASK & board.getBoard()) == 0L) {
+                    if ((Board.BLACK_KING_SIDE_CASTLE_EMPTY_SQUARES_MASK & board.getBoard()) == 0L) {
                         // Si les cases ne sont pas attaquées
-                        if ((BitBoard.BLACK_KING_SIDE_CASTLE_NEED_TO_NOT_BE_ATTACKED_MASK
+                        if ((Board.BLACK_KING_SIDE_CASTLE_NEED_TO_NOT_BE_ATTACKED_MASK
                                 & generateOpponentMask(board)) == 0L) {
                             // On peut roquer
-                            kingMoves |= BitBoard.BLACK_KING_SIDE_CASTLE_KING_SQUARE;
+                            kingMoves |= Board.BLACK_KING_SIDE_CASTLE_KING_SQUARE;
                         }
                     }
                 }
@@ -1200,14 +1202,14 @@ public class MoveGenerator {
             // Si on a les droits de roquer du côté de la dame
             if (board.blackCastleQueenSide == 1L) {
                 // Si la tour est à sa place
-                if ((board.blackRooks & BitBoard.BLACK_QUEEN_SIDE_ROOK_SQUARE) != 0L) {
+                if ((board.blackRooks & Board.BLACK_QUEEN_SIDE_ROOK_SQUARE) != 0L) {
                     // Si il n'y a pas de pièces entre le roi et la tour
-                    if ((BitBoard.BLACK_QUEEN_SIDE_CASTLE_EMPTY_SQUARES_MASK & board.getBoard()) == 0L) {
+                    if ((Board.BLACK_QUEEN_SIDE_CASTLE_EMPTY_SQUARES_MASK & board.getBoard()) == 0L) {
                         // Si les cases ne sont pas attaquées
-                        if ((BitBoard.BLACK_QUEEN_SIDE_CASTLE_NEED_TO_NOT_BE_ATTACKED_MASK
+                        if ((Board.BLACK_QUEEN_SIDE_CASTLE_NEED_TO_NOT_BE_ATTACKED_MASK
                                 & generateOpponentMask(board)) == 0L) {
                             // On peut roquer
-                            kingMoves |= BitBoard.BLACK_QUEEN_SIDE_CASTLE_KING_SQUARE;
+                            kingMoves |= Board.BLACK_QUEEN_SIDE_CASTLE_KING_SQUARE;
                         }
                     }
                 }
@@ -1217,7 +1219,7 @@ public class MoveGenerator {
         return kingMoves;
     }
 
-    private static long generateBlackKingMoves(long king, BitBoard board) {
+    private static long generateBlackKingMoves(long king, Board board) {
         long kingMoves = generateKingMask(king);
         // On ne peut pas aller sur une case occupée par une pièce de la même couleur
         kingMoves &= ~board.getBlackPieces();
@@ -1231,13 +1233,13 @@ public class MoveGenerator {
         // Si on a les droits de roquer du côté de du roi
         if (board.blackCastleKingSide == 1L) {
             // Si la tour est à sa place
-            if ((board.blackRooks & BitBoard.BLACK_KING_SIDE_ROOK_SQUARE) != 0L) {
+            if ((board.blackRooks & Board.BLACK_KING_SIDE_ROOK_SQUARE) != 0L) {
                 // Si il n'y a pas de pièces entre le roi et la tour
-                if ((BitBoard.BLACK_KING_SIDE_CASTLE_EMPTY_SQUARES_MASK & board.getBoard()) == 0L) {
+                if ((Board.BLACK_KING_SIDE_CASTLE_EMPTY_SQUARES_MASK & board.getBoard()) == 0L) {
                     // Si les cases ne sont pas attaquées
-                    if ((BitBoard.BLACK_KING_SIDE_CASTLE_NEED_TO_NOT_BE_ATTACKED_MASK & opponentAttacks) == 0L) {
+                    if ((Board.BLACK_KING_SIDE_CASTLE_NEED_TO_NOT_BE_ATTACKED_MASK & opponentAttacks) == 0L) {
                         // On peut roquer
-                        kingMoves |= BitBoard.BLACK_KING_SIDE_CASTLE_KING_SQUARE;
+                        kingMoves |= Board.BLACK_KING_SIDE_CASTLE_KING_SQUARE;
                     }
                 }
             }
@@ -1246,13 +1248,13 @@ public class MoveGenerator {
         // Si on a les droits de roquer du côté de la dame
         if (board.blackCastleQueenSide == 1L) {
             // Si la tour est à sa place
-            if ((board.blackRooks & BitBoard.BLACK_QUEEN_SIDE_ROOK_SQUARE) != 0L) {
+            if ((board.blackRooks & Board.BLACK_QUEEN_SIDE_ROOK_SQUARE) != 0L) {
                 // Si il n'y a pas de pièces entre le roi et la tour
-                if ((BitBoard.BLACK_QUEEN_SIDE_CASTLE_EMPTY_SQUARES_MASK & board.getBoard()) == 0L) {
+                if ((Board.BLACK_QUEEN_SIDE_CASTLE_EMPTY_SQUARES_MASK & board.getBoard()) == 0L) {
                     // Si les cases ne sont pas attaquées
-                    if ((BitBoard.BLACK_QUEEN_SIDE_CASTLE_NEED_TO_NOT_BE_ATTACKED_MASK & opponentAttacks) == 0L) {
+                    if ((Board.BLACK_QUEEN_SIDE_CASTLE_NEED_TO_NOT_BE_ATTACKED_MASK & opponentAttacks) == 0L) {
                         // On peut roquer
-                        kingMoves |= BitBoard.BLACK_QUEEN_SIDE_CASTLE_KING_SQUARE;
+                        kingMoves |= Board.BLACK_QUEEN_SIDE_CASTLE_KING_SQUARE;
                     }
                 }
             }
@@ -1261,7 +1263,7 @@ public class MoveGenerator {
         return kingMoves;
     }
 
-    private static long generateWhiteKingMoves(long king, BitBoard board) {
+    private static long generateWhiteKingMoves(long king, Board board) {
         long kingMoves = generateKingMask(king);
         // On ne peut pas aller sur une case occupée par une pièce de la même couleur
         kingMoves &= ~board.getWhitePieces();
@@ -1275,13 +1277,13 @@ public class MoveGenerator {
         // Si on a les droits de roquer du côté de du roi
         if (board.whiteCastleKingSide == 1L) {
             // Si la tour est à sa place
-            if ((board.whiteRooks & BitBoard.WHITE_KING_SIDE_ROOK_SQUARE) != 0L) {
+            if ((board.whiteRooks & Board.WHITE_KING_SIDE_ROOK_SQUARE) != 0L) {
                 // Si il n'y a pas de pièces entre le roi et la tour
-                if ((BitBoard.WHITE_KING_SIDE_CASTLE_EMPTY_SQUARES_MASK & board.getBoard()) == 0L) {
+                if ((Board.WHITE_KING_SIDE_CASTLE_EMPTY_SQUARES_MASK & board.getBoard()) == 0L) {
                     // Si les cases ne sont pas attaquées
-                    if ((BitBoard.WHITE_KING_SIDE_CASTLE_NEED_TO_NOT_BE_ATTACKED_MASK & opponentAttacks) == 0L) {
+                    if ((Board.WHITE_KING_SIDE_CASTLE_NEED_TO_NOT_BE_ATTACKED_MASK & opponentAttacks) == 0L) {
                         // On peut roquer
-                        kingMoves |= BitBoard.WHITE_KING_SIDE_CASTLE_KING_SQUARE;
+                        kingMoves |= Board.WHITE_KING_SIDE_CASTLE_KING_SQUARE;
                     }
                 }
             }
@@ -1290,13 +1292,13 @@ public class MoveGenerator {
         // Si on a les droits de roquer du côté de la dame
         if (board.whiteCastleQueenSide == 1L) {
             // Si la tour est à sa place
-            if ((board.whiteRooks & BitBoard.WHITE_QUEEN_SIDE_ROOK_SQUARE) != 0L) {
+            if ((board.whiteRooks & Board.WHITE_QUEEN_SIDE_ROOK_SQUARE) != 0L) {
                 // Si il n'y a pas de pièces entre le roi et la tour
-                if ((BitBoard.WHITE_QUEEN_SIDE_CASTLE_EMPTY_SQUARES_MASK & board.getBoard()) == 0L) {
+                if ((Board.WHITE_QUEEN_SIDE_CASTLE_EMPTY_SQUARES_MASK & board.getBoard()) == 0L) {
                     // Si les cases ne sont pas attaquées
-                    if ((BitBoard.WHITE_QUEEN_SIDE_CASTLE_NEED_TO_NOT_BE_ATTACKED_MASK & opponentAttacks) == 0L) {
+                    if ((Board.WHITE_QUEEN_SIDE_CASTLE_NEED_TO_NOT_BE_ATTACKED_MASK & opponentAttacks) == 0L) {
                         // On peut roquer
-                        kingMoves |= BitBoard.WHITE_QUEEN_SIDE_CASTLE_KING_SQUARE;
+                        kingMoves |= Board.WHITE_QUEEN_SIDE_CASTLE_KING_SQUARE;
                     }
                 }
             }
@@ -1305,7 +1307,7 @@ public class MoveGenerator {
         return kingMoves;
     }
 
-    public static long generateBlackKnightMoves(long knights, BitBoard board) {
+    public static long generateBlackKnightMoves(long knights, Board board) {
         // Le cavalier peut se déplacer en L, 2 cases dans une direction et 1 case dans
         // une autre et ne peut pas aller sur une case occupée par une pièce de la même
         // couleur
@@ -1320,7 +1322,7 @@ public class MoveGenerator {
         return knightMoves;
     }
 
-    public static long generateBlackBishopMoves(long bishops, BitBoard board) {
+    public static long generateBlackBishopMoves(long bishops, Board board) {
         // La seule différence entre les mouvements des fous et les masques des fous est
         // que selon la couleur, les fous ne peuvent pas capturer une pièce de la même
         // couleur
@@ -1341,7 +1343,7 @@ public class MoveGenerator {
         return bishopMoves;
     }
 
-    public static long generateBlackRookMoves(long rooks, BitBoard board) {
+    public static long generateBlackRookMoves(long rooks, Board board) {
         // La seule différence entre les mouvements des tours et les masques des tours
         // est que selon la couleur, les tours ne peuvent pas capturer une pièce de la
         // même couleur
@@ -1362,7 +1364,7 @@ public class MoveGenerator {
         return rookMoves;
     }
 
-    public static long generateBlackQueenMoves(long queens, BitBoard board) {
+    public static long generateBlackQueenMoves(long queens, Board board) {
         // La seule différence entre les mouvements des reines et les masques des reines
         // est que selon la couleur, les reines ne peuvent pas capturer une pièce de la
         // même couleur

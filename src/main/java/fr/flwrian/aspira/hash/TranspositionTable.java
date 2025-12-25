@@ -1,4 +1,4 @@
-package com.bitboard.algorithms;
+package fr.flwrian.aspira.hash;
 
 /**
  * Transposition Table – 4-way set-associative, depth-preferred replacement.

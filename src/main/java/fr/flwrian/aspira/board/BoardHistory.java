@@ -1,4 +1,4 @@
-package com.bitboard;
+package fr.flwrian.aspira.board;
 
 public class BoardHistory {
     public long bitboard, move;
@@ -14,7 +14,7 @@ public class BoardHistory {
         // vide
     }
 
-    public void copyFrom(BitBoard b, long move) {
+    public void copyFrom(Board b, long move) {
         this.move = move;
         this.bitboard = b.bitboard;
 
@@ -45,7 +45,7 @@ public class BoardHistory {
         this.zobristKey = b.zobristKey;
     }
 
-    public void restoreTo(BitBoard b) {
+    public void restoreTo(Board b) {
         b.bitboard = this.bitboard;
 
         b.whitePawns = this.whitePawns;

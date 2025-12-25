@@ -1,4 +1,4 @@
-package com.bitboard;
+package fr.flwrian.aspira.perft;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -8,9 +8,14 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 
+import fr.flwrian.aspira.board.Board;
+import fr.flwrian.aspira.move.Move;
+import fr.flwrian.aspira.move.PackedMove;
+import fr.flwrian.aspira.move.PackedMoveList;
+
 public class Perft {
 
-    public static long perft(BitBoard bitBoard, int depth) {
+    public static long perft(Board bitBoard, int depth) {
 
         if (depth == 0) {
             return 1;
@@ -38,7 +43,7 @@ public class Perft {
         return nodes;
     }
 
-    public static String perftDivideString(BitBoard bitBoard, int depth) {
+    public static String perftDivideString(Board bitBoard, int depth) {
         String result = "";
         result += "[PerftDivide]\n";
         result += "[Depth: " + depth + "]\n";
@@ -130,7 +135,7 @@ public class Perft {
                     // Split the line into FEN and depth results
                     String[] parts = testLine.split(";");
                     String fen = parts[0].trim();
-                    BitBoard bitBoard = new BitBoard();
+                    Board bitBoard = new Board();
                     bitBoard.loadFromFen(fen);
 
                     outputBuilder.append("┌────────────────────────────────────────────────────────┐\n");
@@ -321,7 +326,7 @@ public class Perft {
     // System.out.println("Nodes searched: " + totalNodes);
     // }
 
-    public static String calculateNPS(BitBoard bitBoard, long time) {
+    public static String calculateNPS(Board bitBoard, long time) {
         // Search new nodes until time is up
         long nodes = 0;
         long startTime = System.currentTimeMillis();

@@ -1,4 +1,4 @@
-package com.bitboard.algorithms;
+package fr.flwrian.aspira.hash;
 
 import java.util.Random;
 

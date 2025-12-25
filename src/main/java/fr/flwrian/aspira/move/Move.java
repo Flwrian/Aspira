@@ -1,15 +1,16 @@
-package com.bitboard;
+package fr.flwrian.aspira.move;
 
 
-import com.bitboard.BitBoard;
 import java.util.Objects;
+
+import fr.flwrian.aspira.board.Board;
 
 public final class Move {
 
 
     public static final byte DEFAULT = 0;
     public static final byte DOUBLE_PAWN_PUSH = 2;
-    public static final byte EN_PASSENT = 3;
+    public static final byte EN_PASSANT = 3;
     public static final byte PROMOTION = 4;
     public static final byte CASTLING = 5;
     public static final byte CAPTURE = 6;
@@ -44,7 +45,7 @@ public final class Move {
         this.pieceTo = pieceTo;
     }
 
-    public Move(int from, int to, BitBoard board) {
+    public Move(int from, int to, Board board) {
         this.from = from;
         this.to = to;
         this.pieceFrom = board.getPiece(from);
@@ -78,28 +79,28 @@ public final class Move {
             char promotionPiece = move.charAt(4);
             switch (promotionPiece) {
             case 'Q':
-                this.pieceTo = BitBoard.QUEEN;
+                this.pieceTo = Board.QUEEN;
                 break;
             case 'R':
-                this.pieceTo = BitBoard.ROOK;
+                this.pieceTo = Board.ROOK;
                 break;
             case 'B':
-                this.pieceTo = BitBoard.BISHOP;
+                this.pieceTo = Board.BISHOP;
                 break;
             case 'N':
-                this.pieceTo = BitBoard.KNIGHT;
+                this.pieceTo = Board.KNIGHT;
                 break;
             case 'q':
-                this.pieceTo = BitBoard.QUEEN;
+                this.pieceTo = Board.QUEEN;
                 break;
             case 'r':
-                this.pieceTo = BitBoard.ROOK;
+                this.pieceTo = Board.ROOK;
                 break;
             case 'b':
-                this.pieceTo = BitBoard.BISHOP;
+                this.pieceTo = Board.BISHOP;
                 break;
             case 'n':
-                this.pieceTo = BitBoard.KNIGHT;
+                this.pieceTo = Board.KNIGHT;
                 break;
             }
             this.type = PROMOTION;
@@ -107,7 +108,7 @@ public final class Move {
 
     }
 
-    public Move(String move, BitBoard board) {
+    public Move(String move, Board board) {
         // example move: e2e4 or e7e8Q for promotion
         int rankFrom = 8 - Character.getNumericValue(move.charAt(1));
         int fileFrom = move.charAt(0) - 'a';
@@ -131,14 +132,14 @@ public final class Move {
         if ((pieceFrom == 1 || pieceFrom == 7) && pieceTo == 0) {
             // check if the move is en passant
             if (Long.numberOfTrailingZeros(board.enPassantSquare) == to) {
-                this.type = EN_PASSENT;
+                this.type = EN_PASSANT;
                 return;
             }
         }
 
         // if piece from is king and it tries to move two squares, it is a castling move
         //! ce code pue sa mere va falloir le changer
-        if (pieceFrom == BitBoard.KING || pieceFrom == BitBoard.KING*2 && Math.abs(from - to) >= 2) {
+        if (pieceFrom == Board.KING || pieceFrom == Board.KING*2 && Math.abs(from - to) >= 2) {
             this.type = CASTLING;
             return;
         }
@@ -148,28 +149,28 @@ public final class Move {
             char promotionPiece = move.charAt(4);
             switch (promotionPiece) {
             case 'Q':
-                this.pieceTo = BitBoard.QUEEN;
+                this.pieceTo = Board.QUEEN;
                 break;
             case 'R':
-                this.pieceTo = BitBoard.ROOK;
+                this.pieceTo = Board.ROOK;
                 break;
             case 'B':
-                this.pieceTo = BitBoard.BISHOP;
+                this.pieceTo = Board.BISHOP;
                 break;
             case 'N':
-                this.pieceTo = BitBoard.KNIGHT;
+                this.pieceTo = Board.KNIGHT;
                 break;
             case 'q':
-                this.pieceTo = BitBoard.QUEEN;
+                this.pieceTo = Board.QUEEN;
                 break;
             case 'r':
-                this.pieceTo = BitBoard.ROOK;
+                this.pieceTo = Board.ROOK;
                 break;
             case 'b':
-                this.pieceTo = BitBoard.BISHOP;
+                this.pieceTo = Board.BISHOP;
                 break;
             case 'n':
-                this.pieceTo = BitBoard.KNIGHT;
+                this.pieceTo = Board.KNIGHT;
                 break;
             }
             this.type = PROMOTION;
@@ -247,8 +248,8 @@ public final class Move {
         return type == CASTLING;
     }
 
-    public boolean isEn_passent_capture() {
-        return type == EN_PASSENT;
+    public boolean isEn_passant_capture() {
+        return type == EN_PASSANT;
     }
 
     public boolean isPromotion() {
@@ -304,7 +305,7 @@ public final class Move {
         //     return "O-O";
         // }
 
-        // if (type == EN_PASSENT) {
+        // if (type == EN_PASSANT) {
         //     return BitBoard.getSquareIndexNotation(from) + "x" + BitBoard.getSquareIndexNotation(to);
         // }
 
@@ -314,16 +315,16 @@ public final class Move {
             String promotionPiece = "";
             if (isWhite) {
                 switch (pieceTo) {
-                    case BitBoard.QUEEN:
+                    case Board.QUEEN:
                         promotionPiece = "q";
                         break;
-                    case BitBoard.ROOK:
+                    case Board.ROOK:
                         promotionPiece = "r";
                         break;
-                    case BitBoard.BISHOP:
+                    case Board.BISHOP:
                         promotionPiece = "b";
                         break;
-                    case BitBoard.KNIGHT:
+                    case Board.KNIGHT:
                         promotionPiece = "n";
                         break;
                 }
@@ -331,25 +332,25 @@ public final class Move {
 
             else {
                 switch (pieceTo) {
-                    case BitBoard.QUEEN:
+                    case Board.QUEEN:
                         promotionPiece = "q";
                         break;
-                    case BitBoard.ROOK:
+                    case Board.ROOK:
                         promotionPiece = "r";
                         break;
-                    case BitBoard.BISHOP:
+                    case Board.BISHOP:
                         promotionPiece = "b";
                         break;
-                    case BitBoard.KNIGHT:
+                    case Board.KNIGHT:
                         promotionPiece = "n";
                         break;
                 }
             }
 
-            return BitBoard.getSquareIndexNotation(from) + BitBoard.getSquareIndexNotation(to) + promotionPiece;
+            return Board.getSquareIndexNotation(from) + Board.getSquareIndexNotation(to) + promotionPiece;
         }
 
-        return BitBoard.getSquareIndexNotation(from) + BitBoard.getSquareIndexNotation(to);
+        return Board.getSquareIndexNotation(from) + Board.getSquareIndexNotation(to);
     }
 
 

@@ -1,12 +1,13 @@
-package com.bitboard;
+package fr.flwrian.aspira.move;
 
-import com.bitboard.BitBoard;
 
 
 import java.util.*;
 import java.util.function.Consumer;
 
-public class MoveList implements Iterable<Move>, List<Move> {
+import fr.flwrian.aspira.board.Board;
+
+public class MoveList implements List<Move> {
 
     private Move[] moves;
     private int size = 0;
@@ -191,7 +192,7 @@ public class MoveList implements Iterable<Move>, List<Move> {
     }
 
 
-    public Move add(int from, int to, BitBoard board) {
+    public Move add(int from, int to, Board board) {
         return this.add(from,to,board.getPiece(from),board.getPiece(to));
     }
 

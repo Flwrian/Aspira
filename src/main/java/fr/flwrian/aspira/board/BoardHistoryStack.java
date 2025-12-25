@@ -1,4 +1,6 @@
-package com.bitboard;
+package fr.flwrian.aspira.board;
+
+import fr.flwrian.aspira.move.PackedMove;
 
 public class BoardHistoryStack {
     public final BoardHistory[] stack;
@@ -11,7 +13,7 @@ public class BoardHistoryStack {
         }
     }
 
-    public void push(BitBoard board, long move) {
+    public void push(Board board, long move) {
         if (top + 1 >= stack.length) {
             throw new RuntimeException("BoardHistoryStack overflow");
         }

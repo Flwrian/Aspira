@@ -1,13 +1,13 @@
-package com.bitboard.algorithms;
+package fr.flwrian.aspira.search;
 
-import com.bitboard.BitBoard;
-import com.bitboard.Move;
+import fr.flwrian.aspira.board.Board;
+import fr.flwrian.aspira.move.Move;
 
-public interface ChessAlgorithm {
+public interface SearchAlgorithm {
 
-    public Move search(BitBoard board, int wtime, int btime, int winc, int binc, int movetime, int depth);
+    public Move search(Board board, int wtime, int btime, int winc, int binc, int movetime, int depth);
 
-    public int evaluate(BitBoard board);
+    public int evaluate(Board board);
 
     public String getName();
 

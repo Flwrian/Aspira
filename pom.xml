@@ -5,9 +5,9 @@
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
-  <groupId>com.example</groupId>
-  <artifactId>demo</artifactId>
-  <version>1</version>
+  <groupId>fr.flwrian.aspira</groupId>
+  <artifactId>aspira</artifactId>
+  <version>1.0.0</version>
 
   <name>Aspira</name>
   <!-- FIXME change it to the project's website -->
@@ -79,7 +79,7 @@
             <appendAssemblyId>false</appendAssemblyId>
             <archive>
               <manifest>
-                <mainClass>com.bitboard.UCI</mainClass>
+                <mainClass>fr.flwrian.aspira.uci.UCI</mainClass>
               </manifest>
             </archive>
             <descriptorRefs>
@@ -111,7 +111,7 @@
 				<transformer
 				implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
 			      <mainClass>
-				  com.bitboard.UCI</mainClass>
+				  fr.flwrian.aspira.uci.UCI</mainClass>
 				</transformer>
 			  </transformers>
 			</configuration>
