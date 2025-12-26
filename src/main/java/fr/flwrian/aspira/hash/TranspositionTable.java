@@ -148,4 +148,12 @@ public class TranspositionTable {
     // Optional: for quick stats
     public int capacity() { return buckets * WAYS; }
     public int buckets()  { return buckets; }
+    /** Returns the current hash table occupancy permill */
+    public int hashfull() {
+        int usedSlots = 0;
+        for (int i = 0; i < keys.length; i++) {
+            if (used[i] != 0) usedSlots++;
+        }
+        return (int) ((usedSlots * 1000L) / capacity());
+    }
 }
