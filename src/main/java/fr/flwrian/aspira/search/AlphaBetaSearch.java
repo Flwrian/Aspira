@@ -192,6 +192,43 @@ public class AlphaBetaSearch implements SearchAlgorithm {
             if (alpha >= beta) return new MoveValue(entry.bestMove, ttVal, "");
         }
 
+        // // Null Move Pruning
+        // if (!isPV
+        //     && depth >= 3
+        //     && ply > 0
+        //     && !board.isKingInCheck(board.whiteTurn)
+        //     && board.phase >= 10) {  // hasNonPawnMaterial check
+
+        //     int staticEval = evalSideToMove(board);
+
+        //     if (staticEval >= beta && beta < MATE_BOUND) {
+        //         // Adaptive reduction based on depth and eval margin
+        //         int evalMargin = Math.min((staticEval - beta) / 200, 3);
+        //         int R = depth / 3 + 4 + evalMargin;
+                
+        //         board.makeNullMove();
+        //         int score = -negamax(board, depth - R,
+        //                             -beta, -(beta - 1),
+        //                             ply + 1, false).value;
+        //         board.undoNullMove();
+
+        //         if (score >= beta && score < MATE_BOUND) {
+        //             // For shallow depths, return immediately
+        //             if (depth < 12) {
+        //                 return new MoveValue(0L, score);
+        //             }
+                    
+        //             // Verification search for deeper nodes to avoid zugzwang
+        //             int verificationScore = negamax(board, depth - R,
+        //                                            -beta, -(beta - 1),
+        //                                            ply, false).value;
+                    
+        //             if (verificationScore >= beta) {
+        //                 return new MoveValue(0L, score);
+        //             }
+        //         }
+        //     }
+        // }
 
         // Feuille => QS
         if (depth <= 0) return qsearch(board, alpha, beta, ply);

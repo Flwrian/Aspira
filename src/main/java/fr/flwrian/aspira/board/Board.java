@@ -1361,11 +1361,21 @@ public class Board {
     }
 
     public void makeNullMove() {
-        makeMove(0L);
+        saveBoardHistory(0L);
+
+        if (enPassantSquare != 0L) {
+            this.zobristKey ^= Zobrist.EN_PASSANT_KEYS[Long.numberOfTrailingZeros(enPassantSquare)];
+            enPassantSquare = 0L;
+        }
+
+        whiteTurn = !whiteTurn;
+        this.zobristKey ^= Zobrist.SIDE_TO_MOVE_KEY;
+
+        plyCount++;
     }
 
     public void undoNullMove() {
-
+        undoMove();
     }
 
     public final void makeMove(long move) {
