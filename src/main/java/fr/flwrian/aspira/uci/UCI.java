@@ -10,6 +10,7 @@ import fr.flwrian.aspira.move.MoveGenerator;
 import fr.flwrian.aspira.move.PackedMove;
 import fr.flwrian.aspira.perft.Perft;
 import fr.flwrian.aspira.search.AlphaBetaSearch;
+import fr.flwrian.aspira.search.SearchAlgorithm;
 
 /**
  * This class is the UCI interface for the chess engine.
@@ -24,15 +25,14 @@ public class UCI {
     private static String STARTING_POSITION = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
     private static Board board = new Board();
-    // private static Engine engine;
     static Engine engine = new Engine(board);
 
-    private static int nbCommands = 0;
+    private static SearchAlgorithm searchAlgorithm;
 
     public static void main(String[] args) {
 
-        AlphaBetaSearch advancedChessAlgorithm = new AlphaBetaSearch();
-        engine.setAlgorithm(advancedChessAlgorithm);
+        searchAlgorithm = new AlphaBetaSearch();
+        engine.setSearchAlgorithm(searchAlgorithm);
 
         board.loadFromFen(STARTING_POSITION);
 
@@ -49,8 +49,6 @@ public class UCI {
             String input = scanner.nextLine();
             String[] inputArray = input.split(" ");
             String command = inputArray[0];
-
-            nbCommands++;
 
             switch (command) {
                 case "uci":
@@ -82,12 +80,6 @@ public class UCI {
                     break;
                 case "setdepth":
                     setDepth(Integer.parseInt(inputArray[1]));
-                    break;
-                case "setrazordepth":
-                    // setRazorDepth(Integer.parseInt(inputArray[1]));
-                    break;
-                case "setnpm":
-                    // setNPM(Integer.parseInt(inputArray[1]));
                     break;
                 case "d":
                     d();
@@ -285,6 +277,10 @@ public class UCI {
 
     private static void uciNewGame() {
         board = new Board();
+        searchAlgorithm = new AlphaBetaSearch();
+        engine = new Engine(board);
+        engine.setSearchAlgorithm(searchAlgorithm);
+        board.loadFromFen(STARTING_POSITION);
     }
 
     private static void isReady() {

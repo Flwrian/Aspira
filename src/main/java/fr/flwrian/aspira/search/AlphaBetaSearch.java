@@ -34,7 +34,7 @@ public class AlphaBetaSearch implements SearchAlgorithm {
     private boolean timeExceeded = false;
 
     // ==== Transposition Table ====
-    private final TranspositionTable tt = new TranspositionTable(64); // MB
+    private TranspositionTable tt = new TranspositionTable(64); // MB
     private long ttHits = 0;
     private long ttStores = 0;
 
