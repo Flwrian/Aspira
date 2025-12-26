@@ -1187,147 +1187,18 @@ public class MoveGenerator {
         return Board.KING_MOVES[Long.numberOfTrailingZeros(king)];
     }
 
-    public static long generateKingMoves(long king, Board board) {
+    public static final long generateWhiteKingMoves(long king, Board board) {
         // Le roi peut se déplacer d'une case dans toutes les directions et peut roquer
         long kingMoves = generateKingMask(king);
         // pas la meme couleur
-        if (board.whiteTurn) {
-            kingMoves &= ~board.getWhitePieces();
-        } else {
-            kingMoves &= ~board.getBlackPieces();
-        }
+        kingMoves &= ~board.getWhitePieces();
 
         // La logique du roque est comme suit:
         // Si on possède le droit de roquer, que la tour est à sa place et que les cases
         // entre le roi et la tour sont vides
         // alors on peut roquer
 
-        if (board.whiteTurn) {
-            // Si on a les droits de roquer du côté de du roi
-            if (board.whiteCastleKingSide == 1L) {
-                // Si la tour est à sa place
-                if ((board.whiteRooks & Board.WHITE_KING_SIDE_ROOK_SQUARE) != 0L) {
-                    // Si il n'y a pas de pièces entre le roi et la tour
-                    if ((Board.WHITE_KING_SIDE_CASTLE_EMPTY_SQUARES_MASK & board.getBoard()) == 0L) {
-                        // Si les cases ne sont pas attaquées
-                        if ((Board.WHITE_KING_SIDE_CASTLE_NEED_TO_NOT_BE_ATTACKED_MASK
-                                & generateOpponentMask(board)) == 0L) {
-                            // On peut roquer
-                            kingMoves |= Board.WHITE_KING_SIDE_CASTLE_KING_SQUARE;
-                        }
-                    }
-                }
-            }
 
-            // Si on a les droits de roquer du côté de la dame
-            if (board.whiteCastleQueenSide == 1L) {
-                // Si la tour est à sa place
-                if ((board.whiteRooks & Board.WHITE_QUEEN_SIDE_ROOK_SQUARE) != 0L) {
-                    // Si il n'y a pas de pièces entre le roi et la tour
-                    if ((Board.WHITE_QUEEN_SIDE_CASTLE_EMPTY_SQUARES_MASK & board.getBoard()) == 0L) {
-                        // Si les cases ne sont pas attaquées
-                        if ((Board.WHITE_QUEEN_SIDE_CASTLE_NEED_TO_NOT_BE_ATTACKED_MASK
-                                & generateOpponentMask(board)) == 0L) {
-                            // On peut roquer
-                            kingMoves |= Board.WHITE_QUEEN_SIDE_CASTLE_KING_SQUARE;
-                        }
-                    }
-                }
-            }
-        }
-
-        else {
-            // Si on a les droits de roquer du côté de du roi
-            if (board.blackCastleKingSide == 1L) {
-                // Si la tour est à sa place
-                if ((board.blackRooks & Board.BLACK_KING_SIDE_ROOK_SQUARE) != 0L) {
-                    // Si il n'y a pas de pièces entre le roi et la tour
-                    if ((Board.BLACK_KING_SIDE_CASTLE_EMPTY_SQUARES_MASK & board.getBoard()) == 0L) {
-                        // Si les cases ne sont pas attaquées
-                        if ((Board.BLACK_KING_SIDE_CASTLE_NEED_TO_NOT_BE_ATTACKED_MASK
-                                & generateOpponentMask(board)) == 0L) {
-                            // On peut roquer
-                            kingMoves |= Board.BLACK_KING_SIDE_CASTLE_KING_SQUARE;
-                        }
-                    }
-                }
-            }
-
-            // Si on a les droits de roquer du côté de la dame
-            if (board.blackCastleQueenSide == 1L) {
-                // Si la tour est à sa place
-                if ((board.blackRooks & Board.BLACK_QUEEN_SIDE_ROOK_SQUARE) != 0L) {
-                    // Si il n'y a pas de pièces entre le roi et la tour
-                    if ((Board.BLACK_QUEEN_SIDE_CASTLE_EMPTY_SQUARES_MASK & board.getBoard()) == 0L) {
-                        // Si les cases ne sont pas attaquées
-                        if ((Board.BLACK_QUEEN_SIDE_CASTLE_NEED_TO_NOT_BE_ATTACKED_MASK
-                                & generateOpponentMask(board)) == 0L) {
-                            // On peut roquer
-                            kingMoves |= Board.BLACK_QUEEN_SIDE_CASTLE_KING_SQUARE;
-                        }
-                    }
-                }
-            }
-        }
-
-        return kingMoves;
-    }
-
-    private static long generateBlackKingMoves(long king, Board board) {
-        long kingMoves = generateKingMask(king);
-        // On ne peut pas aller sur une case occupée par une pièce de la même couleur
-        kingMoves &= ~board.getBlackPieces();
-
-        final long opponentAttacks = generateOpponentMask(board);
-
-        // On ne peut pas aller sur une case attaquée par l'adversaire
-        kingMoves &= ~opponentAttacks;
-
-        // La logique du roque est comme suit:
-        // Si on a les droits de roquer du côté de du roi
-        if (board.blackCastleKingSide == 1L) {
-            // Si la tour est à sa place
-            if ((board.blackRooks & Board.BLACK_KING_SIDE_ROOK_SQUARE) != 0L) {
-                // Si il n'y a pas de pièces entre le roi et la tour
-                if ((Board.BLACK_KING_SIDE_CASTLE_EMPTY_SQUARES_MASK & board.getBoard()) == 0L) {
-                    // Si les cases ne sont pas attaquées
-                    if ((Board.BLACK_KING_SIDE_CASTLE_NEED_TO_NOT_BE_ATTACKED_MASK & opponentAttacks) == 0L) {
-                        // On peut roquer
-                        kingMoves |= Board.BLACK_KING_SIDE_CASTLE_KING_SQUARE;
-                    }
-                }
-            }
-        }
-
-        // Si on a les droits de roquer du côté de la dame
-        if (board.blackCastleQueenSide == 1L) {
-            // Si la tour est à sa place
-            if ((board.blackRooks & Board.BLACK_QUEEN_SIDE_ROOK_SQUARE) != 0L) {
-                // Si il n'y a pas de pièces entre le roi et la tour
-                if ((Board.BLACK_QUEEN_SIDE_CASTLE_EMPTY_SQUARES_MASK & board.getBoard()) == 0L) {
-                    // Si les cases ne sont pas attaquées
-                    if ((Board.BLACK_QUEEN_SIDE_CASTLE_NEED_TO_NOT_BE_ATTACKED_MASK & opponentAttacks) == 0L) {
-                        // On peut roquer
-                        kingMoves |= Board.BLACK_QUEEN_SIDE_CASTLE_KING_SQUARE;
-                    }
-                }
-            }
-        }
-
-        return kingMoves;
-    }
-
-    private static long generateWhiteKingMoves(long king, Board board) {
-        long kingMoves = generateKingMask(king);
-        // On ne peut pas aller sur une case occupée par une pièce de la même couleur
-        kingMoves &= ~board.getWhitePieces();
-
-        final long opponentAttacks = generateOpponentMask(board);
-
-        // Déja on enlève les cases attaquées par l'adversaire
-        kingMoves &= ~opponentAttacks;
-
-        // La logique du roque est comme suit:
         // Si on a les droits de roquer du côté de du roi
         if (board.whiteCastleKingSide == 1L) {
             // Si la tour est à sa place
@@ -1335,7 +1206,8 @@ public class MoveGenerator {
                 // Si il n'y a pas de pièces entre le roi et la tour
                 if ((Board.WHITE_KING_SIDE_CASTLE_EMPTY_SQUARES_MASK & board.getBoard()) == 0L) {
                     // Si les cases ne sont pas attaquées
-                    if ((Board.WHITE_KING_SIDE_CASTLE_NEED_TO_NOT_BE_ATTACKED_MASK & opponentAttacks) == 0L) {
+                    if ((Board.WHITE_KING_SIDE_CASTLE_NEED_TO_NOT_BE_ATTACKED_MASK
+                            & generateOpponentMask(board)) == 0L) {
                         // On peut roquer
                         kingMoves |= Board.WHITE_KING_SIDE_CASTLE_KING_SQUARE;
                     }
@@ -1350,9 +1222,55 @@ public class MoveGenerator {
                 // Si il n'y a pas de pièces entre le roi et la tour
                 if ((Board.WHITE_QUEEN_SIDE_CASTLE_EMPTY_SQUARES_MASK & board.getBoard()) == 0L) {
                     // Si les cases ne sont pas attaquées
-                    if ((Board.WHITE_QUEEN_SIDE_CASTLE_NEED_TO_NOT_BE_ATTACKED_MASK & opponentAttacks) == 0L) {
+                    if ((Board.WHITE_QUEEN_SIDE_CASTLE_NEED_TO_NOT_BE_ATTACKED_MASK
+                            & generateOpponentMask(board)) == 0L) {
                         // On peut roquer
                         kingMoves |= Board.WHITE_QUEEN_SIDE_CASTLE_KING_SQUARE;
+                    }
+                }
+            }
+        }
+        return kingMoves;
+    }
+
+    public static long generateBlackKingMoves(long king, Board board) {
+        // Le roi peut se déplacer d'une case dans toutes les directions et peut roquer
+        long kingMoves = generateKingMask(king);
+        // pas la meme couleur
+        kingMoves &= ~board.getBlackPieces();
+
+        // La logique du roque est comme suit:
+        // Si on possède le droit de roquer, que la tour est à sa place et que les cases
+        // entre le roi et la tour sont vides
+        // alors on peut roquer
+
+        // Si on a les droits de roquer du côté de du roi
+        if (board.blackCastleKingSide == 1L) {
+            // Si la tour est à sa place
+            if ((board.blackRooks & Board.BLACK_KING_SIDE_ROOK_SQUARE) != 0L) {
+                // Si il n'y a pas de pièces entre le roi et la tour
+                if ((Board.BLACK_KING_SIDE_CASTLE_EMPTY_SQUARES_MASK & board.getBoard()) == 0L) {
+                    // Si les cases ne sont pas attaquées
+                    if ((Board.BLACK_KING_SIDE_CASTLE_NEED_TO_NOT_BE_ATTACKED_MASK
+                            & generateOpponentMask(board)) == 0L) {
+                        // On peut roquer
+                        kingMoves |= Board.BLACK_KING_SIDE_CASTLE_KING_SQUARE;
+                    }
+                }
+            }
+        }
+
+        // Si on a les droits de roquer du côté de la dame
+        if (board.blackCastleQueenSide == 1L) {
+            // Si la tour est à sa place
+            if ((board.blackRooks & Board.BLACK_QUEEN_SIDE_ROOK_SQUARE) != 0L) {
+                // Si il n'y a pas de pièces entre le roi et la tour
+                if ((Board.BLACK_QUEEN_SIDE_CASTLE_EMPTY_SQUARES_MASK & board.getBoard()) == 0L) {
+                    // Si les cases ne sont pas attaquées
+                    if ((Board.BLACK_QUEEN_SIDE_CASTLE_NEED_TO_NOT_BE_ATTACKED_MASK
+                            & generateOpponentMask(board)) == 0L) {
+                        // On peut roquer
+                        kingMoves |= Board.BLACK_QUEEN_SIDE_CASTLE_KING_SQUARE;
                     }
                 }
             }
