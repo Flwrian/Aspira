@@ -1,9 +1,14 @@
 #!/bin/sh
-MYSELF=`which "$0" 2>/dev/null`
-[ $? -gt 0 -a -f "$0" ] && MYSELF="./$0"
-java=java
-if test -n "$JAVA_HOME"; then
-    java="$JAVA_HOME/bin/java"
-fi
-exec "$java" -XX:+UseParallelGC $java_args -jar $MYSELF "$@"
-exit 1 
+
+MYSELF="$(readlink -f "$0")"
+
+JAVA_BIN=java
+[ -n "$JAVA_HOME" ] && JAVA_BIN="$JAVA_HOME/bin/java"
+
+exec "$JAVA_BIN" \
+  -XX:+UseParallelGC \
+  -XX:-TieredCompilation \
+  -XX:+AlwaysPreTouch \
+  -XX:+UseNUMA \
+  -XX:+UnlockExperimentalVMOptions \
+  -jar "$MYSELF" "$@"
