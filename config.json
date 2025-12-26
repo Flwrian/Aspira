@@ -58,7 +58,7 @@
     },
     "config_name": "config.json",
     "output": 0,
-    "seed": 11438256541750934216,
+    "seed": 17307771273997189691,
     "variant": 0,
     "type": 0,
     "gauntlet_seeds": 1,
@@ -67,7 +67,7 @@
     "wait": 0,
     "autosaveinterval": 20,
     "games": 2,
-    "rounds": 200,
+    "rounds": 2000,
     "concurrency": 6,
     "force_concurrency": false,
     "recover": true,
@@ -85,9 +85,9 @@
     },
     "engines": [
         {
-            "name": "dev",
+            "name": "new",
             "dir": "",
-            "cmd": "Aspira_dev",
+            "cmd": "./Aspira_dev",
             "args": "",
             "restart": false,
             "options": [],
@@ -105,9 +105,9 @@
             "variant": 0
         },
         {
-            "name": "main",
+            "name": "old",
             "dir": "",
-            "cmd": "Aspira_dev_before",
+            "cmd": "./engines/Aspira_dev_before",
             "args": "",
             "restart": false,
             "options": [],
@@ -126,27 +126,27 @@
         }
     ],
     "stats": {
-        "main vs dev": {
-            "wins": 17,
-            "losses": 23,
-            "draws": 62,
-            "penta_WW": 3,
-            "penta_WD": 8,
-            "penta_WL": 3,
-            "penta_DD": 19,
-            "penta_LD": 16,
-            "penta_LL": 2
+        "old vs new": {
+            "wins": 48,
+            "losses": 25,
+            "draws": 57,
+            "penta_WW": 11,
+            "penta_WD": 18,
+            "penta_WL": 8,
+            "penta_DD": 14,
+            "penta_LD": 11,
+            "penta_LL": 3
         },
-        "dev vs main": {
-            "wins": 13,
-            "losses": 12,
-            "draws": 21,
-            "penta_WW": 1,
-            "penta_WD": 6,
+        "new vs old": {
+            "wins": 10,
+            "losses": 14,
+            "draws": 26,
+            "penta_WW": 0,
+            "penta_WD": 5,
             "penta_WL": 5,
-            "penta_DD": 5,
+            "penta_DD": 8,
             "penta_LD": 5,
-            "penta_LL": 1
+            "penta_LL": 2
         }
     }
 }
