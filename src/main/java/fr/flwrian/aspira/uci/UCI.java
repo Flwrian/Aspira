@@ -78,9 +78,6 @@ public class UCI {
                 case "option":
                     option(inputArray);
                     break;
-                case "setdepth":
-                    setDepth(Integer.parseInt(inputArray[1]));
-                    break;
                 case "d":
                     d();
                     break;
