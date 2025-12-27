@@ -273,8 +273,11 @@ public class UCI {
     }
 
     private static void uciNewGame() {
+        board = null;
         board = new Board();
+        searchAlgorithm = null;
         searchAlgorithm = new AlphaBetaSearch();
+        engine = null;
         engine = new Engine(board);
         engine.setSearchAlgorithm(searchAlgorithm);
         board.loadFromFen(STARTING_POSITION);

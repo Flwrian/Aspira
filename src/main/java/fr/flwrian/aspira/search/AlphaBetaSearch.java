@@ -180,17 +180,25 @@ public class AlphaBetaSearch implements SearchAlgorithm {
         long key = board.zobristKey;
         TranspositionTable.Entry entry = tt.get(key);
         if (entry != null && entry.depth >= depth) {
-            ttHits++;
             int ttVal = fromTTScore(entry.value, ply);
+
             if (entry.flag == TranspositionTable.Entry.EXACT) {
-                return new MoveValue(entry.bestMove, ttVal, "");
-            } else if (entry.flag == TranspositionTable.Entry.LOWERBOUND) {
-                if (ttVal > alpha) alpha = ttVal;
-            } else if (entry.flag == TranspositionTable.Entry.UPPERBOUND) {
-                if (ttVal < beta) beta = ttVal;
+                ttHits++;
+                return new MoveValue(entry.bestMove, ttVal);
             }
-            if (alpha >= beta) return new MoveValue(entry.bestMove, ttVal, "");
+
+            if (!isPV) {
+                if (entry.flag == TranspositionTable.Entry.LOWERBOUND && ttVal >= beta) {
+                    ttHits++;
+                    return new MoveValue(entry.bestMove, ttVal);
+                }
+                if (entry.flag == TranspositionTable.Entry.UPPERBOUND && ttVal <= alpha) {
+                    ttHits++;
+                    return new MoveValue(entry.bestMove, ttVal);
+                }
+            }
         }
+
 
         // // Null Move Pruning
         // if (!isPV
@@ -241,8 +249,13 @@ public class AlphaBetaSearch implements SearchAlgorithm {
             return new MoveValue(0L, DRAW);
         }
 
-        // Ordre: ttMove seulement si EXACT (safe)
-        final long ttMove = (entry != null ) ? entry.bestMove : 0L;
+        long ttMove = 0L;
+        if (entry != null) {
+            if (entry.flag == TranspositionTable.Entry.EXACT
+                || (!isPV && entry.depth >= depth - 1)) {
+                ttMove = entry.bestMove;
+            }
+        }
         if (ttMove != 0L) moves.prioritize(ttMove);
         moves.sortByScore();
 
@@ -320,8 +333,11 @@ public class AlphaBetaSearch implements SearchAlgorithm {
         else if (bestScore >= originalBeta)   flag = TranspositionTable.Entry.LOWERBOUND;
         else                                  flag = TranspositionTable.Entry.EXACT;
 
-        tt.put(key, bestMove, toTTScore(bestScore, ply), depth, flag);
-        ttStores++;
+        if (flag == TranspositionTable.Entry.EXACT || depth >= 2){
+
+            tt.put(key, bestMove, toTTScore(bestScore, ply), depth, flag);
+            ttStores++;
+        }
 
         return new MoveValue(bestMove, bestScore, bestPv);
     }

@@ -22,7 +22,7 @@
         "enabled": false
     },
     "opening": {
-        "file": "8moves.epd",
+        "file": "./8moves.epd",
         "format": 0,
         "order": 1,
         "plies": -1,
@@ -58,7 +58,7 @@
     },
     "config_name": "config.json",
     "output": 0,
-    "seed": 17307771273997189691,
+    "seed": 1729960083592988688,
     "variant": 0,
     "type": 0,
     "gauntlet_seeds": 1,
@@ -67,8 +67,8 @@
     "wait": 0,
     "autosaveinterval": 20,
     "games": 2,
-    "rounds": 2000,
-    "concurrency": 6,
+    "rounds": 150,
+    "concurrency": 7,
     "force_concurrency": false,
     "recover": true,
     "noswap": false,
@@ -85,7 +85,7 @@
     },
     "engines": [
         {
-            "name": "new",
+            "name": "dev",
             "dir": "",
             "cmd": "./Aspira_dev",
             "args": "",
@@ -105,7 +105,7 @@
             "variant": 0
         },
         {
-            "name": "old",
+            "name": "main",
             "dir": "",
             "cmd": "./engines/Aspira_dev_before",
             "args": "",
@@ -126,27 +126,27 @@
         }
     ],
     "stats": {
-        "old vs new": {
-            "wins": 48,
-            "losses": 25,
-            "draws": 57,
-            "penta_WW": 11,
-            "penta_WD": 18,
-            "penta_WL": 8,
-            "penta_DD": 14,
-            "penta_LD": 11,
-            "penta_LL": 3
+        "main vs dev": {
+            "wins": 17,
+            "losses": 7,
+            "draws": 14,
+            "penta_WW": 4,
+            "penta_WD": 6,
+            "penta_WL": 3,
+            "penta_DD": 3,
+            "penta_LD": 2,
+            "penta_LL": 1
         },
-        "new vs old": {
-            "wins": 10,
-            "losses": 14,
-            "draws": 26,
-            "penta_WW": 0,
-            "penta_WD": 5,
-            "penta_WL": 5,
-            "penta_DD": 8,
-            "penta_LD": 5,
-            "penta_LL": 2
+        "dev vs main": {
+            "wins": 4,
+            "losses": 9,
+            "draws": 7,
+            "penta_WW": 1,
+            "penta_WD": 1,
+            "penta_WL": 1,
+            "penta_DD": 2,
+            "penta_LD": 2,
+            "penta_LL": 3
         }
     }
 }
