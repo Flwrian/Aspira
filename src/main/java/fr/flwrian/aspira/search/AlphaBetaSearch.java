@@ -34,7 +34,7 @@ public class AlphaBetaSearch implements SearchAlgorithm {
     private boolean timeExceeded = false;
 
     // ==== Transposition Table ====
-    private TranspositionTable tt = new TranspositionTable(64); // MB
+    private final TranspositionTable tt = new TranspositionTable(64); // MB
     private long ttHits = 0;
     private long ttStores = 0;
 
@@ -145,7 +145,7 @@ public class AlphaBetaSearch implements SearchAlgorithm {
                 System.out.printf(Locale.US, "info depth %d score %s nodes %d nps %d time %.0f pv %s\n",
                         depth, mateScore, nodes, (long) rawNps, timeMs, pv);
             } else {
-                System.out.printf(Locale.US, "info depth %d score cp %d nodes %d nps %d time %.0f hashfull %d pv %s\n",
+                System.out.printf(Locale.US, "info depth %d score cp %d nodes %d nps %d time %.0f hashfull %s pv %s\n",
                         depth, score, nodes, (long) rawNps, timeMs, tt.hashfull(), pv);
             }
     }
@@ -191,7 +191,6 @@ public class AlphaBetaSearch implements SearchAlgorithm {
             }
             if (alpha >= beta) return new MoveValue(entry.bestMove, ttVal, "");
         }
-
 
         // // Null Move Pruning
         // if (!isPV
@@ -242,13 +241,8 @@ public class AlphaBetaSearch implements SearchAlgorithm {
             return new MoveValue(0L, DRAW);
         }
 
-        long ttMove = 0L;
-        if (entry != null) {
-            if (entry.flag == TranspositionTable.Entry.EXACT
-                || (!isPV && entry.depth >= depth - 1)) {
-                ttMove = entry.bestMove;
-            }
-        }
+        // Ordre: ttMove seulement si EXACT (safe)
+        final long ttMove = (entry != null ) ? entry.bestMove : 0L;
         if (ttMove != 0L) moves.prioritize(ttMove);
         moves.sortByScore();
 
@@ -326,11 +320,8 @@ public class AlphaBetaSearch implements SearchAlgorithm {
         else if (bestScore >= originalBeta)   flag = TranspositionTable.Entry.LOWERBOUND;
         else                                  flag = TranspositionTable.Entry.EXACT;
 
-        if (flag == TranspositionTable.Entry.EXACT || depth >= 2){
-
-            tt.put(key, bestMove, toTTScore(bestScore, ply), depth, flag);
-            ttStores++;
-        }
+        tt.put(key, bestMove, toTTScore(bestScore, ply), depth, flag);
+        ttStores++;
 
         return new MoveValue(bestMove, bestScore, bestPv);
     }
