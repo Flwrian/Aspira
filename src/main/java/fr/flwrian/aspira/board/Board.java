@@ -997,8 +997,7 @@ public class Board {
         // EN PASSANT
         // =========================
         if (enPassantSquare != 0L) {
-            int file = Long.numberOfTrailingZeros(enPassantSquare) & 7;
-            zobristKey ^= Zobrist.EN_PASSANT_KEYS[file];
+            zobristKey ^= Zobrist.EN_PASSANT_KEYS[Long.numberOfTrailingZeros(this.enPassantSquare)];
         }
 
         return zobristKey;
@@ -1276,6 +1275,7 @@ public class Board {
         System.out.println("     " + getFen());
         System.out.println("    Key: " + Long.toHexString(this.zobristKey));
         System.out.println("    Key generated: " + Long.toHexString(generateZobristKey()));
+        System.out.println(this.zobristKey == generateZobristKey() ? "    Zobrist Key OK" : "    Zobrist Key MISMATCH");
         System.out.println("     Eval: " + evaluate());
     }
 

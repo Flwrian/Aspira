@@ -71,7 +71,7 @@ public class Engine {
         return PGN;
     }
 
-    public void setAlgorithm(SearchAlgorithm algorithm) {
+    public void setSearchAlgorithm(SearchAlgorithm algorithm) {
         this.algorithm = algorithm;
     }
 

@@ -145,8 +145,8 @@ public class AlphaBetaSearch implements SearchAlgorithm {
                 System.out.printf(Locale.US, "info depth %d score %s nodes %d nps %d time %.0f pv %s\n",
                         depth, mateScore, nodes, (long) rawNps, timeMs, pv);
             } else {
-                System.out.printf(Locale.US, "info depth %d score cp %d nodes %d nps %d time %.0f pv %s\n",
-                        depth, score, nodes, (long) rawNps, timeMs, pv);
+                System.out.printf(Locale.US, "info depth %d score cp %d nodes %d nps %d time %.0f hashfull %s pv %s\n",
+                        depth, score, nodes, (long) rawNps, timeMs, tt.hashfull(), pv);
             }
     }
 

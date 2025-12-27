@@ -26,9 +26,8 @@ public class Perft {
         
         for (int i = 0; i < moveList.size(); i++) {
             bitBoard.makeMove(moveList.get(i));
-            // Compare hash key
             // if (bitBoard.generateZobristKey() != bitBoard.zobristKey) {
-            //     // le soucis c'est le pieceType dans la movegen qui n'est pas le bon (Bitboard.PAWN au lieu de WHITEPAWN ou BLACKPAWN)
+
             //     System.out.println("Hash key mismatch!");
             //     System.out.println("Expected: " + Long.toHexString(bitBoard.zobristKey) + " Found: "
             //             + Long.toHexString(bitBoard.generateZobristKey()));
