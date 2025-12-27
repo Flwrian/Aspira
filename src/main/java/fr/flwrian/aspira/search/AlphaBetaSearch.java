@@ -192,8 +192,6 @@ public class AlphaBetaSearch implements SearchAlgorithm {
             if (alpha >= beta) return new MoveValue(entry.bestMove, ttVal, "");
         }
 
-        
-
 
         // // Null Move Pruning
         // if (!isPV
