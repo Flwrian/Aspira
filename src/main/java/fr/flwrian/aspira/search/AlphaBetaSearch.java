@@ -180,26 +180,16 @@ public class AlphaBetaSearch implements SearchAlgorithm {
         long key = board.zobristKey;
         TranspositionTable.Entry entry = tt.get(key);
         if (entry != null && entry.depth >= depth) {
+            ttHits++;
             int ttVal = fromTTScore(entry.value, ply);
-
             if (entry.flag == TranspositionTable.Entry.EXACT) {
-                ttHits++;
-                return new MoveValue(entry.bestMove, ttVal);
+                return new MoveValue(entry.bestMove, ttVal, "");
+            } else if (entry.flag == TranspositionTable.Entry.LOWERBOUND) {
+                if (ttVal > alpha) alpha = ttVal;
+            } else if (entry.flag == TranspositionTable.Entry.UPPERBOUND) {
+                if (ttVal < beta) beta = ttVal;
             }
-
-            if (!isPV) {
-                if (entry.flag == TranspositionTable.Entry.LOWERBOUND && ttVal >= beta) {
-                    ttHits++;
-                    return new MoveValue(entry.bestMove, ttVal);
-                }
-                if (entry.flag == TranspositionTable.Entry.UPPERBOUND && ttVal <= alpha) {
-                    ttHits++;
-                    return new MoveValue(entry.bestMove, ttVal);
-                }
-            }
-
             if (alpha >= beta) return new MoveValue(entry.bestMove, ttVal, "");
-            
         }
 
         
