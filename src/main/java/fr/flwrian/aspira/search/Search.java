@@ -10,9 +10,22 @@ import fr.flwrian.aspira.move.PackedMoveList;
 
 public class Search implements SearchAlgorithm {
 
-    final int MAX_PLY = 128;
+    static final int MAX_PLY = 60;
+
+    static final int VALUE_MATE = 32000;
+    static final int VALUE_INFINITE = 32001;
+    static final int VALUE_NONE = 32002;
+
+    static final int VALUE_MATE_IN_PLY = VALUE_MATE - MAX_PLY;
+    static final int VALUE_MATED_IN_PLY = -VALUE_MATE_IN_PLY;
+
+    static final int VALUE_TB_WIN = VALUE_MATE_IN_PLY;
+    static final int VALUE_TB_LOSS = -VALUE_TB_WIN;
+    static final int VALUE_TB_WIN_IN_MAX_PLY = VALUE_TB_WIN - MAX_PLY;
+    static final int VALUE_TB_LOSS_IN_MAX_PLY = -VALUE_TB_WIN_IN_MAX_PLY;
+
+
     final int CHECK_RATE = 236;
-    final int MATE = 32000;
     final int INFINITE_VALUE = 32001;
 
     int[] pvLengths = new int[MAX_PLY];
@@ -108,8 +121,8 @@ public class Search implements SearchAlgorithm {
             }
 
             // Mate distance pruning
-            alpha = Math.max(alpha, ply - MATE);
-            beta = Math.min(beta, MATE - ply + 1);
+            alpha = Math.max(alpha, matedInPly(ply));
+            beta = Math.min(beta, mateInPly(ply + 1));
             if (alpha >= beta) {
                 return alpha;
             }
@@ -150,7 +163,7 @@ public class Search implements SearchAlgorithm {
             board.undoNullMove();
 
             if (score >= beta) {
-                if (score >= MATE - MAX_PLY - MAX_PLY) {
+                if (score >= VALUE_TB_WIN_IN_MAX_PLY) {
                     score = beta;
                 }
                 return score;
@@ -158,7 +171,7 @@ public class Search implements SearchAlgorithm {
         }
 
         int oldAlpha = alpha;
-        int bestScore = -MATE;
+        int bestScore = -VALUE_INFINITE;
         int bestMove = 0;
 
         int madeMoves = 0;
@@ -209,7 +222,7 @@ public class Search implements SearchAlgorithm {
             // No moves made -> checkmate or stalemate
             if (madeMoves == 0) {
                 if (inCheck) {
-                    return -MATE + ply;
+                    return matedInPly(ply);
                 } else {
                     return 0;
                 }
@@ -315,16 +328,33 @@ public class Search implements SearchAlgorithm {
         }
         return sb.toString().trim();
     }
+    
 
-    public String convertScore(int score) {
-        if (score > MATE - MAX_PLY) {
-            return "mate " + ((MATE - score) / 2) + ((MATE - score) & 1);
-        } else if (score < -MATE + MAX_PLY) {
-            return "mate " + -(( -MATE - score) / 2) + (( -MATE - score) & 1);
-        } else {
+    public static String convertScore(int score) {
+        if (score >= VALUE_MATE_IN_PLY) {
+            int mate = VALUE_MATE - score;
+            int ply = (mate >> 1) + (mate & 1);
+            return "mate " + ply;
+        } 
+        else if (score <= VALUE_MATED_IN_PLY) {
+            int mate = VALUE_MATE + score;
+            int ply = (mate >> 1) + (mate & 1);
+            return "mate -" + ply;
+        } 
+        else {
             return "cp " + score;
         }
     }
+
+
+    public int mateInPly(int ply) {
+        return VALUE_MATE - ply;
+    }
+
+    public int matedInPly(int ply) {
+        return ply - VALUE_MATE;
+    }
+
 
     private void printSearchInfo(int depth, int score, long nodes, long durationNanos) {
         double timeMs = durationNanos / 1_000_000.0;
