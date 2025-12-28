@@ -176,14 +176,12 @@ public class AlphaBetaSearch implements SearchAlgorithm {
 
         nodes++;
 
-        // Check node limit
         if (maxNodes > 0 && nodes >= maxNodes) {
             nodesExceeded = true;
-            timeExceeded = true; // Use timeExceeded flag to stop search
+            timeExceeded = true;
             return new MoveValue(0L, 0);
         }
         
-        // Répétition
         if (board.isThreefoldRepetition()) return new MoveValue(0L, DRAW);
 
         // Mate Distance Pruning
