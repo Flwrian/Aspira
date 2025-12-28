@@ -48,7 +48,9 @@ public class PackedMove {
     public static int getPieceFrom(long move)   { return (int)((move >> 20) & 0xF); }
     public static int getFlags(long move)       { return (int)((move >> 24) & 0xF); }
     public static int getScore(long move)       { return (int)((move >> 28) & 0xFFFFF); }
-
+    public static boolean isPromotion(long move) {
+        return (getPromotion(move) != 0);
+    }
     public static boolean isCapture(long move) {
         return (getCaptured(move) != Board.EMPTY);
     }

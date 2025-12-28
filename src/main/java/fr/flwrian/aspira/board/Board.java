@@ -1999,37 +1999,35 @@ public class Board {
         int pieceFrom = getPiece(fromSquare);
 
         // piece to if last character is not a digit
-        int pieceTo = 0;
+        int captured = getPiece(toSquare);
+
+        int promotedPiece = 0;
 
         // if last character is q or r or b or n
         if (move.length() == 5) {
             char lastChar = Character.toLowerCase(move.charAt(4));
             switch (lastChar) {
                 case 'q':
-                    pieceTo = QUEEN;
+                    promotedPiece = QUEEN;
                     break;
                 case 'r':
-                    pieceTo = ROOK;
+                    promotedPiece = ROOK;
                     break;
                 case 'b':
-                    pieceTo = BISHOP;
+                    promotedPiece = BISHOP;
                     break;
                 case 'n':
-                    pieceTo = KNIGHT;
+                    promotedPiece = KNIGHT;
                     break;
             }
         }
 
         if (move.length() == 5) {
-            System.out.println("Promotion move");
-            System.out.println("to piece: " + pieceTo);
-            long moveLong = PackedMove.encode(fromSquare, pieceTo, pieceFrom, pieceTo, toSquare, pieceFrom, pieceTo);
-            System.out.println("Move: " + moveLong);
+            long moveLong = PackedMove.encode(fromSquare, toSquare, pieceFrom, captured, promotedPiece, Move.PROMOTION, Move.PROMOTION_SCORE);
+
             makeMove(moveLong);
         } else {
-            System.out.println("Normal move");
-            long moveLong = PackedMove.encode(fromSquare, pieceFrom, pieceFrom, pieceTo, toSquare, pieceFrom, pieceTo);
-            System.out.println("Move: " + moveLong);
+            long moveLong = PackedMove.encode(fromSquare, toSquare, pieceFrom, captured, 0, 0, 0);
             makeMove(moveLong);
         }
 
@@ -2371,6 +2369,11 @@ public class Board {
         this.phase = other.phase;
 
         this.zobristKey = other.zobristKey;
+    }
+
+    // return if the side to mvoe has any non pawn material
+    public boolean hasNonPawnMaterial() {
+        return (whiteTurn ? (whiteKnights | whiteBishops | whiteRooks | whiteQueens) : (blackKnights | blackBishops | blackRooks | blackQueens)) != 0;
     }
 
 }

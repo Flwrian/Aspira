@@ -1198,7 +1198,6 @@ public class MoveGenerator {
         // entre le roi et la tour sont vides
         // alors on peut roquer
 
-
         // Si on a les droits de roquer du côté de du roi
         if (board.whiteCastleKingSide == 1L) {
             // Si la tour est à sa place
