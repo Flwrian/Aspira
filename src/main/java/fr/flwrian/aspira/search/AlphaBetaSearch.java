@@ -215,23 +215,34 @@ public class AlphaBetaSearch implements SearchAlgorithm {
             return new MoveValue(0L, alpha);
 
         // TT probe
-        long key = board.zobristKey;
-        TranspositionTable.Entry entry = tt.get(key);
+        TranspositionTable.Entry entry = tt.get(board.zobristKey);
         if (entry != null && entry.depth >= depth) {
             ttHits++;
             int ttVal = fromTTScore(entry.value, ply);
-            if (entry.flag == TranspositionTable.Entry.EXACT) {
-                return new MoveValue(entry.bestMove, ttVal, "");
-            } else if (entry.flag == TranspositionTable.Entry.LOWERBOUND) {
-                if (ttVal > alpha)
-                    alpha = ttVal;
-            } else if (entry.flag == TranspositionTable.Entry.UPPERBOUND) {
-                if (ttVal < beta)
-                    beta = ttVal;
+
+            switch (entry.flag) {
+                case TranspositionTable.Entry.EXACT:
+                    if (ttVal <= alpha)
+                        return new MoveValue(entry.bestMove, alpha);
+                    if (ttVal >= beta)
+                        return new MoveValue(entry.bestMove, beta);
+                    return new MoveValue(entry.bestMove, ttVal);
+
+                case TranspositionTable.Entry.LOWERBOUND:
+                    if (ttVal > alpha)
+                        alpha = ttVal;
+                    break;
+
+                case TranspositionTable.Entry.UPPERBOUND:
+                    if (ttVal < beta)
+                        beta = ttVal;
+                    break;
             }
+
             if (alpha >= beta)
-                return new MoveValue(entry.bestMove, ttVal, "");
+                return new MoveValue(entry.bestMove, alpha);
         }
+
 
         // Shawn absolute cinema code
         if (!isPV
@@ -356,7 +367,7 @@ public class AlphaBetaSearch implements SearchAlgorithm {
         else
             flag = TranspositionTable.Entry.EXACT;
 
-        tt.put(key, bestMove, toTTScore(bestScore, ply), depth, flag);
+        tt.put(board.zobristKey, bestMove, toTTScore(bestScore, ply), depth, flag);
         ttStores++;
 
         return new MoveValue(bestMove, bestScore, bestPv);
