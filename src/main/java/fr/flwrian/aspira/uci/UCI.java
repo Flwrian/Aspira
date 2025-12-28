@@ -128,6 +128,7 @@ public class UCI {
                         winc <ms>         White increment
                         binc <ms>         Black increment
                         movetime <ms>     Fixed move time
+                        nodes <long>      Search until N nodes are visited
 
                   stop
                       Stop the current search.
@@ -192,6 +193,7 @@ public class UCI {
         int winc = 0;
         int binc = 0;
         int movetime = 0;
+        long nodes = 0;
 
         for (int i = 1; i < tokens.length; i += 2) {
             if (i + 1 >= tokens.length)
@@ -205,6 +207,7 @@ public class UCI {
                 case "winc" -> winc = Integer.parseInt(arg);
                 case "binc" -> binc = Integer.parseInt(arg);
                 case "movetime" -> movetime = Integer.parseInt(arg);
+                case "nodes" -> nodes = Long.parseLong(arg);
             }
         }
 
@@ -214,11 +217,12 @@ public class UCI {
         final int finalBinc = binc;
         final int finalMovetime = movetime;
         final int finalDepth = depth;
+        final long finalNodes = nodes;
 
         Thread searchThread = new Thread(() -> {
             engine.getSearchAlgorithm().setStopSearch(false);
             engine.getSearchAlgorithm().search(board, finalWtime, finalBtime, finalWinc, finalBinc, finalMovetime,
-                    finalDepth);
+                    finalDepth, finalNodes);
         });
         searchThread.start();
     }
