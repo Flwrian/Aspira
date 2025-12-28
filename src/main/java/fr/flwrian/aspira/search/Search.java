@@ -16,7 +16,7 @@ public class Search implements SearchAlgorithm {
     final int INFINITE_VALUE = 32001;
 
     int[] pvLengths = new int[MAX_PLY];
-    long[][] principalVariations = new long[MAX_PLY][MAX_PLY];
+    int[][] principalVariations = new int[MAX_PLY][MAX_PLY];
 
     long nodes = 0;
     boolean stopSearch = false;
@@ -55,7 +55,7 @@ public class Search implements SearchAlgorithm {
         }
 
         PackedMoveList moves = board.getCaptureMoves();
-        moves.sortByScore();
+        orderQMoves(moves);
 
         for (int i = 0; i < moves.size(); i++) {
             nodes++;
@@ -123,7 +123,7 @@ public class Search implements SearchAlgorithm {
         long ttkey = board.zobristKey;
         TranspositionTable.Entry tte = transpositionTable.get(ttkey);
         boolean ttHit = (tte != null);
-        long ttMove = tte != null ? tte.bestMove : 0L;
+        int ttMove = tte != null ? tte.bestMove : 0;
         int ttScore = ttHit ? tte.value : 0;
 
         if (!rootNode && ttHit && tte.depth >= depth) {
@@ -159,16 +159,15 @@ public class Search implements SearchAlgorithm {
 
         int oldAlpha = alpha;
         int bestScore = -MATE;
-        long bestMove = 0L;
+        int bestMove = 0;
 
         int madeMoves = 0;
 
         PackedMoveList moves = board.getLegalMoves();
-        moves.prioritize(ttMove);
-        moves.sortByScore();
+        orderMoves(moves, ttMove, board);
 
         for (int i = 0; i < moves.size(); i++) {
-            long move = moves.get(i);
+            int move = moves.get(i);
             madeMoves++;
             nodes++;
 
@@ -238,7 +237,7 @@ public class Search implements SearchAlgorithm {
     public void iterativeDeepening(Board board) {
         nodes = 0;
         int score = -INFINITE_VALUE;
-        long bestMove = 0L;
+        int bestMove = 0;
 
         startTime = System.nanoTime();
 
@@ -263,7 +262,7 @@ public class Search implements SearchAlgorithm {
         }
 
         // Last attempt to get best move
-        if (bestMove == 0L) {
+        if (bestMove == 0) {
             bestMove = principalVariations[0][0];
         }
 
@@ -342,7 +341,7 @@ public class Search implements SearchAlgorithm {
         }
         for (int i = 0; i < principalVariations.length; i++) {
             for (int j = 0; j < principalVariations[i].length; j++) {
-                principalVariations[i][j] = 0L;
+                principalVariations[i][j] = 0;
             }
         }
 
@@ -354,6 +353,70 @@ public class Search implements SearchAlgorithm {
 
         // reset history table and transposition table
         historyTable = new int[2][64][64];
+    }
+
+    public static final int[][] mvvLva = {
+
+            { 105, 205, 305, 405, 505, 605 }, // Pawn captures
+
+            { 104, 204, 304, 404, 504, 604 }, // Knight captures
+
+            { 103, 203, 303, 403, 503, 603 }, // Bishop captures
+
+            { 102, 202, 302, 402, 502, 602 }, // Rook captures
+
+            { 101, 201, 301, 401, 501, 601 }, // Queen captures
+
+            { 100, 200, 300, 400, 500, 600 } // King captures
+
+    };
+
+    public int scoreMove(int move, int ttMove, Board board) {
+        if (move == ttMove) {
+            return 1_000_000;
+        }
+
+        if (PackedMove.isCapture(move)) {
+            return 32_000 + mvvLva[PackedMove.getCaptured(move)][PackedMove.getPieceFrom(move)];
+        }
+
+        return historyTable[board.whiteTurn ? 0 : 1][PackedMove.getFrom(move)][PackedMove.getTo(move)];
+    }
+
+    public int scoreQMove(int move) {
+        return mvvLva[PackedMove.getCaptured(move)][PackedMove.getPieceFrom(move)];
+    }
+
+    public void orderMoves(PackedMoveList moves, int ttMove, Board board) {
+        // Simple bubble sort based on score
+        for (int i = 0; i < moves.size() - 1; i++) {
+            for (int j = 0; j < moves.size() - i - 1; j++) {
+                int scoreA = scoreMove(moves.moves[j], ttMove, board);
+                int scoreB = scoreMove(moves.moves[j + 1], ttMove, board);
+                if (scoreA < scoreB) {
+                    // Swap
+                    int temp = moves.moves[j];
+                    moves.moves[j] = moves.moves[j + 1];
+                    moves.moves[j + 1] = temp;
+                }
+            }
+        }
+    }
+
+    public void orderQMoves(PackedMoveList moves) {
+        // Simple bubble sort based on score
+        for (int i = 0; i < moves.size() - 1; i++) {
+            for (int j = 0; j < moves.size() - i - 1; j++) {
+                int scoreA = scoreQMove(moves.moves[j]);
+                int scoreB = scoreQMove(moves.moves[j + 1]);
+                if (scoreA < scoreB) {
+                    // Swap
+                    int temp = moves.moves[j];
+                    moves.moves[j] = moves.moves[j + 1];
+                    moves.moves[j + 1] = temp;
+                }
+            }
+        }
     }
 
     @Override

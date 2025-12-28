@@ -70,7 +70,7 @@ public class Perft {
 
         // Itère sur chaque coup possible au premier niveau
         for (int i = 0; i < moveList.size(); i++) {
-            long move = moveList.get(i);
+            int move = moveList.get(i);
             bitBoard.makeMove(move);
             // Compare hash key
             // if (bitBoard.generateZobristKey() != bitBoard.zobristKey) {

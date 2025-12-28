@@ -15,13 +15,6 @@ public final class Move {
     public static final byte CASTLING = 5;
     public static final byte CAPTURE = 6;
 
-    // scores for ordering moves later
-    public static final int PROMOTION_SCORE = 150;
-    public static final int CAPTURE_SCORE = 100;
-    public static final int CASTLING_SCORE = 150;
-    public static final int DOUBLE_PAWN_PUSH_SCORE = 0;
-    public static final int IS_CHECK_SCORE = 500;
-
 
     public int from;
     public int to;
@@ -50,14 +43,13 @@ public final class Move {
         this.capturedPiece = board.getPiece(to);
     }
 
-    public Move(int from, int to, int pieceFrom, int capturedPiece, int promotion, int flags, int seeScore) {
+    public Move(int from, int to, int pieceFrom, int capturedPiece, int promotion, int flags) {
         this.from = from;
         this.to = to;
         this.pieceFrom = pieceFrom;
         this.capturedPiece = capturedPiece;
         this.promotion = promotion;
         this.flags = flags;
-        this.seeScore = seeScore;
     }
 
     public Move(String move, Board board) {

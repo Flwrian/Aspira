@@ -9,8 +9,8 @@ import fr.flwrian.aspira.move.Move;
 import fr.flwrian.aspira.move.MoveGenerator;
 import fr.flwrian.aspira.move.PackedMove;
 import fr.flwrian.aspira.perft.Perft;
-import fr.flwrian.aspira.search.AlphaBetaSearch;
-import fr.flwrian.aspira.search.PureNegamax;
+// import fr.flwrian.aspira.search.AlphaBetaSearch;
+// import fr.flwrian.aspira.search.PureNegamax;
 import fr.flwrian.aspira.search.Search;
 import fr.flwrian.aspira.search.SearchAlgorithm;
 

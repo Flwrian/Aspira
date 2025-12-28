@@ -561,7 +561,7 @@ public class Board {
 
     }
 
-    private void saveBoardHistory(long move) {
+    private void saveBoardHistory(int move) {
         history.push(this, move);
     }
 
@@ -1370,7 +1370,7 @@ public class Board {
     }
 
     public void makeNullMove() {
-        saveBoardHistory(0L);
+        saveBoardHistory(0);
 
         if (enPassantSquare != 0L) {
             this.zobristKey ^= Zobrist.EN_PASSANT_KEYS[Long.numberOfTrailingZeros(enPassantSquare)];
@@ -1387,7 +1387,7 @@ public class Board {
         undoMove();
     }
 
-    public final void makeMove(long move) {
+    public final void makeMove(int move) {
         saveBoardHistory(move);
 
         final int from = PackedMove.getFrom(move);
@@ -1422,7 +1422,7 @@ public class Board {
     }
 
     private void makeMoveWhite(int from, int to, long fromBB, long toBB, int flags, int fromFlipped, int toFlipped,
-            long move) {
+            int move) {
         // Handle captures first (branch prediction optimization)
         if ((blackPieces & toBB) != 0) {
             handleCaptureWhite(toBB);
@@ -1452,7 +1452,7 @@ public class Board {
         }
     }
 
-    private void makeMoveBlack(int from, int to, long fromBB, long toBB, int flags, long move) {
+    private void makeMoveBlack(int from, int to, long fromBB, long toBB, int flags, int move) {
         if ((whitePieces & toBB) != 0) {
             handleCaptureBlack(toBB);
         }
@@ -1493,7 +1493,7 @@ public class Board {
     }
 
     private void handleWhitePawnMove(int from, int to, long fromBB, long toBB,
-            int flags, int fromFlipped, int toFlipped, long move) {
+            int flags, int fromFlipped, int toFlipped, int move) {
         if (flags == Move.EN_PASSANT) {
             long capturedPawn = enPassantSquare >> 8;
             blackPawns &= ~capturedPawn;
@@ -1528,7 +1528,7 @@ public class Board {
     }
 
     private void handleWhitePromotion(int from, int to, long fromBB, long toBB,
-            int toFlipped, int fromFlipped, long move) {
+            int toFlipped, int fromFlipped, int move) {
         int promoType = PackedMove.getPromotion(move);
 
         // Remove pawn
@@ -1624,7 +1624,7 @@ public class Board {
     }
 
     private void handleBlackPawnMove(int from, int to, long fromBB, long toBB,
-            int flags, long move) {
+            int flags, int move) {
         if (flags == Move.EN_PASSANT) {
             long capturedPawn = enPassantSquare << 8;
             whitePawns &= ~capturedPawn;
@@ -1658,7 +1658,7 @@ public class Board {
         }
     }
 
-    private void handleBlackPromotion(int from, int to, long fromBB, long toBB, long move) {
+    private void handleBlackPromotion(int from, int to, long fromBB, long toBB, int move) {
         int promoType = PackedMove.getPromotion(move);
 
         // Remove pawn
@@ -2032,11 +2032,11 @@ public class Board {
         }
 
         if (move.length() == 5) {
-            long moveLong = PackedMove.encode(fromSquare, toSquare, pieceFrom, captured, promotedPiece, Move.PROMOTION, Move.PROMOTION_SCORE);
+            int moveLong = PackedMove.encode(fromSquare, toSquare, pieceFrom, captured, promotedPiece, Move.PROMOTION);
 
             makeMove(moveLong);
         } else {
-            long moveLong = PackedMove.encode(fromSquare, toSquare, pieceFrom, captured, 0, 0, 0);
+            int moveLong = PackedMove.encode(fromSquare, toSquare, pieceFrom, captured, 0, 0);
             makeMove(moveLong);
         }
 
@@ -2055,7 +2055,7 @@ public class Board {
         // Si le roi est en échec, le coup n'est pas légal
         // Sinon, le coup est légal
         for (int i = 0; i < moveList.size(); i++) {
-            long move = moveList.get(i);
+            int move = moveList.get(i);
             makeMove(move);
             if (isKingInCheck(!whiteTurn)) {
                 moveList.remove(i);
@@ -2086,7 +2086,7 @@ public class Board {
         // Si le roi est en échec, le coup n'est pas légal
         // Sinon, le coup est légal
         for (int i = 0; i < moveList.size(); i++) {
-            long move = moveList.get(i);
+            int move = moveList.get(i);
             makeMove(move);
             if (isKingInCheck(!whiteTurn)) {
                 moveList.remove(i);

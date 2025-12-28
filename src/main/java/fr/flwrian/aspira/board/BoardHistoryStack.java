@@ -13,7 +13,7 @@ public class BoardHistoryStack {
         }
     }
 
-    public void push(Board board, long move) {
+    public void push(Board board, int move) {
         if (top + 1 >= stack.length) {
             throw new RuntimeException("BoardHistoryStack overflow");
         }
