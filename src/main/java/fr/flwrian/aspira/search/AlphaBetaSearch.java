@@ -28,6 +28,10 @@ public class AlphaBetaSearch implements SearchAlgorithm {
     private boolean stopSearch = false;
     public void setStopSearch(boolean b) { stopSearch = b; }
 
+    // ==== Node limit ====
+    private long maxNodes = 0;
+    private boolean nodesExceeded = false;
+
     // ==== Time control ====
     private long searchStartTime;
     private long timeLimitNanos;
@@ -65,9 +69,13 @@ public class AlphaBetaSearch implements SearchAlgorithm {
     }
 
     @Override
-    public Move search(Board board, int wtime, int btime, int winc, int binc, int movetime, int depth) {
+    public Move search(Board board, int wtime, int btime, int winc, int binc, int movetime, int depth, long maxNodes) {
         long bestPackedMove = 0L;
         searchStartTime = System.nanoTime();
+
+        // Node limit
+        this.maxNodes = maxNodes;
+        nodesExceeded = false;
 
         // Temps
         if (movetime > 0) {
@@ -160,13 +168,20 @@ public class AlphaBetaSearch implements SearchAlgorithm {
     //        NEGAMAX + PVS
     // =========================
     private MoveValue negamax(Board board, int depth, int alpha, int beta, int ply, boolean isPV) {
-        // TIME
+        // TIME & NODES
         if (System.nanoTime() - searchStartTime > timeLimitNanos || stopSearch) {
             timeExceeded = true;
             return new MoveValue(0L, 0);
         }
 
         nodes++;
+
+        // Check node limit
+        if (maxNodes > 0 && nodes >= maxNodes) {
+            nodesExceeded = true;
+            timeExceeded = true; // Use timeExceeded flag to stop search
+            return new MoveValue(0L, 0);
+        }
         
         // Répétition
         if (board.isThreefoldRepetition()) return new MoveValue(0L, DRAW);

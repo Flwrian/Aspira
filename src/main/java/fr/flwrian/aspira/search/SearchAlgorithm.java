@@ -5,7 +5,7 @@ import fr.flwrian.aspira.move.Move;
 
 public interface SearchAlgorithm {
 
-    public Move search(Board board, int wtime, int btime, int winc, int binc, int movetime, int depth);
+    public Move search(Board board, int wtime, int btime, int winc, int binc, int movetime, int depth, long maxNodes);
 
     public int evaluate(Board board);
 
