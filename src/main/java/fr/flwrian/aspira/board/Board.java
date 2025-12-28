@@ -506,6 +506,15 @@ public class Board {
     public static final int QUEEN_SCORE = 900;
     public static final int KING_SCORE = 20000;
 
+    public static final int[] PIECE_SCORES = {
+            PAWN_SCORE,
+            KNIGHT_SCORE,
+            BISHOP_SCORE,
+            ROOK_SCORE,
+            QUEEN_SCORE,
+            KING_SCORE
+    };
+
     public final BoardHistoryStack history = new BoardHistoryStack(256); // profondeur max
 
     public static final String INITIAL_STARTING_POSITION = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";

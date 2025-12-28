@@ -14,6 +14,14 @@ public class PackedMove {
     // 28–47 : SEE score or move score
     // 48–63 : optional (can be 0, or store sort priority, phase, history info...)
 
+    // Bit layout (64 bits):
+    // 1-6:   to (6 bits)
+    // 7-12:  from (6 bits)
+    // 13-16: promotion piece (4 bits)
+    // 17-20: captured piece (4 bits)
+    // 21-24: piece from (4 bits)
+    // 25-28: flags (4 bits)
+    // 29-48: score for move ordering (20 bits)
     public static long encode(
         int from, int to,
         int pieceFrom, int capturedPiece,

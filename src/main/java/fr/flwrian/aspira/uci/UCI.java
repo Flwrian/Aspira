@@ -10,6 +10,8 @@ import fr.flwrian.aspira.move.MoveGenerator;
 import fr.flwrian.aspira.move.PackedMove;
 import fr.flwrian.aspira.perft.Perft;
 import fr.flwrian.aspira.search.AlphaBetaSearch;
+import fr.flwrian.aspira.search.PureNegamax;
+import fr.flwrian.aspira.search.Search;
 import fr.flwrian.aspira.search.SearchAlgorithm;
 
 /**
@@ -31,7 +33,7 @@ public class UCI {
 
     public static void main(String[] args) {
 
-        searchAlgorithm = new AlphaBetaSearch();
+        searchAlgorithm = new Search();
         engine.setSearchAlgorithm(searchAlgorithm);
 
         board.loadFromFen(STARTING_POSITION);
@@ -278,13 +280,8 @@ public class UCI {
     }
 
     private static void uciNewGame() {
-        board = null;
+        searchAlgorithm.flushHashTable();
         board = new Board();
-        searchAlgorithm = null;
-        searchAlgorithm = new AlphaBetaSearch();
-        engine = null;
-        engine = new Engine(board);
-        engine.setSearchAlgorithm(searchAlgorithm);
         board.loadFromFen(STARTING_POSITION);
     }
 

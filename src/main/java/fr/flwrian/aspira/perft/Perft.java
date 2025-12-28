@@ -21,6 +21,21 @@ public class Perft {
             return 1;
         }
 
+        // Bulk counting
+        if (depth == 1) {
+            PackedMoveList moveList = bitBoard.getPseudoLegalMoves();
+            long count = 0;
+
+            for (int i = 0; i < moveList.size(); i++) {
+                bitBoard.makeMove(moveList.get(i));
+                if (!bitBoard.isKingInCheck(!bitBoard.whiteTurn)) {
+                    count++;
+                }
+                bitBoard.undoMove();
+            }
+            return count;
+        }
+
         PackedMoveList moveList = bitBoard.getLegalMoves();
         long nodes = 0;
         

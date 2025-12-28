@@ -156,4 +156,10 @@ public class TranspositionTable {
         }
         return (int) ((usedSlots * 1000L) / capacity());
     }
+
+    public void flush() {
+        for (int i = 0; i < used.length; i++) {
+            used[i] = 0;
+        }
+    }
 }

@@ -54,7 +54,7 @@ public class PackedMoveList {
     public void prioritize(long move) {
         for (int i = 0; i < size; i++) {
             if (moves[i] == move) {
-                PackedMove.setScore(moves[i], 1000); // Set high score
+                PackedMove.setScore(moves[i], 1_000_000); // Set high score
             }
         }
     }

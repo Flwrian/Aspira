@@ -479,4 +479,10 @@ public class AlphaBetaSearch implements SearchAlgorithm {
             this.pv = (pv == null) ? "" : pv;
         }
     }
+
+    @Override
+    public void flushHashTable() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'flushHashTable'");
+    }
 }
