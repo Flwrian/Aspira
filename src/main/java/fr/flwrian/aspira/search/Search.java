@@ -25,11 +25,16 @@ public class Search implements SearchAlgorithm {
     static final int VALUE_TB_LOSS_IN_MAX_PLY = -VALUE_TB_WIN_IN_MAX_PLY;
 
 
-    final int CHECK_RATE = 236;
+    final int CHECK_RATE = 256;
     final int INFINITE_VALUE = 32001;
 
     int[] pvLengths = new int[MAX_PLY];
     int[][] principalVariations = new int[MAX_PLY][MAX_PLY];
+
+    // 3-fold repetition
+    long[] hashHistory = new long[MAX_PLY];
+    int repSize = 0;
+
 
     long nodes = 0;
     long lastNps = 0;
@@ -115,9 +120,10 @@ public class Search implements SearchAlgorithm {
         pvLengths [ply] = ply;
         nodes++;
         boolean rootNode = (ply == 0);
+        long hashKey = board.zobristKey;
 
         if (!rootNode) {
-            if (board.isThreefoldRepetition()) {
+            if (isThreefoldRepetition(hashKey)) {
                 return -5;
             }
 
@@ -138,10 +144,9 @@ public class Search implements SearchAlgorithm {
         }
 
         // TT probe
-        long ttkey = board.zobristKey;
-        TranspositionTable.Entry tte = transpositionTable.get(ttkey);
+        TranspositionTable.Entry tte = transpositionTable.get(hashKey);
         boolean ttHit = (tte != null);
-        int ttMove = tte != null ? tte.bestMove : 0;
+        int ttMove = ttHit ? tte.bestMove : 0;
         int ttScore = ttHit ? tte.value : VALUE_NONE;
 
         if (!rootNode && ttHit && tte.depth >= depth) {
@@ -188,10 +193,12 @@ public class Search implements SearchAlgorithm {
             nodes++;
 
             board.makeMove(move);
+            hashHistory[repSize++] = board.zobristKey;
 
             // Search
             int score = -absearch(board, depth - 1, -beta, -alpha, ply + 1);
             board.undoMove();
+            repSize--;
 
             if (score > bestScore) {
                 bestScore = score;
@@ -235,7 +242,7 @@ public class Search implements SearchAlgorithm {
                 return 0;
             }
         }
-        
+
         // Calculate bound for TT
         int flag;
         if (bestScore >= beta) {
@@ -247,11 +254,27 @@ public class Search implements SearchAlgorithm {
         }
 
         if (!checkTime(false)) {
-            transpositionTable.put(ttkey, bestMove, bestScore, depth, flag);
+            transpositionTable.put(hashKey, bestMove, bestScore, depth, flag);
         }
         
         return bestScore;
     }
+
+    private boolean isThreefoldRepetition(long key) {
+        int count = 0;
+
+        // on saute de 2 en 2 (même side to move)
+        for (int i = repSize - 2; i >= 0; i -= 2) {
+
+            if (hashHistory[i] == key) {
+                count++;
+                if (count >= 2) // position courante + 2 = threefold
+                    return true;
+            }
+        }
+        return false;
+    }
+
 
     public void iterativeDeepening(Board board, int depthLimit) {
         nodes = 0;

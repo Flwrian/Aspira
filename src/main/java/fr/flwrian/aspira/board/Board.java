@@ -568,18 +568,16 @@ public class Board {
     public boolean isThreefoldRepetition() {
         // to check for repetition, we need to check if the current position has been
         // seen (we will check in the history stack if it appears 3 times)
-        if (history.isEmpty()) {
+        if (history.isEmpty() || plyCount < 8) {
             return false;
         } else {
-            int occurrences = 0;
-            for (int i = history.stack.length - 1; i >= 0; i--) {
-                if (this.zobristKey == history.stack[i].zobristKey) {
-                    occurrences++;
-                    if (occurrences >= 2) {
-                        return true;
-                    }
-                }
+            // If the position before the last move is the same as the current position, we
+            // can return true
+            if ((history.stack[plyCount - 4].zobristKey == this.zobristKey)
+                    && (history.stack[plyCount - 8].zobristKey == this.zobristKey)) {
+                return true;
             }
+
             return false;
         }
     }
