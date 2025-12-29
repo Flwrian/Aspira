@@ -140,9 +140,7 @@ public class Search implements SearchAlgorithm {
         int ttScore = ttHit ? tte.value : 0;
 
         if (!rootNode && ttHit && tte.depth >= depth) {
-            if (tte.flag == TranspositionTable.Entry.EXACT) {
-                return ttScore;
-            } else if (tte.flag == TranspositionTable.Entry.LOWERBOUND) {
+            if (tte.flag == TranspositionTable.Entry.LOWERBOUND) {
                 alpha = Math.max(alpha, ttScore);
             } else if (tte.flag == TranspositionTable.Entry.UPPERBOUND) {
                 beta = Math.min(beta, ttScore);
