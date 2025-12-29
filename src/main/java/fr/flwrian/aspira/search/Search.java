@@ -25,7 +25,7 @@ public class Search implements SearchAlgorithm {
     static final int VALUE_TB_LOSS_IN_MAX_PLY = -VALUE_TB_WIN_IN_MAX_PLY;
 
 
-    final int CHECK_RATE = 236;
+    final int CHECK_RATE = 256;
     final int INFINITE_VALUE = 32001;
 
     int[] pvLengths = new int[MAX_PLY];
