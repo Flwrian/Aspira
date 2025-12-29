@@ -32,6 +32,7 @@ public class Search implements SearchAlgorithm {
     int[][] principalVariations = new int[MAX_PLY][MAX_PLY];
 
     long nodes = 0;
+    long lastNps = 0;
     boolean stopSearch = false;
     int checks = CHECK_RATE;
 
@@ -120,6 +121,10 @@ public class Search implements SearchAlgorithm {
                 return -5;
             }
 
+            if (board.isStaleMate()) {
+                return 0;
+            }
+
             // Mate distance pruning
             alpha = Math.max(alpha, matedInPly(ply));
             beta = Math.min(beta, mateInPly(ply + 1));
@@ -137,7 +142,7 @@ public class Search implements SearchAlgorithm {
         TranspositionTable.Entry tte = transpositionTable.get(ttkey);
         boolean ttHit = (tte != null);
         int ttMove = tte != null ? tte.bestMove : 0;
-        int ttScore = ttHit ? tte.value : 0;
+        int ttScore = ttHit ? tte.value : VALUE_NONE;
 
         if (!rootNode && ttHit && tte.depth >= depth) {
             if (tte.flag == TranspositionTable.Entry.LOWERBOUND) {
@@ -206,11 +211,14 @@ public class Search implements SearchAlgorithm {
 
                     if (score >= beta) {
                         // Update history
-                        int bonus = depth * depth;
-                        int from = PackedMove.getFrom(move);
-                        int to = PackedMove.getTo(move);
-                        int hhbonus = historyTable[board.whiteTurn ? 0 : 1][from][to] * Math.abs(bonus) / 16384;
-                        historyTable[board.whiteTurn ? 0 : 1][from][to] += hhbonus;
+                        // Only for non-capture moves
+                        if (!PackedMove.isCapture(move)) {
+                            int bonus = depth * depth;
+                            int from = PackedMove.getFrom(move);
+                            int to = PackedMove.getTo(move);
+                            int hhbonus = historyTable[board.whiteTurn ? 0 : 1][from][to] * Math.abs(bonus) / 16384;
+                            historyTable[board.whiteTurn ? 0 : 1][from][to] += hhbonus;
+                        }
                         break;
                     }
                 }
@@ -245,7 +253,7 @@ public class Search implements SearchAlgorithm {
         return bestScore;
     }
 
-    public void iterativeDeepening(Board board) {
+    public void iterativeDeepening(Board board, int depthLimit) {
         nodes = 0;
         int score = -INFINITE_VALUE;
         int bestMove = 0;
@@ -254,7 +262,7 @@ public class Search implements SearchAlgorithm {
 
         
 
-        for (int depth = 1; depth <= 64; depth++) {
+        for (int depth = 1; depth <= depthLimit; depth++) {
 
             score = absearch(board, depth, -INFINITE_VALUE, INFINITE_VALUE, 0);
 
@@ -328,21 +336,16 @@ public class Search implements SearchAlgorithm {
     }
     
 
-    public static String convertScore(int score) {
+    public String convertScore(int score) {
         if (score >= VALUE_MATE_IN_PLY) {
-            int mate = VALUE_MATE - score;
-            int ply = (mate >> 1) + (mate & 1);
-            return "mate " + ply;
-        } 
-        else if (score <= VALUE_MATED_IN_PLY) {
-            int mate = VALUE_MATE + score;
-            int ply = (mate >> 1) + (mate & 1);
-            return "mate -" + ply;
-        } 
-        else {
+            return "mate " + (((VALUE_MATE - score) / 2) + ((VALUE_MATE - score) & 1));
+        } else if (score <= VALUE_MATED_IN_PLY) {
+            return "mate " + (-((VALUE_MATE + score) / 2) + ((VALUE_MATE + score) & 1));
+        } else {
             return "cp " + score;
         }
     }
+
 
 
     public int mateInPly(int ply) {
@@ -357,9 +360,10 @@ public class Search implements SearchAlgorithm {
     private void printSearchInfo(int depth, int score, long nodes, long durationNanos) {
         double timeMs = durationNanos / 1_000_000.0;
         double rawNps = nodes / (durationNanos / 1_000_000_000.0);
+        lastNps = (long) rawNps;
 
         System.out.printf(Locale.US, "info depth %d score %s nodes %d nps %d time %.0f pv %s\n",
-                depth, convertScore(score), nodes, (long) rawNps, timeMs, getPV());
+                depth, convertScore(score), nodes, lastNps, timeMs, getPV());
     }
 
     private void resetSearch() {
@@ -462,7 +466,7 @@ public class Search implements SearchAlgorithm {
             timeLimit = (long) (timePerMoveMs * 0.9 * 1_000_000L);
         }
         
-        iterativeDeepening(board);
+        iterativeDeepening(board, depth);
         return PackedMove.unpack(principalVariations[0][0]);
     }
 
@@ -483,7 +487,7 @@ public class Search implements SearchAlgorithm {
 
     @Override
     public long getLastNPS() {
-        return nodes / (System.nanoTime() - startTime);
+        return lastNps;
     }
 
     @Override
