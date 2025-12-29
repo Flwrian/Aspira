@@ -575,7 +575,7 @@ public class Board {
             for (int i = history.stack.length - 1; i >= 0; i--) {
                 if (this.zobristKey == history.stack[i].zobristKey) {
                     occurrences++;
-                    if (occurrences >= 3) {
+                    if (occurrences >= 2) {
                         return true;
                     }
                 }
