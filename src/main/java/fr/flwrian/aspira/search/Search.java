@@ -226,20 +226,20 @@ public class Search implements SearchAlgorithm {
                 }
             }
 
-            // Calculate bound for TT
-            int flag;
-            if (bestScore >= beta) {
-                flag = TranspositionTable.Entry.LOWERBOUND;
-            } else if (alpha != oldAlpha) {
-                flag = TranspositionTable.Entry.EXACT;
-            } else {
-                flag = TranspositionTable.Entry.UPPERBOUND;
-            }
+            
+        }
+        // Calculate bound for TT
+        int flag;
+        if (bestScore >= beta) {
+            flag = TranspositionTable.Entry.LOWERBOUND;
+        } else if (alpha != oldAlpha) {
+            flag = TranspositionTable.Entry.EXACT;
+        } else {
+            flag = TranspositionTable.Entry.UPPERBOUND;
+        }
 
-            if (!checkTime(false)) {
-                transpositionTable.put(ttkey, bestMove, bestScore, depth, flag);
-            }
-
+        if (!checkTime(false)) {
+            transpositionTable.put(ttkey, bestMove, bestScore, depth, flag);
         }
         
         return bestScore;
