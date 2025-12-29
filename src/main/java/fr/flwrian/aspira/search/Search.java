@@ -224,18 +224,18 @@ public class Search implements SearchAlgorithm {
                 }
 
             }
-
-            // No moves made -> checkmate or stalemate
-            if (madeMoves == 0) {
-                if (inCheck) {
-                    return matedInPly(ply);
-                } else {
-                    return 0;
-                }
-            }
-
-            
+  
         }
+        
+        // No moves made -> checkmate or stalemate
+        if (madeMoves == 0) {
+            if (inCheck) {
+                return matedInPly(ply);
+            } else {
+                return 0;
+            }
+        }
+        
         // Calculate bound for TT
         int flag;
         if (bestScore >= beta) {
