@@ -88,7 +88,6 @@ public class UCI {
                     help();
                     break;
                 default:
-                    System.out.println("Unknown command: " + command);
                     break;
             }
         }
@@ -162,14 +161,12 @@ public class UCI {
 
     private static void go(String[] tokens) {
         if (tokens.length < 2) {
-            System.out.println("Usage: go <options>");
             return;
         }
 
         switch (tokens[1]) {
             case "perft":
                 if (tokens.length < 3) {
-                    System.out.println("Usage: go perft <depth>");
                     return;
                 }
                 handlePerftCommand(tokens);

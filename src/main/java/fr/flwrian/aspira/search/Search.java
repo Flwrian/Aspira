@@ -31,6 +31,11 @@ public class Search implements SearchAlgorithm {
     int[] pvLengths = new int[MAX_PLY];
     int[][] principalVariations = new int[MAX_PLY][MAX_PLY];
 
+    // 3-fold repetition
+    long[] hashHistory = new long[MAX_PLY];
+    int repSize = 0;
+
+
     long nodes = 0;
     long lastNps = 0;
     boolean stopSearch = false;
@@ -113,16 +118,12 @@ public class Search implements SearchAlgorithm {
         }
 
         pvLengths [ply] = ply;
-        nodes++;
         boolean rootNode = (ply == 0);
+        long hashKey = board.zobristKey;
 
         if (!rootNode) {
-            if (board.isThreefoldRepetition()) {
+            if (isThreefoldRepetition(hashKey)) {
                 return -5;
-            }
-
-            if (board.isStaleMate()) {
-                return 0;
             }
 
             // Mate distance pruning
@@ -138,11 +139,10 @@ public class Search implements SearchAlgorithm {
         }
 
         // TT probe
-        long ttkey = board.zobristKey;
-        TranspositionTable.Entry tte = transpositionTable.get(ttkey);
+        TranspositionTable.Entry tte = transpositionTable.get(hashKey);
         boolean ttHit = (tte != null);
-        int ttMove = tte != null ? tte.bestMove : 0;
-        int ttScore = ttHit ? tte.value : VALUE_NONE;
+        int ttMove = ttHit ? tte.bestMove : 0;
+        int ttScore = ttHit ? scoreFromTT(tte.value, ply) : 0;
 
         if (!rootNode && ttHit && tte.depth >= depth) {
             if (tte.flag == TranspositionTable.Entry.LOWERBOUND) {
@@ -188,10 +188,12 @@ public class Search implements SearchAlgorithm {
             nodes++;
 
             board.makeMove(move);
+            hashHistory[repSize++] = board.zobristKey;
 
             // Search
             int score = -absearch(board, depth - 1, -beta, -alpha, ply + 1);
             board.undoMove();
+            repSize--;
 
             if (score > bestScore) {
                 bestScore = score;
@@ -214,28 +216,31 @@ public class Search implements SearchAlgorithm {
                         // Only for non-capture moves
                         if (!PackedMove.isCapture(move)) {
                             int bonus = depth * depth;
+                            int color = board.whiteTurn ? 0 : 1;
                             int from = PackedMove.getFrom(move);
                             int to = PackedMove.getTo(move);
-                            int hhbonus = historyTable[board.whiteTurn ? 0 : 1][from][to] * Math.abs(bonus) / 16384;
-                            historyTable[board.whiteTurn ? 0 : 1][from][to] += hhbonus;
+
+                            int current = historyTable[color][from][to];
+                            int delta = bonus - (current * Math.abs(bonus)) / 16384;
+                            historyTable[color][from][to] = current + delta;
                         }
                         break;
                     }
                 }
 
             }
-
-            // No moves made -> checkmate or stalemate
-            if (madeMoves == 0) {
-                if (inCheck) {
-                    return matedInPly(ply);
-                } else {
-                    return 0;
-                }
-            }
-
-            
+  
         }
+        
+        // No moves made -> checkmate or stalemate
+        if (madeMoves == 0) {
+            if (inCheck) {
+                return matedInPly(ply);
+            } else {
+                return 0;
+            }
+        }
+
         // Calculate bound for TT
         int flag;
         if (bestScore >= beta) {
@@ -247,11 +252,28 @@ public class Search implements SearchAlgorithm {
         }
 
         if (!checkTime(false)) {
-            transpositionTable.put(ttkey, bestMove, bestScore, depth, flag);
+            transpositionTable.put(hashKey, bestMove, bestScore, depth, flag);
         }
         
         return bestScore;
     }
+
+    private boolean isThreefoldRepetition(long key) {
+        int count = 0;
+
+        // on saute de 2 en 2 (même side to move)
+        for (int i = repSize - 2; i >= 0; i -= 2) {
+
+            if (hashHistory[i] == key) {
+                count++;
+                if (count == 1) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
 
     public void iterativeDeepening(Board board, int depthLimit) {
         nodes = 0;
@@ -269,14 +291,14 @@ public class Search implements SearchAlgorithm {
             if (stopSearch || checkTime(true)) {
                 break;
             }
-
+            
             // Save best move from principal variation
             bestMove = principalVariations[0][0];
-
+            
             // Print info
             long endTime = System.nanoTime();
             printSearchInfo(depth, score, nodes, endTime - startTime);
-
+            
 
         }
 
@@ -343,6 +365,20 @@ public class Search implements SearchAlgorithm {
             return "mate " + (-((VALUE_MATE + score) / 2) + ((VALUE_MATE + score) & 1));
         } else {
             return "cp " + score;
+        }
+    }
+
+    public int scoreFromTT(int score, int ply) {
+        if (score >= VALUE_TB_WIN_IN_MAX_PLY) {
+            return score - ply;
+        }
+
+        else {
+            if (score <= VALUE_TB_LOSS_IN_MAX_PLY) {
+                return score + ply;
+            } else {
+                return score;
+            }
         }
     }
 
@@ -420,36 +456,97 @@ public class Search implements SearchAlgorithm {
     }
 
     public void orderMoves(PackedMoveList moves, int ttMove, Board board) {
-        // Simple bubble sort based on score
-        for (int i = 0; i < moves.size() - 1; i++) {
-            for (int j = 0; j < moves.size() - i - 1; j++) {
-                int scoreA = scoreMove(moves.moves[j], ttMove, board);
-                int scoreB = scoreMove(moves.moves[j + 1], ttMove, board);
-                if (scoreA < scoreB) {
-                    // Swap
-                    int temp = moves.moves[j];
-                    moves.moves[j] = moves.moves[j + 1];
-                    moves.moves[j + 1] = temp;
+        int size = moves.size();
+        int[] m = moves.moves;
+
+        int idx = 0;
+
+        // 1️⃣ TT move en premier
+        if (ttMove != 0) {
+            for (int i = 0; i < size; i++) {
+                if (m[i] == ttMove) {
+                    swap(m, 0, i);
+                    idx = 1;
+                    break;
                 }
             }
+        }
+
+        // 2️⃣ Bucket captures juste après
+        int captureStart = idx;
+        for (int i = idx; i < size; i++) {
+            if (PackedMove.isCapture(m[i])) {
+                swap(m, idx++, i);
+            }
+        }
+
+        // Trie uniquement les captures (MVV-LVA)
+        sortCaptures(m, captureStart, idx);
+
+        // 3️⃣ Trie les quiets par history heuristic
+        sortQuiets(m, idx, size, board);
+    }
+    private static void swap(int[] arr, int a, int b) {
+        int tmp = arr[a];
+        arr[a] = arr[b];
+        arr[b] = tmp;
+    }
+    private void sortCaptures(int[] m, int from, int to) {
+        for (int i = from + 1; i < to; i++) {
+            int move = m[i];
+            int score = scoreQMove(move);
+            int j = i - 1;
+
+            while (j >= from && scoreQMove(m[j]) < score) {
+                m[j + 1] = m[j];
+                j--;
+            }
+            m[j + 1] = move;
+        }
+    }
+    private void sortQuiets(int[] m, int from, int to, Board board) {
+        int color = board.whiteTurn ? 0 : 1;
+
+        for (int i = from + 1; i < to; i++) {
+            int move = m[i];
+            int fromSq = PackedMove.getFrom(move);
+            int toSq = PackedMove.getTo(move);
+            int score = historyTable[color][fromSq][toSq];
+
+            int j = i - 1;
+            while (j >= from) {
+                int m2 = m[j];
+                int s2 = historyTable[color]
+                        [PackedMove.getFrom(m2)]
+                        [PackedMove.getTo(m2)];
+
+                if (s2 >= score) break;
+
+                m[j + 1] = m[j];
+                j--;
+            }
+            m[j + 1] = move;
         }
     }
 
+
     public void orderQMoves(PackedMoveList moves) {
-        // Simple bubble sort based on score
-        for (int i = 0; i < moves.size() - 1; i++) {
-            for (int j = 0; j < moves.size() - i - 1; j++) {
-                int scoreA = scoreQMove(moves.moves[j]);
-                int scoreB = scoreQMove(moves.moves[j + 1]);
-                if (scoreA < scoreB) {
-                    // Swap
-                    int temp = moves.moves[j];
-                    moves.moves[j] = moves.moves[j + 1];
-                    moves.moves[j + 1] = temp;
-                }
+        int size = moves.size();
+        int[] m = moves.moves;
+
+        for (int i = 1; i < size; i++) {
+            int move = m[i];
+            int score = scoreQMove(move);
+            int j = i - 1;
+
+            while (j >= 0 && scoreQMove(m[j]) < score) {
+                m[j + 1] = m[j];
+                j--;
             }
+            m[j + 1] = move;
         }
     }
+
 
     @Override
     public Move search(Board board, int wtime, int btime, int winc, int binc, int movetime, int depth, long maxNodes) {
