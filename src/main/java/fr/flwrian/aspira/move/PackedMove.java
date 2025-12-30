@@ -76,7 +76,7 @@ public final class PackedMove {
     // ---------- HELPERS ----------
 
     public static boolean isPromotion(int move) {
-        return getPromotion(move) != 0;
+        return getFlags(move) == Move.PROMOTION;
     }
 
     public static boolean isCapture(int move) {

@@ -1595,8 +1595,7 @@ public class Board {
     private void handleWhiteKingMove(int from, int to, long fromBB, long toBB,
             int fromFlipped, int toFlipped, int flags) {
         // Check for castling
-        if ((toBB & (C1 | G1)) != 0 &&
-                (whiteCastleQueenSide != 0 || whiteCastleKingSide != 0)) {
+        if (flags == Move.CASTLING) {
             if ((toBB & C1) != 0) {
                 processWhiteCastleQueenSide(fromBB);
             } else {
@@ -1723,8 +1722,7 @@ public class Board {
 
     private void handleBlackKingMove(int from, int to, long fromBB, long toBB, int flags) {
         // Check for castling
-        if ((toBB & (C8 | G8)) != 0 &&
-                (blackCastleQueenSide != 0 || blackCastleKingSide != 0)) {
+        if (flags == Move.CASTLING) {
             if ((toBB & C8) != 0) {
                 processBlackCastleQueenSide(fromBB);
             } else {
