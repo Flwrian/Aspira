@@ -123,11 +123,7 @@ public class Search implements SearchAlgorithm {
 
         if (!rootNode) {
             if (isThreefoldRepetition(hashKey)) {
-                return -50;
-            }
-
-            if (board.isStaleMate()) {
-                return 0;
+                return -5;
             }
 
             // Mate distance pruning
