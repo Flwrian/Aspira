@@ -31,15 +31,19 @@ public class AlphaBetaSearch implements SearchAlgorithm {
     
     static {
         // Initialize LMR reduction table with logarithmic formula
-        // reduction = ln(depth) * ln(moveNumber) / divisor
+        // reduction = ln(depth) * ln(moveCount) / divisor
+        // Note: Table is indexed by [depth][moveIndex] where moveIndex is 0-based
+        // but the formula uses moveCount (1-based), so moveCount = moveIndex + 1
         final double divisor = 2.5;
         for (int depth = 0; depth < MAX_DEPTH; depth++) {
-            for (int moveNum = 0; moveNum < MAX_MOVES; moveNum++) {
-                if (depth == 0 || moveNum == 0) {
-                    LMR_TABLE[depth][moveNum] = 0;
+            for (int moveIndex = 0; moveIndex < MAX_MOVES; moveIndex++) {
+                int moveCount = moveIndex + 1;  // Convert 0-based index to 1-based count
+                if (depth < 1 || moveCount < 2) {
+                    // No reduction for depth 0 or first move
+                    LMR_TABLE[depth][moveIndex] = 0;
                 } else {
-                    double reduction = Math.log(depth) * Math.log(moveNum) / divisor;
-                    LMR_TABLE[depth][moveNum] = (int) Math.max(0, reduction);
+                    double reduction = Math.log(depth) * Math.log(moveCount) / divisor;
+                    LMR_TABLE[depth][moveIndex] = (int) Math.max(0, reduction);
                 }
             }
         }
