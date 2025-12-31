@@ -2,69 +2,106 @@
 ![UCI Support](https://img.shields.io/badge/Protocol-UCI-green.svg)
 ![License](https://img.shields.io/badge/License-MIT-lightgrey.svg)
 
-# 🧠 Aspira – Java Chess Engine
+# Aspira – Java Chess Engine
 
-**Aspira** is a chess engine built from the ground up in **Java** — born out of curiosity, a love of chess, and a deep drive to understand how things work at a low level.
+Aspira is a chess engine written entirely in **Java**.  
+It didn’t start as an attempt to build a strong engine, and it definitely didn’t stay simple for long.
 
-This project isn’t just about creating a strong engine. It’s about learning by doing: building everything myself — from board representation and bitboards to move generation, legality checking, and search logic. No shortcuts, no libraries doing the hard work.
+What began as “let’s make something that plays legal moves” slowly turned into one of the most mentally demanding projects I’ve worked on. Chess engines have this special property: everything depends on everything else. One small mistake, one shortcut, one assumption that isn’t 100% correct — and suddenly nothing makes sense anymore. Wrong evaluations, illegal moves, random blunders, or performance falling off a cliff.
 
----
-
-## 🚧 Project Philosophy
-
-Aspira started as a side project back when I was learning Java — just a basic engine to play some legal moves. But over time, it turned into a serious dive into engine architecture, bitboard logic, and performance optimization. I’ve since rewritten large parts of the codebase to make it faster, cleaner, and more scalable.
-
-The engine is now in its **second major iteration (V2)**, fully rebuilt with performance and correctness in mind.
+This project forced me to write *good* code everywhere. There’s no hiding. If one part is sloppy, the whole engine eventually explodes.
 
 ---
 
-## ✅ Features Implemented
+## About the Project
 
-- ✅ Full rule implementation: castling, en passant, promotion, legality checking, repetition
-- ⚙️ Core engine loop  
-- ♟️ Bitboard-based move generation (including magic bitboards)  
-- 🔄 UCI protocol support  
-- 🧠 Pluggable search algorithms
-- 📜 FEN/PGN parsing and saving  
-- 🧪 Perft testing suite
-- 🔍 Zobrist hashing for fast position tracking  
-- 🔢 Packed move representation
-- ⏱️ Time management inside the search  
+Aspira is built from the ground up. No chess libraries doing the heavy lifting, no magic abstractions that hide complexity. Every major component exists because I needed to understand it deeply enough to implement it myself.
 
----
+That includes:
+- board representation
+- bitboards
+- move generation
+- legality checking
+- search
+- time management
+- hashing
+- repetition detection
 
-## 🧭 Roadmap & Upcoming Work
+At multiple points, I had to throw away large parts of the code and start again. The current version is not “v1 with patches”, it’s a full rewrite with everything I learned the hard way baked in.
 
-- 🧠 **NNUE / ML experiments** *(future phase)*  
-  Possibly integrating simple NN models for position eval.
+This is easily one of the most headache-inducing projects I’ve done — but also one of the most rewarding.
 
 ---
 
-## ⚡ Performance
+## Current State
 
-As of March 2025, Aspira’s move generation peaks at around **15 million nodes per second (MNPS)** on a **Ryzen 7 7800X3D**, with all rule enforcement and legality checks enabled. Optimization is ongoing.
+Aspira is a functional UCI chess engine with a solid core architecture. It’s not trying to compete with Stockfish, but it *does* aim to be correct, fast, and understandable.
 
----
+### What’s implemented
 
-## 🤝 Contributing
-
-**Aspira is open to contributions.** Whether it’s code, ideas, testing, or feedback — all help is welcome. If you're interested in contributing:
-
-1. Fork the repo  
-2. Pick an open issue (or open your own)  
-3. Open a pull request
-
-Feel free to reach out if you want to discuss architecture, optimization, or chess engine theory.
-
----
-
-## 💬 Special Thanks
-
-Huge thanks to the **Stockfish Discord community** for the resources, discussions, and general inspiration. Also shout-out to the creators of open-source tools and test suites that help keep engines like this honest.
+- Full ruleset (castling, en passant, promotion, repetition)
+- Bitboard-based move generation (including sliding pieces)
+- Zobrist hashing
+- Transposition table
+- Alpha-beta search with quiescence search
+- Move ordering (history heuristic, MVV-LVA, TT move)
+- Time management
+- UCI protocol support
+- FEN / PGN handling
+- Perft testing for correctness
 
 ---
 
-## 🚀 Why Aspira?
+## Performance
 
-The name *Aspira* comes from the idea of “aspiring” — to improve, to dig deeper, to push further into the mechanics of something complex. This engine is my way of doing that with both chess and code.
+On March 2025 on a **Ryzen 7 7800X3D**, Aspira reaches around **15 million nodes per second** in realistic conditions (legal move generation, checks, full rules enforced).
+December 2025: move gen ~1.5x performance
 
+That number didn’t come from one big optimization. It came from dozens of small fixes:
+- removing unnecessary allocations
+- fixing subtle bugs that killed pruning
+- rewriting slow paths
+- simplifying logic that looked “clean” but wasn’t fast
+
+Most performance gains came from correctness, not clever tricks.
+
+---
+
+## Why This Was Hard
+
+Chess engines are unforgiving.  
+You don’t just debug crashes — you debug *ideas*.
+
+- A broken repetition check quietly kills winning lines.
+- A slightly wrong make/undo corrupts the position three plies later.
+- A bad quiescence search looks fine… until it doesn’t.
+- One incorrect bit operation and evaluation becomes noise.
+
+You spend hours staring at code that *looks* correct, only to realize the bug is conceptually wrong, not syntactically wrong.
+
+That’s what makes this project special to me.
+
+---
+
+## Contributing
+
+Aspira is open to contributions.
+
+If you want to contribute:
+1. Fork the repository
+2. Open an issue or pick an existing one
+3. Submit a pull request with a clear explanation
+
+I’m always open to discussions about engine design, performance trade-offs, or chess programming in general.
+
+---
+
+## Closing Thoughts
+
+Aspira isn’t just a chess engine.  
+It’s the result of wrestling with complexity until things finally started to make sense.
+
+The name comes from *aspiring* — not just to build something stronger, but to understand something deeply enough that it stops being mysterious.  
+Somewhere along the way, it also started aspiring my soul.
+
+There’s still a lot to improve. But this is a solid foundation, earned the hard way.
