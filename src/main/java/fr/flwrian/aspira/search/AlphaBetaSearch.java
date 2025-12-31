@@ -24,6 +24,23 @@ public class AlphaBetaSearch implements SearchAlgorithm {
     private long nodes = 0;
     private long cutoffs = 0;
 
+    // ==== LMR reduction table ====
+    private static final int MAX_DEPTH = 64;
+    private static final int MAX_MOVES = 64;
+    private static final int[][] LMR_TABLE = new int[MAX_DEPTH][MAX_MOVES];
+    
+    static {
+        // Initialize LMR reduction table with logarithmic formula
+        // reduction = ln(depth) * ln(moveNumber) / divisor
+        final double divisor = 2.5;
+        for (int depth = 1; depth < MAX_DEPTH; depth++) {
+            for (int moveNum = 1; moveNum < MAX_MOVES; moveNum++) {
+                double reduction = Math.log(depth) * Math.log(moveNum) / divisor;
+                LMR_TABLE[depth][moveNum] = (int) Math.max(0, reduction);
+            }
+        }
+    }
+
     // Stop search flag
     private boolean stopSearch = false;
     public void setStopSearch(boolean b) { stopSearch = b; }
@@ -269,7 +286,6 @@ public class AlphaBetaSearch implements SearchAlgorithm {
         // LMR params
         final int LMR_MIN_DEPTH = 3;
         final int LMR_MIN_MOVES = 3;
-        final int LMR_REDUCTION = 1;
 
         boolean firstMove = true;
         final boolean criticalDepth = (depth <= 2);  // garde-fous
@@ -285,9 +301,10 @@ public class AlphaBetaSearch implements SearchAlgorithm {
             int scoreRaw;
             String childPv;
 
-            // === Pas de LMR ni PVS en profondeur critique ou si check ===
+            // === LMR conditions ===
             boolean isCapture = PackedMove.isCapture(move);
-            boolean allowLMR  = !criticalDepth && !inCheck && !givesCheck;
+            boolean isPromotion = (PackedMove.getPromotion(move) != Board.EMPTY);
+            boolean allowLMR  = !criticalDepth && !inCheck && !givesCheck && !isPromotion;
             boolean canReduce = allowLMR && depth >= LMR_MIN_DEPTH && i >= LMR_MIN_MOVES && !isCapture;
 
             if (firstMove || criticalDepth) {
@@ -296,7 +313,23 @@ public class AlphaBetaSearch implements SearchAlgorithm {
                 childPv  = child.pv;
                 firstMove = false;
             } else {
-                int searchDepth = canReduce ? (newDepth - LMR_REDUCTION) : newDepth;
+                // Calculate LMR reduction using table
+                int reduction = 0;
+                if (canReduce) {
+                    int d = Math.min(depth, MAX_DEPTH - 1);
+                    int m = Math.min(i, MAX_MOVES - 1);
+                    reduction = LMR_TABLE[d][m];
+                    
+                    // Reduce less in PV nodes
+                    if (isPV) {
+                        reduction = Math.max(0, reduction - 1);
+                    }
+                    
+                    // Clamp reduction to not go below depth 1
+                    reduction = Math.min(reduction, newDepth - 1);
+                }
+                
+                int searchDepth = newDepth - reduction;
 
                 // PVS null-window
                 MoveValue red = negamax(board, searchDepth, -(alpha + 1), -alpha, ply + 1, false);
@@ -304,9 +337,19 @@ public class AlphaBetaSearch implements SearchAlgorithm {
                 childPv  = red.pv;
 
                 if (scoreRaw > alpha) {
-                    MoveValue full = negamax(board, newDepth, -beta, -alpha, ply + 1, true);
-                    scoreRaw = -full.value;
-                    childPv  = full.pv;
+                    // Re-search at full depth if reduced search failed high
+                    if (reduction > 0 && searchDepth < newDepth) {
+                        MoveValue full = negamax(board, newDepth, -(alpha + 1), -alpha, ply + 1, false);
+                        scoreRaw = -full.value;
+                        childPv  = full.pv;
+                    }
+                    
+                    // Full window search if still above alpha
+                    if (scoreRaw > alpha) {
+                        MoveValue full = negamax(board, newDepth, -beta, -alpha, ply + 1, true);
+                        scoreRaw = -full.value;
+                        childPv  = full.pv;
+                    }
                 }
             }
 
