@@ -46,3 +46,9 @@ Aspira_dev
 Aspira_dev_before
 benchmarks.txt
 config.json
+
+# helix ignore
+.classpath
+.factorypath
+.project
+.settings/
