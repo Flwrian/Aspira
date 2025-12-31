@@ -33,10 +33,14 @@ public class AlphaBetaSearch implements SearchAlgorithm {
         // Initialize LMR reduction table with logarithmic formula
         // reduction = ln(depth) * ln(moveNumber) / divisor
         final double divisor = 2.5;
-        for (int depth = 1; depth < MAX_DEPTH; depth++) {
-            for (int moveNum = 1; moveNum < MAX_MOVES; moveNum++) {
-                double reduction = Math.log(depth) * Math.log(moveNum) / divisor;
-                LMR_TABLE[depth][moveNum] = (int) Math.max(0, reduction);
+        for (int depth = 0; depth < MAX_DEPTH; depth++) {
+            for (int moveNum = 0; moveNum < MAX_MOVES; moveNum++) {
+                if (depth == 0 || moveNum == 0) {
+                    LMR_TABLE[depth][moveNum] = 0;
+                } else {
+                    double reduction = Math.log(depth) * Math.log(moveNum) / divisor;
+                    LMR_TABLE[depth][moveNum] = (int) Math.max(0, reduction);
+                }
             }
         }
     }
@@ -338,7 +342,7 @@ public class AlphaBetaSearch implements SearchAlgorithm {
 
                 if (scoreRaw > alpha) {
                     // Re-search at full depth if reduced search failed high
-                    if (reduction > 0 && searchDepth < newDepth) {
+                    if (reduction > 0) {
                         MoveValue full = negamax(board, newDepth, -(alpha + 1), -alpha, ply + 1, false);
                         scoreRaw = -full.value;
                         childPv  = full.pv;
