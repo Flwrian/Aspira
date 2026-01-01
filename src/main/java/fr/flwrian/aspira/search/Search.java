@@ -108,154 +108,179 @@ public class Search implements SearchAlgorithm {
     }
 
     public int absearch(Board board, int depth, int alpha, int beta, int ply) {
+    
+    if (checkTime(false)) {
+        return 0;
+    }
+
+    if (ply >= MAX_PLY) {
+        return evaluate(board);
+    }
+
+    pvLengths[ply] = ply;
+    boolean rootNode = (ply == 0);
+    long hashKey = board.zobristKey;
+
+    if (!rootNode) {
+        if (isThreefoldRepetition(hashKey)) {
+            return -5;
+        }
+
+        alpha = Math.max(alpha, matedInPly(ply));
+        beta = Math.min(beta, mateInPly(ply + 1));
+        if (alpha >= beta) {
+            return alpha;
+        }
+    }
+
+    if (depth <= 0) {
+        return qsearch(board, alpha, beta, ply);
+    }
+
+    // TT probe (inchangé)
+    TranspositionTable.Entry tte = transpositionTable.get(hashKey);
+    boolean ttHit = (tte != null);
+    int ttMove = ttHit ? tte.bestMove : 0;
+    int ttScore = ttHit ? scoreFromTT(tte.value, ply) : 0;
+
+    if (!rootNode && ttHit && tte.depth >= depth) {
+        if (tte.flag == TranspositionTable.Entry.LOWERBOUND) {
+            alpha = Math.max(alpha, ttScore);
+        } else if (tte.flag == TranspositionTable.Entry.UPPERBOUND) {
+            beta = Math.min(beta, ttScore);
+        }
+
+        if (alpha >= beta) {
+            return ttScore;
+        }
+    }
+
+    boolean inCheck = board.isKingInCheck(board.whiteTurn);
+
+    // Null move pruning (inchangé)
+    if (!inCheck && depth >= 3) {
+        board.makeNullMove();
+        int score = -absearch(board, depth - 2, -beta, -beta + 1, ply + 1);
+        board.undoNullMove();
+
+        if (score >= beta) {
+            if (score >= VALUE_TB_WIN_IN_MAX_PLY) {
+                score = beta;
+            }
+            return score;
+        }
+    }
+
+    int oldAlpha = alpha;
+    int bestScore = -VALUE_INFINITE;
+    int bestMove = 0;
+    int madeMoves = 0;
+
+    PackedMoveList moves = board.getLegalMoves();
+    orderMoves(moves, ttMove, board);
+
+    // ========== PARTIE MODIFIÉE AVEC LMR ==========
+    for (int i = 0; i < moves.size(); i++) {
+        int move = moves.get(i);
+        madeMoves++;
+        nodes++;
+
+        board.makeMove(move);
+        hashHistory[repSize++] = board.zobristKey;
+
+        int score;
         
-        if (checkTime(false)) {
+        // Conditions pour appliquer LMR
+        boolean doLMR = depth >= 3                    // Profondeur suffisante
+                     && madeMoves > 3                 // Au moins 3 coups déjà cherchés
+                     && !inCheck                      // Pas en échec
+                     && !board.isKingInCheck(board.whiteTurn)  // Le coup ne donne pas échec
+                     && !PackedMove.isCapture(move)   // Pas une capture
+                     && !PackedMove.isPromotion(move); // Pas une promotion
+
+        if (doLMR) {
+            // Calcul de la réduction
+            int reduction = calculateReduction(depth, madeMoves);
+            
+            // Recherche réduite
+            score = -absearch(board, depth - 1 - reduction, -alpha - 1, -alpha, ply + 1);
+            
+            // Si le coup réduit dépasse alpha, re-search à profondeur normale
+            if (score > alpha) {
+                score = -absearch(board, depth - 1, -beta, -alpha, ply + 1);
+            }
+        } else {
+            // Recherche normale
+            score = -absearch(board, depth - 1, -beta, -alpha, ply + 1);
+        }
+
+        board.undoMove();
+        repSize--;
+
+        if (score > bestScore) {
+            bestScore = score;
+            bestMove = move;
+
+            principalVariations[ply][ply] = move;
+            for (int j = ply + 1; j < pvLengths[ply + 1]; j++) {
+                principalVariations[ply][j] = principalVariations[ply + 1][j];
+            }
+            pvLengths[ply] = pvLengths[ply + 1];
+
+            if (score > alpha) {
+                alpha = score;
+
+                if (score >= beta) {
+                    if (!PackedMove.isCapture(move)) {
+                        int bonus = depth * depth;
+                        int color = board.whiteTurn ? 0 : 1;
+                        int from = PackedMove.getFrom(move);
+                        int to = PackedMove.getTo(move);
+
+                        int current = historyTable[color][from][to];
+                        int delta = bonus - (current * Math.abs(bonus)) / 16384;
+                        historyTable[color][from][to] = current + delta;
+                    }
+                    break;
+                }
+            }
+        }
+    }
+    // ========== FIN DE LA PARTIE MODIFIÉE ==========
+    
+    // Checkmate/stalemate (inchangé)
+    if (madeMoves == 0) {
+        if (inCheck) {
+            return matedInPly(ply);
+        } else {
             return 0;
         }
+    }
 
-        if (ply >= MAX_PLY) {
-            return evaluate(board);
-        }
+    // TT storage (inchangé)
+    int flag;
+    if (bestScore >= beta) {
+        flag = TranspositionTable.Entry.LOWERBOUND;
+    } else if (alpha != oldAlpha) {
+        flag = TranspositionTable.Entry.EXACT;
+    } else {
+        flag = TranspositionTable.Entry.UPPERBOUND;
+    }
 
-        pvLengths [ply] = ply;
-        boolean rootNode = (ply == 0);
-        long hashKey = board.zobristKey;
+    if (!checkTime(false)) {
+        transpositionTable.put(hashKey, bestMove, bestScore, depth, flag);
+    }
+    
+    return bestScore;
+}
 
-        if (!rootNode) {
-            if (isThreefoldRepetition(hashKey)) {
-                return -5;
-            }
 
-            // Mate distance pruning
-            alpha = Math.max(alpha, matedInPly(ply));
-            beta = Math.min(beta, mateInPly(ply + 1));
-            if (alpha >= beta) {
-                return alpha;
-            }
-        }
-
-        if (depth <= 0) {
-            return qsearch(board, alpha, beta, ply);
-        }
-
-        // TT probe
-        TranspositionTable.Entry tte = transpositionTable.get(hashKey);
-        boolean ttHit = (tte != null);
-        int ttMove = ttHit ? tte.bestMove : 0;
-        int ttScore = ttHit ? scoreFromTT(tte.value, ply) : 0;
-
-        if (!rootNode && ttHit && tte.depth >= depth) {
-            if (tte.flag == TranspositionTable.Entry.LOWERBOUND) {
-                alpha = Math.max(alpha, ttScore);
-            } else if (tte.flag == TranspositionTable.Entry.UPPERBOUND) {
-                beta = Math.min(beta, ttScore);
-            }
-
-            if (alpha >= beta) {
-                return ttScore;
-            }
-
-        }
-
-        boolean inCheck = board.isKingInCheck(board.whiteTurn);
-
-        // Null move pruning
-        if (!inCheck && depth >= 3) {
-            board.makeNullMove();
-            int score = -absearch(board, depth - 2, -beta, -beta + 1, ply + 1);
-            board.undoNullMove();
-
-            if (score >= beta) {
-                if (score >= VALUE_TB_WIN_IN_MAX_PLY) {
-                    score = beta;
-                }
-                return score;
-            }
-        }
-
-        int oldAlpha = alpha;
-        int bestScore = -VALUE_INFINITE;
-        int bestMove = 0;
-
-        int madeMoves = 0;
-
-        PackedMoveList moves = board.getLegalMoves();
-        orderMoves(moves, ttMove, board);
-
-        for (int i = 0; i < moves.size(); i++) {
-            int move = moves.get(i);
-            madeMoves++;
-            nodes++;
-
-            board.makeMove(move);
-            hashHistory[repSize++] = board.zobristKey;
-
-            // Search
-            int score = -absearch(board, depth - 1, -beta, -alpha, ply + 1);
-            board.undoMove();
-            repSize--;
-
-            if (score > bestScore) {
-                bestScore = score;
-                bestMove = move;
-
-                // Update principal variation
-                principalVariations[ply][ply] = move;
-
-                for (int j = ply + 1; j < pvLengths[ply + 1]; j++) {
-                    principalVariations[ply][j] = principalVariations[ply + 1][j];
-                }
-
-                pvLengths[ply] = pvLengths[ply + 1];
-
-                if (score > alpha) {
-                    alpha = score;
-
-                    if (score >= beta) {
-                        // Update history
-                        // Only for non-capture moves
-                        if (!PackedMove.isCapture(move)) {
-                            int bonus = depth * depth;
-                            int color = board.whiteTurn ? 0 : 1;
-                            int from = PackedMove.getFrom(move);
-                            int to = PackedMove.getTo(move);
-
-                            int current = historyTable[color][from][to];
-                            int delta = bonus - (current * Math.abs(bonus)) / 16384;
-                            historyTable[color][from][to] = current + delta;
-                        }
-                        break;
-                    }
-                }
-
-            }
-  
-        }
+    private int calculateReduction(int depth, int moveNumber) {
+        double logDepth = Math.log(depth);
+        double logMove = Math.log(moveNumber);
+        int reduction = (int) (logDepth * logMove / 2.5);
         
-        // No moves made -> checkmate or stalemate
-        if (madeMoves == 0) {
-            if (inCheck) {
-                return matedInPly(ply);
-            } else {
-                return 0;
-            }
-        }
-
-        // Calculate bound for TT
-        int flag;
-        if (bestScore >= beta) {
-            flag = TranspositionTable.Entry.LOWERBOUND;
-        } else if (alpha != oldAlpha) {
-            flag = TranspositionTable.Entry.EXACT;
-        } else {
-            flag = TranspositionTable.Entry.UPPERBOUND;
-        }
-
-        if (!checkTime(false)) {
-            transpositionTable.put(hashKey, bestMove, bestScore, depth, flag);
-        }
-        
-        return bestScore;
+        return Math.max(1, Math.min(reduction, depth - 1));
     }
 
     private boolean isThreefoldRepetition(long key) {
