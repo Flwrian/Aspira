@@ -116,8 +116,8 @@ public class UCI {
                 }
                 searchAlgorithm.setHashTable(sizeMB);
                 break;
-            case "Threads":
-                throw new UnsupportedOperationException("Threads option is not supported yet.");
+            // case "Threads":
+            //     throw new UnsupportedOperationException("Threads option is not supported yet.");
             default:
                 break;
         }
