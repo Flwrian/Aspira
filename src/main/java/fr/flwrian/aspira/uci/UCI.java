@@ -28,6 +28,10 @@ public class UCI {
     private static final int HASH_TABLE_DEFAULT_SIZE_MB = 64;
     private static final int HASH_TABLE_MAX_SIZE_MB = 1024;
 
+    private static final int THREADS_MIN = 1;
+    private static final int THREADS_DEFAULT = 1;
+    private static final int THREADS_MAX = 1;
+
     private static String STARTING_POSITION = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
     private static Board board = new Board();
@@ -116,8 +120,15 @@ public class UCI {
                 }
                 searchAlgorithm.setHashTable(sizeMB);
                 break;
-            // case "Threads":
-            //     throw new UnsupportedOperationException("Threads option is not supported yet.");
+            case "Threads":
+                int threads = Integer.parseInt(value);
+                if (threads < THREADS_MIN || threads > THREADS_MAX) {
+                    System.out.println("info string Threads must be between " + THREADS_MIN + " and " + THREADS_MAX);
+                    return;
+                }
+                // searchAlgorithm.setThreads(threads);
+                System.out.println("info string Using " + threads + " threads");
+                break;
             default:
                 break;
         }
