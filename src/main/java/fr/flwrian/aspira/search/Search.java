@@ -108,7 +108,7 @@ public class Search implements SearchAlgorithm {
     }
 
     public int absearch(Board board, int depth, int alpha, int beta, int ply) {
-        
+    
         if (checkTime(false)) {
             return 0;
         }
@@ -117,8 +117,9 @@ public class Search implements SearchAlgorithm {
             return evaluate(board);
         }
 
-        pvLengths [ply] = ply;
+        pvLengths[ply] = ply;
         boolean rootNode = (ply == 0);
+        boolean pvNode = (beta - alpha > 1); // Nœud PV si fenêtre large
         long hashKey = board.zobristKey;
 
         if (!rootNode) {
@@ -126,7 +127,6 @@ public class Search implements SearchAlgorithm {
                 return -5;
             }
 
-            // Mate distance pruning
             alpha = Math.max(alpha, matedInPly(ply));
             beta = Math.min(beta, mateInPly(ply + 1));
             if (alpha >= beta) {
@@ -144,7 +144,7 @@ public class Search implements SearchAlgorithm {
         int ttMove = ttHit ? tte.bestMove : 0;
         int ttScore = ttHit ? scoreFromTT(tte.value, ply) : 0;
 
-        if (!rootNode && ttHit && tte.depth >= depth) {
+        if (!pvNode && ttHit && tte.depth >= depth) {
             if (tte.flag == TranspositionTable.Entry.LOWERBOUND) {
                 alpha = Math.max(alpha, ttScore);
             } else if (tte.flag == TranspositionTable.Entry.UPPERBOUND) {
@@ -154,13 +154,12 @@ public class Search implements SearchAlgorithm {
             if (alpha >= beta) {
                 return ttScore;
             }
-
         }
 
         boolean inCheck = board.isKingInCheck(board.whiteTurn);
 
         // Null move pruning
-        if (!inCheck && depth >= 3) {
+        if (!pvNode && !inCheck && depth >= 3) {
             board.makeNullMove();
             int score = -absearch(board, depth - 2, -beta, -beta + 1, ply + 1);
             board.undoNullMove();
@@ -176,12 +175,12 @@ public class Search implements SearchAlgorithm {
         int oldAlpha = alpha;
         int bestScore = -VALUE_INFINITE;
         int bestMove = 0;
-
         int madeMoves = 0;
 
         PackedMoveList moves = board.getLegalMoves();
         orderMoves(moves, ttMove, board);
 
+        // ========== LMR + PVS COMBINÉS ==========
         for (int i = 0; i < moves.size(); i++) {
             int move = moves.get(i);
             madeMoves++;
@@ -190,8 +189,49 @@ public class Search implements SearchAlgorithm {
             board.makeMove(move);
             hashHistory[repSize++] = board.zobristKey;
 
-            // Search
-            int score = -absearch(board, depth - 1, -beta, -alpha, ply + 1);
+            int score;
+            boolean givesCheck = board.isKingInCheck(board.whiteTurn);
+            
+            if (madeMoves == 1) {
+                // ===== PREMIER COUP : recherche complète PV =====
+                score = -absearch(board, depth - 1, -beta, -alpha, ply + 1);
+            } else {
+                // ===== COUPS SUIVANTS : LMR + PVS =====
+                
+                // Conditions pour LMR
+                boolean doLMR = depth >= 3
+                            && madeMoves > 3
+                            && !inCheck
+                            && !givesCheck
+                            && !PackedMove.isCapture(move)
+                            && !PackedMove.isPromotion(move);
+
+                if (doLMR) {
+                    // Étape 1 : Recherche RÉDUITE avec fenêtre nulle
+                    int reduction = calculateReduction(depth, madeMoves);
+                    score = -absearch(board, depth - 1 - reduction, -alpha - 1, -alpha, ply + 1);
+                    
+                    // Si le coup réduit échoue (score <= alpha), pas besoin de re-search
+                    // Si il dépasse alpha, on continue ci-dessous
+                } else {
+                    // Pas de LMR : recherche normale avec fenêtre nulle
+                    score = -absearch(board, depth - 1, -alpha - 1, -alpha, ply + 1);
+                }
+                
+                // Étape 2 : Re-search si le coup dépasse alpha
+                if (score > alpha) {
+                    // Si LMR a été appliqué, d'abord re-search à profondeur normale avec fenêtre nulle
+                    if (doLMR) {
+                        score = -absearch(board, depth - 1, -alpha - 1, -alpha, ply + 1);
+                    }
+                    
+                    // Si toujours > alpha, recherche complète avec fenêtre large
+                    if (score > alpha && score < beta) {
+                        score = -absearch(board, depth - 1, -beta, -alpha, ply + 1);
+                    }
+                }
+            }
+
             board.undoMove();
             repSize--;
 
@@ -199,21 +239,16 @@ public class Search implements SearchAlgorithm {
                 bestScore = score;
                 bestMove = move;
 
-                // Update principal variation
                 principalVariations[ply][ply] = move;
-
                 for (int j = ply + 1; j < pvLengths[ply + 1]; j++) {
                     principalVariations[ply][j] = principalVariations[ply + 1][j];
                 }
-
                 pvLengths[ply] = pvLengths[ply + 1];
 
                 if (score > alpha) {
                     alpha = score;
 
                     if (score >= beta) {
-                        // Update history
-                        // Only for non-capture moves
                         if (!PackedMove.isCapture(move)) {
                             int bonus = depth * depth;
                             int color = board.whiteTurn ? 0 : 1;
@@ -227,12 +262,10 @@ public class Search implements SearchAlgorithm {
                         break;
                     }
                 }
-
             }
-  
         }
+        // ========== FIN LMR + PVS ==========
         
-        // No moves made -> checkmate or stalemate
         if (madeMoves == 0) {
             if (inCheck) {
                 return matedInPly(ply);
@@ -241,7 +274,6 @@ public class Search implements SearchAlgorithm {
             }
         }
 
-        // Calculate bound for TT
         int flag;
         if (bestScore >= beta) {
             flag = TranspositionTable.Entry.LOWERBOUND;
@@ -256,6 +288,13 @@ public class Search implements SearchAlgorithm {
         }
         
         return bestScore;
+    }
+
+    private int calculateReduction(int depth, int moveNumber) {
+        double logDepth = Math.log(depth);
+        double logMove = Math.log(moveNumber);
+        int reduction = (int) (logDepth * logMove / 2.5);
+        return Math.max(1, Math.min(reduction, depth - 1));
     }
 
     private boolean isThreefoldRepetition(long key) {
