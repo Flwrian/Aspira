@@ -24,6 +24,10 @@ public class UCI {
     private static String AUTHOR = "Flwrian";
     private static String VERSION = "1.0";
 
+    private static final int HASH_TABLE_MIN_SIZE_MB = 8;
+    private static final int HASH_TABLE_DEFAULT_SIZE_MB = 64;
+    private static final int HASH_TABLE_MAX_SIZE_MB = 1024;
+
     private static String STARTING_POSITION = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
     private static Board board = new Board();
@@ -78,8 +82,8 @@ public class UCI {
                 case "quit":
                     quit();
                     break;
-                case "option":
-                    option(inputArray);
+                case "setoption":
+                    setoption(inputArray);
                     break;
                 case "d":
                     d();
@@ -93,7 +97,30 @@ public class UCI {
         }
     }
 
-    private static void option(String[] inputArray) {
+    private static void setoption(String[] inputArray) {
+
+        // Example: setoption name Hash value 128
+        if (inputArray.length < 5) {
+            return;
+        }
+
+        String name = inputArray[2];
+        String value = inputArray[4];
+
+        switch (name) {
+            case "Hash":
+                int sizeMB = Integer.parseInt(value);
+                if (sizeMB < HASH_TABLE_MIN_SIZE_MB || sizeMB > HASH_TABLE_MAX_SIZE_MB) {
+                    System.out.println("info string Hash size must be between " + HASH_TABLE_MIN_SIZE_MB + " and " + HASH_TABLE_MAX_SIZE_MB + " MB");
+                    return;
+                }
+                searchAlgorithm.setHashTable(sizeMB);
+                break;
+            case "Threads":
+                throw new UnsupportedOperationException("Threads option is not supported yet.");
+            default:
+                break;
+        }
     }
 
     private static void help() {
@@ -229,11 +256,6 @@ public class UCI {
         searchThread.start();
     }
 
-    private static void setDepth(int depth) {
-        engine.setDepth(depth);
-        System.out.println("Depth set to " + depth);
-    }
-
     private static void position(String[] inputArray) {
         // Example: position startpos moves e2e4 e7e5
         // Example2: position fen rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0
@@ -293,7 +315,7 @@ public class UCI {
         System.out.println("id name " + ENGINE_NAME);
         System.out.println("id author " + AUTHOR);
         System.out.println("id version " + VERSION);
-        System.out.println("option name Hash type spin default 1 min 1 max 1");
+        System.out.println("option name Hash type spin default " + HASH_TABLE_DEFAULT_SIZE_MB + " min " + HASH_TABLE_MIN_SIZE_MB + " max " + HASH_TABLE_MAX_SIZE_MB);
         System.out.println("option name Threads type spin default 1 min 1 max 1");
         System.out.println();
         System.out.println("uciok");

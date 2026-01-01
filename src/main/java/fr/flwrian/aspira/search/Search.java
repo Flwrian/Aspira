@@ -398,8 +398,8 @@ public class Search implements SearchAlgorithm {
         double rawNps = nodes / (durationNanos / 1_000_000_000.0);
         lastNps = (long) rawNps;
 
-        System.out.printf(Locale.US, "info depth %d score %s nodes %d nps %d time %.0f pv %s\n",
-                depth, convertScore(score), nodes, lastNps, timeMs, getPV());
+        System.out.printf(Locale.US, "info depth %d score %s nodes %d nps %d time %.0f hashfull %d pv %s\n",
+                depth, convertScore(score), nodes, lastNps, timeMs, this.transpositionTable.hashfull(), getPV());
     }
 
     private void resetSearch() {
@@ -590,6 +590,12 @@ public class Search implements SearchAlgorithm {
     @Override
     public void flushHashTable() {
         transpositionTable.flush();
+    }
+
+    @Override
+    public void setHashTable(int sizeMB) {
+        this.transpositionTable = null;
+        this.transpositionTable = new TranspositionTable(sizeMB);
     }
 
 
