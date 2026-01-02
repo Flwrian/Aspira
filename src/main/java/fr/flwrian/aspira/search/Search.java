@@ -334,7 +334,6 @@ public class Search implements SearchAlgorithm {
 
             // Save best move from principal variation
             bestMove = principalVariations[0][0];
-
             // Print info
             long endTime = System.nanoTime();
             printSearchInfo(depth, score, nodes, endTime - startTime);
