@@ -82,7 +82,7 @@ public class Search implements SearchAlgorithm {
             int capturedPiece = PackedMove.getCaptured(moves.get(i));
 
             // Delta pruning
-            if (Board.PIECE_SCORES[capturedPiece] + 400 + bestValue < alpha && !PackedMove.isPromotion(moves.get(i))) {
+            if (Board.PIECE_SCORES[capturedPiece] + 200 + bestValue < alpha && !PackedMove.isPromotion(moves.get(i))) {
                 continue;
             }
 
@@ -193,46 +193,44 @@ public class Search implements SearchAlgorithm {
             int score;
             boolean givesCheck = board.isKingInCheck(board.whiteTurn);
             
+
+            boolean doLMR = depth >= 3
+                        && madeMoves >= 3
+                        && !inCheck
+                        && !givesCheck
+                        && !PackedMove.isCapture(move)
+                        && !PackedMove.isPromotion(move);
+
             if (madeMoves == 1) {
                 // ===== PREMIER COUP : recherche complète PV =====
                 score = -absearch(board, depth - 1, -beta, -alpha, ply + 1);
-            } else {
-                // ===== COUPS SUIVANTS : LMR + PVS =====
-                
-                // Conditions pour LMR
-                boolean doLMR = depth >= 3
-                            && madeMoves > 3
-                            && !inCheck
-                            && !givesCheck
-                            && !PackedMove.isCapture(move)
-                            && !PackedMove.isPromotion(move);
-
+            } 
+            else {
+                // Coups suivants
+                int searchDepth = depth - 1;
+    
                 if (doLMR) {
-                    // Étape 1 : Recherche RÉDUITE avec fenêtre nulle
+                    // LMR : recherche réduite avec fenêtre nulle
                     int reduction = calculateReduction(depth, madeMoves);
-                    score = -absearch(board, depth - 1 - reduction, -alpha - 1, -alpha, ply + 1);
-                    
-                    // Si le coup réduit échoue (score <= alpha), pas besoin de re-search
-                    // Si il dépasse alpha, on continue ci-dessous
-                } else {
-                    // Pas de LMR : recherche normale avec fenêtre nulle
-                    score = -absearch(board, depth - 1, -alpha - 1, -alpha, ply + 1);
+                    searchDepth = depth - 1 - reduction;
                 }
-                
-                // Étape 2 : Re-search si le coup dépasse alpha
+    
+                // Recherche avec fenêtre nulle
+                score = -absearch(board, searchDepth, -alpha - 1, -alpha, ply + 1);
+    
+                // Re-recherche uniquement si prometteur
                 if (score > alpha) {
-                    // Si LMR a été appliqué, d'abord re-search à profondeur normale avec fenêtre nulle
-                    if (doLMR) {
+                    // Si LMR ET score > alpha : re-recherche à profondeur normale
+                    if (doLMR && searchDepth < depth - 1) {
                         score = -absearch(board, depth - 1, -alpha - 1, -alpha, ply + 1);
                     }
-                    
-                    // Si toujours > alpha, recherche complète avec fenêtre large
+        
+                    // Si toujours > alpha : recherche complète
                     if (score > alpha && score < beta) {
                         score = -absearch(board, depth - 1, -beta, -alpha, ply + 1);
                     }
                 }
             }
-
             board.undoMove();
             repSize--;
 
@@ -292,10 +290,11 @@ public class Search implements SearchAlgorithm {
     }
 
     private int calculateReduction(int depth, int moveNumber) {
-        double logDepth = Math.log(depth);
-        double logMove = Math.log(moveNumber);
-        int reduction = (int) (logDepth * logMove / 2.5);
-        return Math.max(1, Math.min(reduction, depth - 1));
+        // double logDepth = Math.log(depth);
+        // double logMove = Math.log(moveNumber);
+        // int reduction = (int) (logDepth * logMove / 2.5);
+        // return Math.max(1, Math.min(reduction, depth - 1));
+        return 1;
     }
 
     private boolean isThreefoldRepetition(long key) {
@@ -315,40 +314,59 @@ public class Search implements SearchAlgorithm {
     }
 
 
-    public void iterativeDeepening(Board board, int depthLimit) {
+        public void iterativeDeepening(Board board, int depthLimit) {
         nodes = 0;
-        int score = -INFINITE_VALUE;
+        int score = 0;
         int bestMove = 0;
 
         startTime = System.nanoTime();
 
-
+        int window = 30;  // Fenêtre initiale
+        int prevScore = 0;
 
         for (int depth = 1; depth <= depthLimit; depth++) {
+        
+            int alpha, beta;
+        
+            // Fenêtre aspiration (sauf pour mate scores)
+            if (depth >= 4 && Math.abs(prevScore) < VALUE_TB_WIN_IN_MAX_PLY) {
+                alpha = prevScore - window;
+                beta = prevScore + window;
+            } else {
+                alpha = -INFINITE_VALUE;
+                beta = INFINITE_VALUE;
+            }
 
-            score = absearch(board, depth, -INFINITE_VALUE, INFINITE_VALUE, 0);
+            score = absearch(board, depth, alpha, beta, 0);
+
+            // Re-recherche si hors fenêtre
+            if (!stopSearch && !checkTime(true) && (score <= alpha || score >= beta)) {
+                int w = window;
+                do {
+                    w *= 2;  // Élargissement progressif
+                    alpha = Math.max(prevScore - w, -INFINITE_VALUE);
+                    beta = Math.min(prevScore + w, INFINITE_VALUE);
+                    score = absearch(board, depth, alpha, beta, 0);
+                } while (!stopSearch && !checkTime(true) && (score <= alpha || score >= beta));
+            }
 
             if (stopSearch || checkTime(true)) {
                 break;
             }
 
-            // Save best move from principal variation
+            prevScore = score;
             bestMove = principalVariations[0][0];
-            // Print info
+
             long endTime = System.nanoTime();
             printSearchInfo(depth, score, nodes, endTime - startTime);
-
-
         }
 
-        // Last attempt to get best move
         if (bestMove == 0) {
             bestMove = principalVariations[0][0];
         }
 
         Move best = PackedMove.unpack(bestMove);
         System.out.println("bestmove " + best);
-
     }
     
     @Override
