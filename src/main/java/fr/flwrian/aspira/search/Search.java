@@ -159,9 +159,10 @@ public class Search implements SearchAlgorithm {
         boolean inCheck = board.isKingInCheck(board.whiteTurn);
 
         // Null move pruning
-        if (!pvNode && !inCheck && depth >= 3) {
+        if (!pvNode && !inCheck && depth >= 3 && board.hasNonPawnMaterial() && ply > 0) {
+            int R = 4;
             board.makeNullMove();
-            int score = -absearch(board, depth - 2, -beta, -beta + 1, ply + 1);
+            int score = -absearch(board, depth - R, -beta, -(beta - 1), ply + 1);
             board.undoNullMove();
 
             if (score >= beta) {
@@ -315,77 +316,41 @@ public class Search implements SearchAlgorithm {
 
 
     public void iterativeDeepening(Board board, int depthLimit) {
+        nodes = 0;
+        int score = -INFINITE_VALUE;
+        int bestMove = 0;
 
-            nodes = 0;
-            int score = 0;
-            int bestMove = 0;
+        startTime = System.nanoTime();
 
-            startTime = System.nanoTime();
 
-            int prevScore = 0;
-            final int ASP_WINDOW = 30;
 
-            for (int depth = 1; depth <= depthLimit; depth++) {
+        for (int depth = 1; depth <= depthLimit; depth++) {
 
-                int alpha, beta;
-                int window = ASP_WINDOW;
+            score = absearch(board, depth, -INFINITE_VALUE, INFINITE_VALUE, 0);
 
-                // Fenêtre initiale
-                if (depth == 1) {
-                    alpha = -INFINITE_VALUE;
-                    beta  =  INFINITE_VALUE;
-                } else {
-                    alpha = prevScore - window;
-                    beta  = prevScore + window;
-                }
-
-                while (true) {
-                    score = absearch(board, depth, alpha, beta, 0);
-
-                    // Arrêt demandé
-                    if (stopSearch || checkTime(true)) {
-                        break;
-                    }
-
-                    // SUCCÈS : score dans la fenêtre
-                    if (score > alpha && score < beta) {
-                        break;
-                    }
-
-                    // FAIL-LOW ou FAIL-HIGH → reset immédiat
-                    window *= 2;
-
-                    // Sécurité : fenêtre trop large → full window
-                    if (window >= INFINITE_VALUE) {
-                        alpha = -INFINITE_VALUE;
-                        beta  =  INFINITE_VALUE;
-                    } else {
-                        alpha = prevScore - window;
-                        beta  = prevScore + window;
-                    }
-                }
-
-                if (stopSearch || checkTime(true)) {
-                    break;
-                }
-
-                prevScore = score;
-
-                // Sauver le best move de la PV
-                bestMove = principalVariations[0][0];
-
-                long endTime = System.nanoTime();
-                printSearchInfo(depth, score, nodes, endTime - startTime);
+            if (stopSearch || checkTime(true)) {
+                break;
             }
 
-            // Sécurité finale
-            if (bestMove == 0) {
-                bestMove = principalVariations[0][0];
-            }
+            // Save best move from principal variation
+            bestMove = principalVariations[0][0];
 
-            Move best = PackedMove.unpack(bestMove);
-            System.out.println("bestmove " + best);
+            // Print info
+            long endTime = System.nanoTime();
+            printSearchInfo(depth, score, nodes, endTime - startTime);
+
+
         }
+
+        // Last attempt to get best move
+        if (bestMove == 0) {
+            bestMove = principalVariations[0][0];
+        }
+
+        Move best = PackedMove.unpack(bestMove);
+        System.out.println("bestmove " + best);
+
+    }
     
     @Override
     public int evaluate(Board board) {
