@@ -75,10 +75,29 @@ public class Search implements SearchAlgorithm {
         }
 
         if (board.isKingInCheck(board.whiteTurn)) {
-            // Fallback to full search if in check
-            return absearch(board, 1, alpha, beta, ply);
-            
+            PackedMoveList evasions = board.getLegalMoves();
+            if (evasions.size() == 0) {
+                return matedInPly(ply);
+            }
+
+            int best = -VALUE_INFINITE;
+            for (int i = 0; i < evasions.size(); i++) {
+                int move = evasions.get(i);
+                board.makeMove(move);
+                int score = -qsearch(board, -beta, -alpha, ply + 1);
+                board.undoMove();
+
+                if (score > best) {
+                    best = score;
+                    if (score > alpha) {
+                        alpha = score;
+                        if (alpha >= beta) break;
+                    }
+                }
+            }
+            return best;
         }
+
 
         PackedMoveList moves = board.getCaptureMoves();
         orderQMoves(moves);
