@@ -10,7 +10,7 @@ import fr.flwrian.aspira.move.PackedMoveList;
 
 public class Search implements SearchAlgorithm {
 
-    static final int MAX_PLY = 60;
+    static final int MAX_PLY = 256;
 
     static final int VALUE_MATE = 32000;
     static final int VALUE_INFINITE = 32001;
@@ -305,7 +305,7 @@ public class Search implements SearchAlgorithm {
 
             if (hashHistory[i] == key) {
                 count++;
-                if (count == 1) {
+                if (count >= 2) {
                     return true;
                 }
             }
