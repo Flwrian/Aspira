@@ -34,6 +34,10 @@ public class Search implements SearchAlgorithm {
     long[] hashHistory = new long[MAX_PLY];
     int repSize = 0;
 
+    // 2 killer moves par ply
+    int[][] killerMoves = new int[MAX_PLY][2];
+
+
 
     long nodes = 0;
     long lastNps = 0;
@@ -157,10 +161,10 @@ public class Search implements SearchAlgorithm {
         }
 
         boolean inCheck = board.isKingInCheck(board.whiteTurn);
-
+        int staticEval = evaluate(board);
         // Null move pruning
-        if (!inCheck && depth >= 3 && board.hasNonPawnMaterial()) {
-            int R = 4;
+        if (!inCheck && depth >= 3 && board.hasNonPawnMaterial() && staticEval >= beta) {
+            int R = 2;
             board.makeNullMove();
             int score = -absearch(board, depth - R, -beta, -beta + 1, ply + 1);
             board.undoNullMove();
@@ -180,7 +184,7 @@ public class Search implements SearchAlgorithm {
         int madeMoves = 0;
 
         PackedMoveList moves = board.getLegalMoves();
-        orderMoves(moves, ttMove, board);
+        orderMoves(moves, ttMove, board, ply);
 
         for (int i = 0; i < moves.size(); i++) {
             int move = moves.get(i);
@@ -190,8 +194,30 @@ public class Search implements SearchAlgorithm {
             board.makeMove(move);
             hashHistory[repSize++] = board.zobristKey;
 
-            // Search
-            int score = -absearch(board, depth - 1, -beta, -alpha, ply + 1);
+            boolean isPV = (i == 0);
+            boolean isCapture = PackedMove.isCapture(move);
+            boolean givesCheck = board.isKingInCheck(!board.whiteTurn);
+
+            int score;
+            boolean allowLMR = !isPV && depth >= 3 && i >= 3 && !isCapture && !givesCheck;
+
+            if (allowLMR) {
+                int R = 1;
+                if (depth >= 6 && i >= 6)
+                    R = 2;
+
+                // Reduced search (null window)
+                score = -absearch(board, depth - 1 - R, -alpha - 1, -alpha, ply + 1);
+
+                // Re-search if it looks promising
+                if (score > alpha) {
+                    score = -absearch(board, depth - 1, -beta, -alpha, ply + 1);
+                }
+            } else {
+                // Normal search
+                score = -absearch(board, depth - 1, -beta, -alpha, ply + 1);
+            }
+
             board.undoMove();
             repSize--;
 
@@ -223,6 +249,12 @@ public class Search implements SearchAlgorithm {
                             int current = historyTable[color][from][to];
                             int delta = bonus - (current * Math.abs(bonus)) / 16384;
                             historyTable[color][from][to] = current + delta;
+
+                            // Update killer moves
+                            if (killerMoves[ply][0] != move) {
+                                killerMoves[ply][1] = killerMoves[ply][0];
+                                killerMoves[ply][0] = move;
+                            }
                         }
                         break;
                     }
@@ -439,13 +471,22 @@ public class Search implements SearchAlgorithm {
 
     };
 
-    public int scoreMove(int move, int ttMove, Board board) {
+    public int scoreMove(int move, int ttMove, Board board, int ply) {
         if (move == ttMove) {
             return 1_000_000;
         }
-
+        
+        
         if (PackedMove.isCapture(move)) {
-            return 32_000 + mvvLva[PackedMove.getCaptured(move)][PackedMove.getPieceFrom(move)];
+            return 500_000 + mvvLva[PackedMove.getCaptured(move)][PackedMove.getPieceFrom(move)];
+        }
+        
+        // killers
+        if (move == killerMoves[ply][0]) {
+            return 90_000;
+        }
+        if (move == killerMoves[ply][1]) {
+            return 80_000;
         }
 
         return historyTable[board.whiteTurn ? 0 : 1][PackedMove.getFrom(move)][PackedMove.getTo(move)];
@@ -455,77 +496,30 @@ public class Search implements SearchAlgorithm {
         return mvvLva[PackedMove.getCaptured(move)][PackedMove.getPieceFrom(move)];
     }
 
-    public void orderMoves(PackedMoveList moves, int ttMove, Board board) {
+    public void orderMoves(PackedMoveList moves, int ttMove, Board board, int ply) {
         int size = moves.size();
         int[] m = moves.moves;
 
-        int idx = 0;
-
-        // 1️⃣ TT move en premier
-        if (ttMove != 0) {
-            for (int i = 0; i < size; i++) {
-                if (m[i] == ttMove) {
-                    swap(m, 0, i);
-                    idx = 1;
-                    break;
-                }
-            }
+        // Pré-calcule les scores UNE FOIS
+        int[] scores = new int[size];
+        for (int i = 0; i < size; i++) {
+            scores[i] = scoreMove(m[i], ttMove, board, ply);
         }
 
-        // 2️⃣ Bucket captures juste après
-        int captureStart = idx;
-        for (int i = idx; i < size; i++) {
-            if (PackedMove.isCapture(m[i])) {
-                swap(m, idx++, i);
-            }
-        }
-
-        // Trie uniquement les captures (MVV-LVA)
-        sortCaptures(m, captureStart, idx);
-
-        // 3️⃣ Trie les quiets par history heuristic
-        sortQuiets(m, idx, size, board);
-    }
-    private static void swap(int[] arr, int a, int b) {
-        int tmp = arr[a];
-        arr[a] = arr[b];
-        arr[b] = tmp;
-    }
-    private void sortCaptures(int[] m, int from, int to) {
-        for (int i = from + 1; i < to; i++) {
+        // Insertion sort (rapide pour petits tableaux)
+        for (int i = 1; i < size; i++) {
             int move = m[i];
-            int score = scoreQMove(move);
+            int score = scores[i];
             int j = i - 1;
 
-            while (j >= from && scoreQMove(m[j]) < score) {
+            while (j >= 0 && scores[j] < score) {
                 m[j + 1] = m[j];
+                scores[j + 1] = scores[j];
                 j--;
             }
+
             m[j + 1] = move;
-        }
-    }
-    private void sortQuiets(int[] m, int from, int to, Board board) {
-        int color = board.whiteTurn ? 0 : 1;
-
-        for (int i = from + 1; i < to; i++) {
-            int move = m[i];
-            int fromSq = PackedMove.getFrom(move);
-            int toSq = PackedMove.getTo(move);
-            int score = historyTable[color][fromSq][toSq];
-
-            int j = i - 1;
-            while (j >= from) {
-                int m2 = m[j];
-                int s2 = historyTable[color]
-                        [PackedMove.getFrom(m2)]
-                        [PackedMove.getTo(m2)];
-
-                if (s2 >= score) break;
-
-                m[j + 1] = m[j];
-                j--;
-            }
-            m[j + 1] = move;
+            scores[j + 1] = score;
         }
     }
 
