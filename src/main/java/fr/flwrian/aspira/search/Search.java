@@ -21,7 +21,7 @@ public class Search implements SearchAlgorithm {
 
     static final int MATE_BOUND = 31000;
 
-    final int CHECK_RATE = 2048; // Augmenté pour moins de overhead
+    final int CHECK_RATE = 1024;
 
     int[] pvLengths = new int[MAX_PLY];
     int[][] principalVariations = new int[MAX_PLY][MAX_PLY];
@@ -30,7 +30,6 @@ public class Search implements SearchAlgorithm {
     int repSize = 0;
 
     int[][] killerMoves = new int[MAX_PLY][2];
-    int[][][] counterMoves = new int[2][64][64]; // NEW: counter move heuristic
 
     long nodes = 0;
     long lastNps = 0;
@@ -42,9 +41,6 @@ public class Search implements SearchAlgorithm {
     long startTime;
 
     int[][][] historyTable = new int[2][64][64];
-    
-    // NEW: Capture history
-    int[][][][] captureHistory = new int[2][6][64][6];
 
     public TranspositionTable transpositionTable = new TranspositionTable(64);
 
@@ -62,7 +58,7 @@ public class Search implements SearchAlgorithm {
 
         nodes++;
 
-        // NEW: Si en échec, on génère toutes les évasions
+        // Si en échec, on génère toutes les évasions comme le code 2
         boolean inCheck = board.isKingInCheck(board.whiteTurn);
         
         if (inCheck) {
@@ -104,31 +100,20 @@ public class Search implements SearchAlgorithm {
             return bestValue;
         }
 
-        // NEW: Delta pruning amélioré
-        int bigDelta = 975; // Valeur reine + marge
-        if (bestValue < alpha - bigDelta) {
-            return alpha;
-        }
-
         if (bestValue > alpha) {
             alpha = bestValue;
         }
 
         PackedMoveList moves = board.getCaptureMoves();
-        orderQMoves(moves, board);
+        orderQMoves(moves);
 
         for (int i = 0; i < moves.size(); i++) {
             int move = moves.get(i);
             int capturedPiece = PackedMove.getCaptured(move);
 
-            // Delta pruning
-            if (Board.PIECE_SCORES[capturedPiece] + 200 + bestValue < alpha 
+            // Delta pruning standard
+            if (Board.PIECE_SCORES[capturedPiece] + 400 + bestValue < alpha 
                 && !PackedMove.isPromotion(move)) {
-                continue;
-            }
-
-            // NEW: SEE pruning (approximation simple)
-            if (seeCapture(board, move) < 0) {
                 continue;
             }
 
@@ -197,42 +182,27 @@ public class Search implements SearchAlgorithm {
         int ttMove = ttHit ? tte.bestMove : 0;
         int ttScore = ttHit ? scoreFromTT(tte.value, ply) : 0;
 
-        // TT cutoff
-        if (!rootNode && !isPV && ttHit && tte.depth >= depth) {
+        // TT cutoff - EXACT uniquement comme le code 2
+        if (!rootNode && ttHit && tte.depth >= depth) {
             if (tte.flag == TranspositionTable.Entry.EXACT) {
                 return ttScore;
-            } else if (tte.flag == TranspositionTable.Entry.LOWERBOUND) {
-                if (ttScore >= beta) return ttScore;
-            } else if (tte.flag == TranspositionTable.Entry.UPPERBOUND) {
-                if (ttScore <= alpha) return ttScore;
+            } else if (!isPV) {
+                // Cutoff bounds seulement si non-PV
+                if (tte.flag == TranspositionTable.Entry.LOWERBOUND && ttScore >= beta) {
+                    return ttScore;
+                } else if (tte.flag == TranspositionTable.Entry.UPPERBOUND && ttScore <= alpha) {
+                    return ttScore;
+                }
             }
         }
 
         int staticEval = evaluate(board);
-        boolean improving = false;
 
-        // NEW: Razoring
-        if (!isPV && !inCheck && depth <= 3) {
-            int razorMargin = 300 * depth;
-            if (staticEval + razorMargin < alpha) {
-                int v = qsearch(board, alpha - 1, alpha, ply);
-                if (v < alpha) return v;
-            }
-        }
-
-        // NEW: Reverse Futility Pruning (RFP)
-        if (!isPV && !inCheck && depth <= 7 && Math.abs(beta) < MATE_BOUND) {
-            int rfpMargin = 80 * depth;
-            if (staticEval - rfpMargin >= beta) {
-                return staticEval;
-            }
-        }
-
-        // Null move pruning (FIXED)
+        // Null move pruning - FIXED avec depth - R - 1
         if (!isPV && !inCheck && depth >= 3 && board.hasNonPawnMaterial() 
             && staticEval >= beta && Math.abs(beta) < MATE_BOUND) {
             
-            int R = 3 + depth / 6 + Math.min(3, (staticEval - beta) / 200);
+            int R = 4; // Réduction fixe comme avant mais avec la bonne formule
             
             board.makeNullMove();
             int score = -absearch(board, depth - R - 1, -beta, -beta + 1, ply + 1, false);
@@ -240,20 +210,8 @@ public class Search implements SearchAlgorithm {
 
             if (stopSearch) return 0;
 
-            if (score >= beta) {
-                if (score >= MATE_BOUND) {
-                    score = beta;
-                }
+            if (score >= beta && score < MATE_BOUND) {
                 return score;
-            }
-        }
-
-        // NEW: Internal Iterative Deepening
-        if (isPV && depth >= 6 && ttMove == 0) {
-            absearch(board, depth - 2, alpha, beta, ply, true);
-            tte = transpositionTable.get(hashKey);
-            if (tte != null) {
-                ttMove = tte.bestMove;
             }
         }
 
@@ -261,90 +219,56 @@ public class Search implements SearchAlgorithm {
         int bestScore = -VALUE_INFINITE;
         int bestMove = 0;
         int madeMoves = 0;
-        int quietsSearched = 0;
-        int[] quietMoves = new int[64];
 
         PackedMoveList moves = board.getLegalMoves();
         orderMoves(moves, ttMove, board, ply);
 
+        boolean firstMove = true;
+
         for (int i = 0; i < moves.size(); i++) {
             int move = moves.get(i);
             
-            boolean isCapture = PackedMove.isCapture(move);
-            boolean isQuiet = !isCapture && !PackedMove.isPromotion(move);
-            
             madeMoves++;
             nodes++;
-
-            // NEW: Late Move Pruning
-            if (!isPV && !inCheck && depth <= 8 && madeMoves > (3 + depth * depth)) {
-                break;
-            }
-
-            // NEW: Futility Pruning
-            if (!isPV && !inCheck && depth <= 7 && isQuiet && 
-                staticEval + 100 + 150 * depth <= alpha) {
-                continue;
-            }
-
-            // NEW: SEE pruning pour mouvements perdants
-            if (depth <= 8 && madeMoves > 1 && !isPV) {
-                if (isCapture && seeCapture(board, move) < -50 * depth) {
-                    continue;
-                }
-            }
 
             board.makeMove(move);
             hashHistory[repSize++] = board.zobristKey;
 
             boolean givesCheck = board.isKingInCheck(!board.whiteTurn);
-            int extension = 0;
-
-            // NEW: Extensions
-            if (givesCheck && depth <= 10) {
-                extension = 1;
-            }
-
-            int newDepth = depth - 1 + extension;
+            boolean isCapture = PackedMove.isCapture(move);
+            
             int score;
 
-            // PVS (Principal Variation Search)
-            if (madeMoves == 1) {
+            // PVS (Principal Variation Search) comme le code 2
+            if (firstMove) {
                 // Premier mouvement: full window
-                score = -absearch(board, newDepth, -beta, -alpha, ply + 1, isPV);
+                score = -absearch(board, depth - 1, -beta, -alpha, ply + 1, isPV);
+                firstMove = false;
             } else {
-                // LMR
+                // LMR plus conservateur
                 int reduction = 0;
                 
-                if (depth >= 3 && madeMoves >= 4 && isQuiet && !givesCheck) {
+                if (depth >= 3 && i >= 4 && !isCapture && !givesCheck && !inCheck) {
                     reduction = 1;
                     
-                    if (depth >= 6 && madeMoves >= 8) {
+                    if (depth >= 6 && i >= 8) {
                         reduction = 2;
                     }
-                    
-                    if (madeMoves >= 12) {
-                        reduction++;
-                    }
-                    
-                    // Moins de réduction si mouvement prometteur
-                    if (isPV) reduction--;
-                    if (improving) reduction--;
-                    
-                    reduction = Math.max(0, Math.min(reduction, newDepth - 1));
                 }
+
+                int searchDepth = depth - 1 - reduction;
 
                 // Null window search
-                score = -absearch(board, newDepth - reduction, -alpha - 1, -alpha, ply + 1, false);
+                score = -absearch(board, searchDepth, -alpha - 1, -alpha, ply + 1, false);
 
-                // Re-search si prometteur
+                // Re-search si la réduction était trop optimiste
                 if (score > alpha && reduction > 0) {
-                    score = -absearch(board, newDepth, -alpha - 1, -alpha, ply + 1, false);
+                    score = -absearch(board, depth - 1, -alpha - 1, -alpha, ply + 1, false);
                 }
 
-                // Re-search avec full window si dans PV
-                if (score > alpha && score < beta && isPV) {
-                    score = -absearch(board, newDepth, -beta, -alpha, ply + 1, true);
+                // Re-search avec full window si dans la fenêtre
+                if (score > alpha && score < beta) {
+                    score = -absearch(board, depth - 1, -beta, -alpha, ply + 1, true);
                 }
             }
 
@@ -368,21 +292,26 @@ public class Search implements SearchAlgorithm {
                     alpha = score;
 
                     if (score >= beta) {
-                        // Beta cutoff
-                        if (isQuiet) {
-                            updateQuietStats(board, move, depth, ply, quietMoves, quietsSearched);
-                        } else {
-                            if (PackedMove.getCaptured(move) != Board.EMPTY) {
-                                updateCaptureHistory(board, move, depth);
+                        // Beta cutoff - update heuristics
+                        if (!isCapture) {
+                            int bonus = depth * depth;
+                            int color = board.whiteTurn ? 0 : 1;
+                            int from = PackedMove.getFrom(move);
+                            int to = PackedMove.getTo(move);
+
+                            int current = historyTable[color][from][to];
+                            int delta = bonus - (current * Math.abs(bonus)) / 16384;
+                            historyTable[color][from][to] = current + delta;
+
+                            // Killers
+                            if (killerMoves[ply][0] != move) {
+                                killerMoves[ply][1] = killerMoves[ply][0];
+                                killerMoves[ply][0] = move;
                             }
                         }
                         break;
                     }
                 }
-            }
-
-            if (isQuiet) {
-                quietMoves[quietsSearched++] = move;
             }
         }
 
@@ -413,79 +342,6 @@ public class Search implements SearchAlgorithm {
     }
 
     // ==================== HELPERS ====================
-    
-    // NEW: Simple SEE (Static Exchange Evaluation)
-    private int seeCapture(Board board, int move) {
-        int from = PackedMove.getFrom(move);
-        int to = PackedMove.getTo(move);
-        int attacker = PackedMove.getPieceFrom(move);
-        int victim = PackedMove.getCaptured(move);
-        
-        // Approximation simple: victime - attaquant
-        int gain = Board.PIECE_SCORES[victim] - Board.PIECE_SCORES[attacker];
-        
-        // Si promotion, bonus
-        if (PackedMove.isPromotion(move)) {
-            gain += 800;
-        }
-        
-        return gain;
-    }
-
-    private void updateQuietStats(Board board, int move, int depth, int ply, 
-                                   int[] quietMoves, int quietsSearched) {
-        int bonus = Math.min(depth * depth * 16, 1200);
-        int color = board.whiteTurn ? 0 : 1;
-        int from = PackedMove.getFrom(move);
-        int to = PackedMove.getTo(move);
-
-        // History
-        updateHistoryScore(color, from, to, bonus);
-
-        // Killers
-        if (killerMoves[ply][0] != move) {
-            killerMoves[ply][1] = killerMoves[ply][0];
-            killerMoves[ply][0] = move;
-        }
-
-        // NEW: Counter moves
-        if (ply > 0) {
-            int prevMove = principalVariations[ply - 1][ply - 1];
-            if (prevMove != 0) {
-                int prevTo = PackedMove.getTo(prevMove);
-                int prevPiece = PackedMove.getPieceFrom(prevMove);
-                counterMoves[color][prevTo][prevPiece] = move;
-            }
-        }
-
-        // Penalty pour mouvements calmes non joués
-        int penalty = -bonus;
-        for (int i = 0; i < quietsSearched; i++) {
-            int m = quietMoves[i];
-            int mFrom = PackedMove.getFrom(m);
-            int mTo = PackedMove.getTo(m);
-            updateHistoryScore(color, mFrom, mTo, penalty);
-        }
-    }
-
-    private void updateHistoryScore(int color, int from, int to, int bonus) {
-        int current = historyTable[color][from][to];
-        int delta = bonus - (current * Math.abs(bonus)) / 16384;
-        historyTable[color][from][to] = Math.max(-16000, Math.min(16000, current + delta));
-    }
-
-    private void updateCaptureHistory(Board board, int move, int depth) {
-        int bonus = Math.min(depth * depth * 8, 800);
-        int color = board.whiteTurn ? 0 : 1;
-        int piece = PackedMove.getPieceFrom(move);
-        int to = PackedMove.getTo(move);
-        int captured = PackedMove.getCaptured(move);
-        
-        int current = captureHistory[color][piece][to][captured];
-        int delta = bonus - (current * Math.abs(bonus)) / 16384;
-        captureHistory[color][piece][to][captured] = 
-            Math.max(-8000, Math.min(8000, current + delta));
-    }
 
     private boolean isThreefoldRepetition(long key) {
         int count = 0;
@@ -509,13 +365,13 @@ public class Search implements SearchAlgorithm {
 
         startTime = System.nanoTime();
 
-        int window = 12; // Fenêtre initiale plus petite
+        int window = 30; // Comme le code 2
         int previousScore = 0;
 
         for (int depth = 1; depth <= depthLimit; depth++) {
             int alpha, beta;
             
-            if (depth < 5 || Math.abs(previousScore) >= MATE_BOUND - 512) {
+            if (Math.abs(previousScore) >= MATE_BOUND - 512) {
                 alpha = -VALUE_INFINITE;
                 beta = +VALUE_INFINITE;
             } else {
@@ -525,23 +381,15 @@ public class Search implements SearchAlgorithm {
 
             score = absearch(board, depth, alpha, beta, 0, true);
 
-            // Aspiration window failed
-            if (!stopSearch && (score <= alpha || score >= beta)) {
-                // Re-search progressif
-                if (score <= alpha) {
-                    beta = (alpha + beta) / 2;
-                    alpha = Math.max(previousScore - window * 4, -VALUE_INFINITE);
-                } else {
-                    alpha = (alpha + beta) / 2;
-                    beta = Math.min(previousScore + window * 4, VALUE_INFINITE);
-                }
-                
-                score = absearch(board, depth, alpha, beta, 0, true);
-                
-                // Si encore raté, full window
-                if (!stopSearch && (score <= alpha || score >= beta)) {
-                    score = absearch(board, depth, -VALUE_INFINITE, VALUE_INFINITE, 0, true);
-                }
+            // Aspiration window failed - re-search progressif comme le code 2
+            if (!stopSearch && !checkTime(true) && (score <= alpha || score >= beta)) {
+                int w = window;
+                do {
+                    w *= 2;
+                    alpha = previousScore - w;
+                    beta = previousScore + w;
+                    score = absearch(board, depth, alpha, beta, 0, true);
+                } while (!stopSearch && !checkTime(true) && (score <= alpha || score >= beta));
             }
 
             if (stopSearch || checkTime(true)) {
@@ -550,11 +398,6 @@ public class Search implements SearchAlgorithm {
 
             bestMove = principalVariations[0][0];
             previousScore = score;
-            
-            // Adjust window
-            if (depth >= 5) {
-                window = 12 + depth;
-            }
 
             long endTime = System.nanoTime();
             printSearchInfo(depth, score, nodes, endTime - startTime);
@@ -581,41 +424,19 @@ public class Search implements SearchAlgorithm {
 
     public int scoreMove(int move, int ttMove, Board board, int ply) {
         if (move == ttMove) {
-            return 10_000_000;
+            return 1_000_000;
         }
 
         if (PackedMove.isCapture(move)) {
-            int captScore = mvvLva[PackedMove.getCaptured(move)][PackedMove.getPieceFrom(move)];
-            
-            // Bonus capture history
-            int color = board.whiteTurn ? 0 : 1;
-            int piece = PackedMove.getPieceFrom(move);
-            int to = PackedMove.getTo(move);
-            int captured = PackedMove.getCaptured(move);
-            int capHist = captureHistory[color][piece][to][captured];
-            
-            return 8_000_000 + captScore * 1000 + capHist;
+            return 500_000 + mvvLva[PackedMove.getCaptured(move)][PackedMove.getPieceFrom(move)];
         }
 
         // Killers
         if (move == killerMoves[ply][0]) {
-            return 900_000;
+            return 90_000;
         }
         if (move == killerMoves[ply][1]) {
-            return 800_000;
-        }
-
-        // Counter moves
-        if (ply > 0) {
-            int prevMove = principalVariations[ply - 1][ply - 1];
-            if (prevMove != 0) {
-                int color = board.whiteTurn ? 0 : 1;
-                int prevTo = PackedMove.getTo(prevMove);
-                int prevPiece = PackedMove.getPieceFrom(prevMove);
-                if (counterMoves[color][prevTo][prevPiece] == move) {
-                    return 700_000;
-                }
-            }
+            return 80_000;
         }
 
         // History
@@ -650,7 +471,7 @@ public class Search implements SearchAlgorithm {
         }
     }
 
-    public void orderQMoves(PackedMoveList moves, Board board) {
+    public void orderQMoves(PackedMoveList moves) {
         int size = moves.size();
         int[] m = moves.moves;
 
@@ -774,9 +595,7 @@ public class Search implements SearchAlgorithm {
         repSize = 0;
 
         historyTable = new int[2][64][64];
-        captureHistory = new int[2][6][64][6];
         killerMoves = new int[MAX_PLY][2];
-        counterMoves = new int[2][64][64];
     }
 
     @Override
