@@ -10,11 +10,12 @@ import fr.flwrian.aspira.move.PackedMoveList;
 
 public class Search implements SearchAlgorithm {
 
-    static final int MAX_PLY = 60;
+    static final int MAX_PLY = 256;
 
     static final int VALUE_MATE = 32000;
     static final int VALUE_INFINITE = 32001;
     static final int VALUE_NONE = 32002;
+    static final int MATE_BOUND = 31000;
 
     static final int VALUE_MATE_IN_PLY = VALUE_MATE - MAX_PLY;
     static final int VALUE_MATED_IN_PLY = -VALUE_MATE_IN_PLY;
@@ -158,18 +159,20 @@ public class Search implements SearchAlgorithm {
         }
 
         boolean inCheck = board.isKingInCheck(board.whiteTurn);
+        boolean isPvNode = (beta - alpha > 1);
+
 
         // Null move pruning
-        if (!inCheck && depth >= 3) {
-            board.makeNullMove();
-            int score = -absearch(board, depth - 2, -beta, -beta + 1, ply + 1);
-            board.undoNullMove();
+        if (!inCheck && depth >= 3 && !isPvNode && board.hasNonPawnMaterial()) {
+            if (beta < MATE_BOUND){
 
-            if (score >= beta) {
-                if (score >= VALUE_TB_WIN_IN_MAX_PLY) {
-                    score = beta;
+                board.makeNullMove();
+                int score = -absearch(board, depth - 2, -beta, -beta + 1, ply + 1);
+                board.undoNullMove();
+
+                if (score >= beta && score < MATE_BOUND) {
+                    return score;
                 }
-                return score;
             }
         }
 
@@ -266,7 +269,7 @@ public class Search implements SearchAlgorithm {
 
             if (hashHistory[i] == key) {
                 count++;
-                if (count == 1) {
+                if (count >= 2) {
                     return true;
                 }
             }
