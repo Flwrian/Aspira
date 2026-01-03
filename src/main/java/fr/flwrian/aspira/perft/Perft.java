@@ -15,6 +15,13 @@ import fr.flwrian.aspira.move.PackedMoveList;
 
 public class Perft {
 
+
+    private static final PackedMoveList[] moveLists = new PackedMoveList[128];
+    static {
+        for (int i = 0; i < 128; i++) {
+            moveLists[i] = new PackedMoveList(218);
+        }
+    }
     public static long perft(Board bitBoard, int depth) {
 
         if (depth == 0) {
@@ -23,7 +30,7 @@ public class Perft {
 
         // Bulk counting
         if (depth == 1) {
-            PackedMoveList moveList = bitBoard.getPseudoLegalMoves();
+            PackedMoveList moveList = bitBoard.getPseudoLegalMoves(moveLists[depth]);
             long count = 0;
 
             for (int i = 0; i < moveList.size(); i++) {
@@ -36,7 +43,7 @@ public class Perft {
             return count;
         }
 
-        PackedMoveList moveList = bitBoard.getLegalMoves();
+        PackedMoveList moveList = bitBoard.getLegalMoves(moveLists[depth]);
         long nodes = 0;
         
         for (int i = 0; i < moveList.size(); i++) {
@@ -63,7 +70,7 @@ public class Perft {
         result += "[Depth: " + depth + "]\n";
         result += "[ === ]\n";
 
-        PackedMoveList moveList = bitBoard.getLegalMoves();
+        PackedMoveList moveList = bitBoard.getLegalMoves(moveLists[depth]);
         long totalNodes = 0;
 
         long time = System.currentTimeMillis();

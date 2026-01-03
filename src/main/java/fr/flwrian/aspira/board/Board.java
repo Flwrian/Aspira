@@ -2043,29 +2043,30 @@ public class Board {
     }
 
     // pseudo legal
-    public PackedMoveList getPseudoLegalMoves() {
-        return MoveGenerator.generatePseudoLegalMoves(this);
+    public PackedMoveList getPseudoLegalMoves(PackedMoveList moves) {
+        return MoveGenerator.generatePseudoLegalMoves(this, moves);
     }
 
     // legal moves
-    public PackedMoveList getLegalMoves() {
-        PackedMoveList moveList = MoveGenerator.generatePseudoLegalMoves(this);
+    public PackedMoveList getLegalMoves(PackedMoveList moves) {
+        moves.clear();
+        moves = MoveGenerator.generatePseudoLegalMoves(this, moves);
 
         // Pour chaque coup, vérifier si le roi est en échec après le coup
         // Si le roi est en échec, le coup n'est pas légal
         // Sinon, le coup est légal
-        for (int i = 0; i < moveList.size(); i++) {
-            int move = moveList.get(i);
+        for (int i = 0; i < moves.size(); i++) {
+            int move = moves.get(i);
             makeMove(move);
             if (isKingInCheck(!whiteTurn)) {
-                moveList.remove(i);
+                moves.remove(i);
                 i--;
             }
             undoMove();
 
         }
 
-        return moveList;
+        return moves;
     }
 
     public boolean isKingInCheck(boolean whiteTurn) {
@@ -2079,34 +2080,37 @@ public class Board {
         return isKingInCheck(whiteTurn);
     }
 
-    public PackedMoveList getCaptureMoves() {
-        PackedMoveList moveList = MoveGenerator.generateCaptureMoves(this);
+    public PackedMoveList getCaptureMoves(PackedMoveList moves) {
+        moves.clear();
+        MoveGenerator.generateCaptureMoves(this, moves);
 
         // Pour chaque coup, vérifier si le roi est en échec après le coup
         // Si le roi est en échec, le coup n'est pas légal
         // Sinon, le coup est légal
-        for (int i = 0; i < moveList.size(); i++) {
-            int move = moveList.get(i);
+        for (int i = 0; i < moves.size(); i++) {
+            int move = moves.get(i);
             makeMove(move);
             if (isKingInCheck(!whiteTurn)) {
-                moveList.remove(i);
+                moves.remove(i);
                 i--;
             }
             undoMove();
 
         }
 
-        return moveList;
+        return moves;
     }
 
-    public boolean isStaleMate() {
-        PackedMoveList moveList = getLegalMoves();
-        return moveList.size() == 0 && !isKingInCheck(whiteTurn);
+    public boolean isStaleMate(PackedMoveList moves) {
+        moves.clear();
+        moves = getLegalMoves(moves);
+        return moves.size() == 0 && !isKingInCheck(whiteTurn);
     }
 
-    public boolean isCheckMate() {
-        PackedMoveList moveList = getLegalMoves();
-        return moveList.size() == 0 && isKingInCheck(whiteTurn);
+    public boolean isCheckMate(PackedMoveList moves) {
+        moves.clear();
+        moves = getLegalMoves(moves);
+        return moves.size() == 0 && isKingInCheck(whiteTurn);
     }
 
     private void updateBitBoard() {

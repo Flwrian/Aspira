@@ -10,7 +10,7 @@ import fr.flwrian.aspira.move.PackedMoveList;
 
 public class Search implements SearchAlgorithm {
 
-    static final int MAX_PLY = 60;
+    static final int MAX_PLY = 128;
 
     static final int VALUE_MATE = 32000;
     static final int VALUE_INFINITE = 32001;
@@ -24,6 +24,7 @@ public class Search implements SearchAlgorithm {
     static final int VALUE_TB_WIN_IN_MAX_PLY = VALUE_TB_WIN - MAX_PLY;
     static final int VALUE_TB_LOSS_IN_MAX_PLY = -VALUE_TB_WIN_IN_MAX_PLY;
 
+    private final PackedMoveList[] moveLists = new PackedMoveList[MAX_PLY];
 
     final int CHECK_RATE = 256;
     final int INFINITE_VALUE = 32001;
@@ -73,7 +74,7 @@ public class Search implements SearchAlgorithm {
             alpha = bestValue;
         }
 
-        PackedMoveList moves = board.getCaptureMoves();
+        PackedMoveList moves = board.getCaptureMoves(moveLists[ply]);
         orderQMoves(moves);
 
         for (int i = 0; i < moves.size(); i++) {
@@ -179,7 +180,7 @@ public class Search implements SearchAlgorithm {
 
         int madeMoves = 0;
 
-        PackedMoveList moves = board.getLegalMoves();
+        PackedMoveList moves = board.getLegalMoves(moveLists[ply]);
         orderMoves(moves, ttMove, board);
 
         for (int i = 0; i < moves.size(); i++) {
@@ -504,6 +505,7 @@ public class Search implements SearchAlgorithm {
             m[j + 1] = move;
         }
     }
+    
     private void sortQuiets(int[] m, int from, int to, Board board) {
         int color = board.whiteTurn ? 0 : 1;
 
@@ -552,6 +554,11 @@ public class Search implements SearchAlgorithm {
     public Move search(Board board, int wtime, int btime, int winc, int binc, int movetime, int depth, long maxNodes) {
         resetSearch();
         nodeLimit = maxNodes;
+
+        // Init stack movelist
+        for (int i = 0; i < MAX_PLY; i++){
+            moveLists[i] = new PackedMoveList(218);
+        }
         
         // Time management
         if (movetime > 0) {

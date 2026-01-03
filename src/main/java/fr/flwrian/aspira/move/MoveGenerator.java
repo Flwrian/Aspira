@@ -257,8 +257,9 @@ public class MoveGenerator {
             Board.QUEEN, Board.ROOK, Board.BISHOP, Board.KNIGHT
     };
 
-    public static PackedMoveList generatePseudoLegalMoves(Board board) {
-        PackedMoveList moves = new PackedMoveList(218);
+    public static PackedMoveList generatePseudoLegalMoves(Board board, PackedMoveList moves) {
+        // PackedMoveList moves = new PackedMoveList(218);
+        moves.clear();
 
         // =========================
         // PAWNS
@@ -535,10 +536,9 @@ public class MoveGenerator {
         return moves;
     }
 
-    public static PackedMoveList generateCaptureMoves(Board board) {
-        // maximum number of capture moves is 218
-        PackedMoveList moves = new PackedMoveList(218);
+    public static PackedMoveList generateCaptureMoves(Board board, PackedMoveList moves) {
 
+        moves.clear();
         // Pawns
         long pawns = board.whiteTurn ? board.getWhitePawns() : board.getBlackPawns();
 
