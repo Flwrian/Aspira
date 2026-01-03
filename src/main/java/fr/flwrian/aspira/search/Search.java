@@ -314,9 +314,34 @@ public class Search implements SearchAlgorithm {
 
         startTime = System.nanoTime();
 
+        int window = 50;
+        int previousScore = 0;
+
         for (int depth = 1; depth <= depthLimit; depth++) {
 
-            score = absearch(board, depth, -INFINITE_VALUE, INFINITE_VALUE, 0);
+            // Aspiration windows
+            int alpha, beta;
+            if (Math.abs(previousScore) >= MATE_BOUND - 512) {
+                alpha = -VALUE_INFINITE;
+                beta = +VALUE_INFINITE;
+            } else {
+                alpha = previousScore - window;
+                beta = previousScore + window;
+            }
+
+            score = absearch(board, depth, alpha, beta, 0);
+
+            // If out of bounds, re-search with full window
+            if (!checkTime(true) && (score <= alpha || score >= beta)) {
+                // aspiration progressive (évite re-search trop large d’un coup)
+                int w = window;
+                do {
+                    w *= 2;
+                    alpha = previousScore - w;
+                    beta = previousScore + w;
+                    score = absearch(board, depth, alpha, beta, 0);
+                } while (!checkTime(true) && (score <= alpha || score >= beta));
+            }
 
             if (stopSearch || checkTime(true)) {
                 break;
