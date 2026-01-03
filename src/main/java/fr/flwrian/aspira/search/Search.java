@@ -314,8 +314,6 @@ public class Search implements SearchAlgorithm {
 
         startTime = System.nanoTime();
 
-        
-
         for (int depth = 1; depth <= depthLimit; depth++) {
 
             score = absearch(board, depth, -INFINITE_VALUE, INFINITE_VALUE, 0);
