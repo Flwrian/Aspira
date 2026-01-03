@@ -10,7 +10,7 @@ import fr.flwrian.aspira.move.PackedMoveList;
 
 public class Search implements SearchAlgorithm {
 
-    static final int MAX_PLY = 256;
+    static final int MAX_PLY = 254;
 
     static final int VALUE_MATE = 32000;
     static final int VALUE_INFINITE = 32001;
@@ -72,6 +72,12 @@ public class Search implements SearchAlgorithm {
 
         if (bestValue > alpha) {
             alpha = bestValue;
+        }
+
+        if (board.isKingInCheck(board.whiteTurn)) {
+            // Fallback to full search if in check
+            return absearch(board, 1, alpha, beta, ply);
+            
         }
 
         PackedMoveList moves = board.getCaptureMoves();
@@ -170,7 +176,10 @@ public class Search implements SearchAlgorithm {
                 int score = -absearch(board, depth - 2, -beta, -beta + 1, ply + 1);
                 board.undoNullMove();
 
-                if (score >= beta && score < MATE_BOUND) {
+                if (score >= beta) {
+                    if (score >= MATE_BOUND) {
+                        score = beta;
+                    }
                     return score;
                 }
             }
