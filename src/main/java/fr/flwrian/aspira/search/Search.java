@@ -10,7 +10,7 @@ import fr.flwrian.aspira.move.PackedMoveList;
 
 public class Search implements SearchAlgorithm {
 
-    static final int MAX_PLY = 60;
+    static final int MAX_PLY = 128;
 
     static final int VALUE_MATE = 32000;
     static final int VALUE_INFINITE = 32001;
@@ -21,8 +21,7 @@ public class Search implements SearchAlgorithm {
 
     static final int VALUE_TB_WIN = VALUE_MATE_IN_PLY;
     static final int VALUE_TB_LOSS = -VALUE_TB_WIN;
-    static final int VALUE_TB_WIN_IN_MAX_PLY = VALUE_TB_WIN - MAX_PLY;
-    static final int VALUE_TB_LOSS_IN_MAX_PLY = -VALUE_TB_WIN_IN_MAX_PLY;
+    static final int MATE_BOUND = 31000;
 
 
     final int CHECK_RATE = 256;
@@ -160,13 +159,14 @@ public class Search implements SearchAlgorithm {
         boolean inCheck = board.isKingInCheck(board.whiteTurn);
 
         // Null move pruning
-        if (!inCheck && depth >= 3) {
+        if (!inCheck && depth >= 3 && board.hasNonPawnMaterial()) {
+            int R = 4;
             board.makeNullMove();
-            int score = -absearch(board, depth - 2, -beta, -beta + 1, ply + 1);
+            int score = -absearch(board, depth - R, -beta, -beta + 1, ply + 1);
             board.undoNullMove();
 
             if (score >= beta) {
-                if (score >= VALUE_TB_WIN_IN_MAX_PLY) {
+                if (score >= MATE_BOUND) {
                     score = beta;
                 }
                 return score;
@@ -369,12 +369,12 @@ public class Search implements SearchAlgorithm {
     }
 
     public int scoreFromTT(int score, int ply) {
-        if (score >= VALUE_TB_WIN_IN_MAX_PLY) {
+        if (score >= MATE_BOUND) {
             return score - ply;
         }
 
         else {
-            if (score <= VALUE_TB_LOSS_IN_MAX_PLY) {
+            if (score <= -MATE_BOUND) {
                 return score + ply;
             } else {
                 return score;
