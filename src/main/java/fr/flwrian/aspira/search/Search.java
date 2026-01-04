@@ -197,11 +197,17 @@ public class Search implements SearchAlgorithm {
             madeMoves++;
             nodes++;
 
+            int reducedDepth = depth - 1;
+
+            if (madeMoves > 1 && depth >= 3 && !inCheck && !PackedMove.isCapture(move) && !PackedMove.isPromotion(move)) {
+                reducedDepth = depth / 2;
+            }
+
             board.makeMove(move);
             hashHistory[repSize++] = board.zobristKey;
 
             // Search
-            int score = -absearch(board, depth - 1, -beta, -alpha, ply + 1);
+            int score = -absearch(board, reducedDepth, -beta, -alpha, ply + 1);
             board.undoMove();
             repSize--;
 
