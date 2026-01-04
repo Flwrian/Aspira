@@ -192,24 +192,47 @@ public class Search implements SearchAlgorithm {
         PackedMoveList moves = board.getLegalMoves(moveLists[ply]);
         orderMoves(moves, ttMove, board);
 
+
+        final int LMR_REDUCTION = 1;
+        final int LMR_MIN_MOVES = 3;
+        final int LMR_MIN_DEPTH = 3;
+
+        final boolean criticalDepth = (depth <= 2);
+
         for (int i = 0; i < moves.size(); i++) {
             int move = moves.get(i);
             madeMoves++;
             nodes++;
 
-            int reducedDepth = depth - 1;
-
-            if (madeMoves > 3 && depth >= 3 && !inCheck && !PackedMove.isCapture(move) && !PackedMove.isPromotion(move)) {
-                reducedDepth = depth / 2;
-            }
-
             board.makeMove(move);
+            boolean givesCheck = board.isKingInCheck(!board.whiteTurn);
+            int newDepth = depth - 1;
             hashHistory[repSize++] = board.zobristKey;
 
             // Search
-            int score = -absearch(board, reducedDepth, -beta, -alpha, ply + 1);
-            board.undoMove();
+
+            boolean isCapture = PackedMove.isCapture(move);
+            boolean allowLMR = !criticalDepth && !inCheck && !givesCheck;
+            boolean canReduce = madeMoves >= LMR_MIN_MOVES && depth >= LMR_MIN_DEPTH && allowLMR && !isCapture;
             repSize--;
+
+            int score;
+            if (madeMoves == 1 || criticalDepth){
+                score = -absearch(board, newDepth, -beta, -alpha, ply + 1);
+            }
+            else {
+                int searchDepth = canReduce ? (newDepth - LMR_REDUCTION): newDepth;
+
+                // PVS null window
+                score = -absearch(board, searchDepth, alpha, -(alpha + 1), ply + 1);
+
+                if (score > alpha){
+                    // full search fail high
+                    score = -absearch(board, newDepth, -beta, -alpha, ply + 1);
+                }
+            }
+
+            board.undoMove();
 
             if (score > bestScore) {
                 bestScore = score;
