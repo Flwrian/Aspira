@@ -167,7 +167,11 @@ public class Search implements SearchAlgorithm {
         }
 
         boolean inCheck = board.isKingInCheck(board.whiteTurn);
-        
+
+        // Check extension
+        if (inCheck) {
+            depth++;
+        }
 
         // Null move pruning
         if (!inCheck && depth >= 3) {
