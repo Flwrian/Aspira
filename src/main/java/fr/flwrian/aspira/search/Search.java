@@ -199,7 +199,7 @@ public class Search implements SearchAlgorithm {
 
             int reducedDepth = depth - 1;
 
-            if (madeMoves > 1 && depth >= 3 && !inCheck && !PackedMove.isCapture(move) && !PackedMove.isPromotion(move)) {
+            if (madeMoves > 3 && depth >= 3 && !inCheck && !PackedMove.isCapture(move) && !PackedMove.isPromotion(move)) {
                 reducedDepth = depth / 2;
             }
 
