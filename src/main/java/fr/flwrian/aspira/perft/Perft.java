@@ -16,9 +16,9 @@ import fr.flwrian.aspira.move.PackedMoveList;
 public class Perft {
 
 
-    private static final PackedMoveList[] moveLists = new PackedMoveList[128];
+    private static final PackedMoveList[] moveLists = new PackedMoveList[16];
     static {
-        for (int i = 0; i < 128; i++) {
+        for (int i = 0; i < 16; i++) {
             moveLists[i] = new PackedMoveList(218);
         }
     }

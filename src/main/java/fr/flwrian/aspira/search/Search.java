@@ -24,7 +24,15 @@ public class Search implements SearchAlgorithm {
     static final int VALUE_TB_WIN_IN_MAX_PLY = VALUE_TB_WIN - MAX_PLY;
     static final int VALUE_TB_LOSS_IN_MAX_PLY = -VALUE_TB_WIN_IN_MAX_PLY;
 
-    private final PackedMoveList[] moveLists = new PackedMoveList[MAX_PLY];
+    private static final PackedMoveList[] moveLists = new PackedMoveList[MAX_PLY];
+
+    static {
+        // Init stack movelist
+        System.out.println("Initializing move lists...");
+        for (int i = 0; i < MAX_PLY; i++){
+            moveLists[i] = new PackedMoveList(218);
+        }
+    }
 
     final int CHECK_RATE = 256;
     final int INFINITE_VALUE = 32001;
@@ -159,6 +167,7 @@ public class Search implements SearchAlgorithm {
         }
 
         boolean inCheck = board.isKingInCheck(board.whiteTurn);
+        
 
         // Null move pruning
         if (!inCheck && depth >= 3) {
@@ -440,29 +449,38 @@ public class Search implements SearchAlgorithm {
 
     };
 
-    public int scoreMove(int move, int ttMove, Board board) {
-        if (move == ttMove) {
-            return 1_000_000;
-        }
+    // public int scoreMove(int move, int ttMove, Board board) {
+    //     if (move == ttMove) {
+    //         return 1_000_000;
+    //     }
 
-        if (PackedMove.isCapture(move)) {
-            return 32_000 + mvvLva[PackedMove.getCaptured(move)][PackedMove.getPieceFrom(move)];
-        }
+    //     if (PackedMove.isCapture(move)) {
+    //         return 32_000 + mvvLva[PackedMove.getCaptured(move)][PackedMove.getPieceFrom(move)];
+    //     }
 
-        return historyTable[board.whiteTurn ? 0 : 1][PackedMove.getFrom(move)][PackedMove.getTo(move)];
-    }
+    //     return historyTable[board.whiteTurn ? 0 : 1][PackedMove.getFrom(move)][PackedMove.getTo(move)];
+    // }
 
     public int scoreQMove(int move) {
         return mvvLva[PackedMove.getCaptured(move)][PackedMove.getPieceFrom(move)];
     }
 
+    /**
+     * Orders moves in the following order:
+     * 1️ -> Transposition table move
+     * 2️ -> Captures (MVV-LVA)
+     * 3️ -> Quiets (History heuristic)
+     * @param moves
+     * @param ttMove
+     * @param board
+     */
     public void orderMoves(PackedMoveList moves, int ttMove, Board board) {
         int size = moves.size();
         int[] m = moves.moves;
 
         int idx = 0;
 
-        // 1️⃣ TT move en premier
+        // Put TT move first
         if (ttMove != 0) {
             for (int i = 0; i < size; i++) {
                 if (m[i] == ttMove) {
@@ -473,7 +491,7 @@ public class Search implements SearchAlgorithm {
             }
         }
 
-        // 2️⃣ Bucket captures juste après
+        // Partition captures and quiets
         int captureStart = idx;
         for (int i = idx; i < size; i++) {
             if (PackedMove.isCapture(m[i])) {
@@ -481,17 +499,19 @@ public class Search implements SearchAlgorithm {
             }
         }
 
-        // Trie uniquement les captures (MVV-LVA)
+        // Sort captures
         sortCaptures(m, captureStart, idx);
 
-        // 3️⃣ Trie les quiets par history heuristic
+        // Sort quiets
         sortQuiets(m, idx, size, board);
     }
+
     private static void swap(int[] arr, int a, int b) {
         int tmp = arr[a];
         arr[a] = arr[b];
         arr[b] = tmp;
     }
+
     private void sortCaptures(int[] m, int from, int to) {
         for (int i = from + 1; i < to; i++) {
             int move = m[i];
@@ -554,11 +574,6 @@ public class Search implements SearchAlgorithm {
     public Move search(Board board, int wtime, int btime, int winc, int binc, int movetime, int depth, long maxNodes) {
         resetSearch();
         nodeLimit = maxNodes;
-
-        // Init stack movelist
-        for (int i = 0; i < MAX_PLY; i++){
-            moveLists[i] = new PackedMoveList(218);
-        }
         
         // Time management
         if (movetime > 0) {
