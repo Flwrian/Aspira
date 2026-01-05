@@ -70,7 +70,7 @@ public class Search implements SearchAlgorithm {
         nodes++;
 
         // ===== QS PLY LIMIT (ABSOLUTELY REQUIRED) =====
-        if (ply >= 8) {
+        if (ply >= MAX_PLY) {
             return evaluate(board);
         }
 
