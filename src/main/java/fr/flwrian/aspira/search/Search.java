@@ -40,6 +40,7 @@ public class Search implements SearchAlgorithm {
     int[] pvLengths = new int[MAX_PLY];
     int[][] principalVariations = new int[MAX_PLY][MAX_PLY];
 
+    int[][] killermoves = new int[MAX_PLY][2];
 
     long nodes = 0;
     long lastNps = 0;
@@ -186,7 +187,7 @@ public class Search implements SearchAlgorithm {
         int madeMoves = 0;
 
         PackedMoveList moves = board.getLegalMoves(moveLists[ply]);
-        orderMoves(moves, ttMove, board);
+        orderMoves(moves, ttMove, board, ply);
 
 
         final int LMR_REDUCTION = 1;
@@ -270,6 +271,11 @@ public class Search implements SearchAlgorithm {
                             int current = historyTable[color][from][to];
                             int delta = bonus - (current * Math.abs(bonus)) / 16384;
                             historyTable[color][from][to] = current + delta;
+
+                            if (killermoves[ply][0] != bestMove){
+                                killermoves[ply][1] = killermoves[ply][0];
+                                killermoves[ply][0] = bestMove;
+                            }
                         }
                         break;
                     }
@@ -476,6 +482,9 @@ public class Search implements SearchAlgorithm {
             }
         }
 
+        // reset killers
+        killermoves = new int[MAX_PLY][2];
+
         
         // reset history table and transposition table
         historyTable = new int[2][64][64];
@@ -522,7 +531,7 @@ public class Search implements SearchAlgorithm {
      * @param ttMove
      * @param board
      */
-    public void orderMoves(PackedMoveList moves, int ttMove, Board board) {
+    public void orderMoves(PackedMoveList moves, int ttMove, Board board, int ply) {
         int size = moves.size();
         int[] m = moves.moves;
 
@@ -538,7 +547,17 @@ public class Search implements SearchAlgorithm {
                 }
             }
         }
-
+        for (int killerIdx = 0; killerIdx < 2; killerIdx++) {
+            int killer = killermoves[ply][killerIdx];
+            if (killer != 0 && killer != ttMove) { // Éviter les doublons avec TT
+                for (int i = idx; i < size; i++) {
+                    if (m[i] == killer) {
+                        swap(m, idx++, i);
+                        break;
+                    }
+                }
+            }
+        }
         // Partition captures and quiets
         int captureStart = idx;
         for (int i = idx; i < size; i++) {
