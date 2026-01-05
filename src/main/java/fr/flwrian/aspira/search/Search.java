@@ -40,10 +40,6 @@ public class Search implements SearchAlgorithm {
     int[] pvLengths = new int[MAX_PLY];
     int[][] principalVariations = new int[MAX_PLY][MAX_PLY];
 
-    // 3-fold repetition
-    long[] hashHistory = new long[MAX_PLY];
-    int repSize = 0;
-
 
     long nodes = 0;
     long lastNps = 0;
@@ -206,17 +202,16 @@ public class Search implements SearchAlgorithm {
 
             board.makeMove(move);
             boolean givesCheck = board.isKingInCheck(!board.whiteTurn);
-            int newDepth = depth - 1;
-            hashHistory[repSize++] = board.zobristKey;
-
-            // Search
 
             boolean isCapture = PackedMove.isCapture(move);
             boolean allowLMR = !criticalDepth && !inCheck && !givesCheck;
             boolean canReduce = madeMoves >= LMR_MIN_MOVES && depth >= LMR_MIN_DEPTH && allowLMR && !isCapture;
-            repSize--;
 
-            int score = -absearch(board, depth - 1, -beta, -alpha, ply + 1);
+            int searchDepth = (canReduce) ? depth - 2 : depth - 1;
+            int score = -absearch(board, searchDepth, -beta, -alpha, ply + 1);
+            if (canReduce && score > alpha) {
+                score = -absearch(board, depth - 1, -beta, -alpha, ply + 1);
+            }
             board.undoMove();
 
             if (score > bestScore) {
