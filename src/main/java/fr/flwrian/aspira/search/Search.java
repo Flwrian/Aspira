@@ -210,13 +210,35 @@ public class Search implements SearchAlgorithm {
                 reduction = calculateReduction(depth, madeMoves, isPVNode);
             }
 
-            // Recherche avec profondeur potentiellement réduite
-            int searchDepth = Math.max(depth - 1 - reduction, 0);
-            int score = -absearch(board, searchDepth, -beta, -alpha, ply + 1);
 
-            // Re-recherche complète si la réduction était trop agressive
+            int searchDepth = Math.max(depth - 1 - reduction, 0);
+            int score;
+
+            // ===== PVS : NOUVEAU CODE =====
+            if (madeMoves == 1) {
+                // Premier coup : recherche normale avec fenêtre complète
+                score = -absearch(board, searchDepth, -beta, -alpha, ply + 1);
+            } else {
+                // Coups suivants : essayer d'abord avec fenêtre nulle (PVS)
+                score = -absearch(board, searchDepth, -alpha - 1, -alpha, ply + 1);
+        
+                // Si le coup s'avère meilleur qu'attendu, re-rechercher avec fenêtre complète
+                if (score > alpha && score < beta) {
+                    score = -absearch(board, searchDepth, -beta, -alpha, ply + 1);
+                }
+            }
+
+            // Re-recherche LMR si nécessaire
             if (reduction > 0 && score > alpha) {
-                score = -absearch(board, depth - 1, -beta, -alpha, ply + 1);
+                // Appliquer aussi PVS pour la re-recherche
+                if (madeMoves == 1) {
+                    score = -absearch(board, depth - 1, -beta, -alpha, ply + 1);
+                } else {
+                    score = -absearch(board, depth - 1, -alpha - 1, -alpha, ply + 1);
+                    if (score > alpha && score < beta) {
+                        score = -absearch(board, depth - 1, -beta, -alpha, ply + 1);
+                    }
+                }
             }
             board.undoMove();
 
