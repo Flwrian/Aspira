@@ -360,7 +360,7 @@ public class Search implements SearchAlgorithm {
                 score = absearch(board, depth, alpha, beta, 0);
             } else {
                 // Aspiration window : fenêtre étroite autour du score précédent
-                int window = 50;
+                int window = 15;
                 alpha = score - window;
                 beta = score + window;
             
