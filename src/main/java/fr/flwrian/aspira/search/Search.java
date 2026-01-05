@@ -202,14 +202,20 @@ public class Search implements SearchAlgorithm {
 
             board.makeMove(move);
             boolean givesCheck = board.isKingInCheck(!board.whiteTurn);
-
             boolean isCapture = PackedMove.isCapture(move);
-            boolean allowLMR = !criticalDepth && !inCheck && !givesCheck;
-            boolean canReduce = madeMoves >= LMR_MIN_MOVES && depth >= LMR_MIN_DEPTH && allowLMR && !isCapture;
+            boolean isPVNode = (beta - alpha > 1);
+            int reduction = 0;
 
-            int searchDepth = (canReduce) ? depth - 2 : depth - 1;
+            if (!criticalDepth && !inCheck && !givesCheck && !isCapture && !PackedMove.isPromotion(move)) {
+                reduction = calculateReduction(depth, madeMoves, isPVNode);
+            }
+
+            // Recherche avec profondeur potentiellement réduite
+            int searchDepth = Math.max(depth - 1 - reduction, 0);
             int score = -absearch(board, searchDepth, -beta, -alpha, ply + 1);
-            if (canReduce && score > alpha) {
+
+            // Re-recherche complète si la réduction était trop agressive
+            if (reduction > 0 && score > alpha) {
                 score = -absearch(board, depth - 1, -beta, -alpha, ply + 1);
             }
             board.undoMove();
@@ -277,6 +283,38 @@ public class Search implements SearchAlgorithm {
         return bestScore;
     }
 
+    
+    // Supprimer les constantes fixes et ajouter :
+
+    private int calculateReduction(int depth, int moveNumber, boolean isPVNode) {
+        if (moveNumber < 3 || depth < 3) {
+            return 0; // Pas de réduction
+        }
+
+        // Formule de base : réduction croissante
+        int reduction = 1;
+
+        if (depth >= 6) {
+            reduction = 2;
+        }
+
+        if (moveNumber >= 6) {
+            reduction += 1;
+        }
+
+        if (moveNumber >= 12) {
+            reduction += 1;
+        }
+
+        // Moins de réduction sur les nœuds PV
+        if (isPVNode && reduction > 0) {
+            reduction -= 1;
+        }
+
+        return reduction;
+    }
+
+    
     public void iterativeDeepening(Board board, int depthLimit) {
         nodes = 0;
         int score = -INFINITE_VALUE;
