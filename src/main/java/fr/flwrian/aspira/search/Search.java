@@ -572,6 +572,7 @@ public class Search implements SearchAlgorithm {
         checks = CHECK_RATE;
         resetSearch();
 
+
         nodeLimit = maxNodes;
 
 
