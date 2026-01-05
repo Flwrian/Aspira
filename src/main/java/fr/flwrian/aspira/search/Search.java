@@ -92,11 +92,14 @@ public class Search implements SearchAlgorithm {
         for (int i = 0; i < moves.size(); i++) {
             nodes++;
 
-            int capturedPiece = PackedMove.getCaptured(moves.get(i));
+            if (!inCheck){
+                
+                int capturedPiece = PackedMove.getCaptured(moves.get(i));
 
-            // Delta pruning
-            if (Board.PIECE_SCORES[capturedPiece] + 200 + bestValue < alpha && !PackedMove.isPromotion(moves.get(i))) {
-                continue;
+                // Delta pruning
+                if (Board.PIECE_SCORES[capturedPiece] + 200 + bestValue < alpha && !PackedMove.isPromotion(moves.get(i))) {
+                    continue;
+                }
             }
 
             board.makeMove(moves.get(i));
