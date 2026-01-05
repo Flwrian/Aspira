@@ -272,9 +272,9 @@ public class Search implements SearchAlgorithm {
                             int delta = bonus - (current * Math.abs(bonus)) / 16384;
                             historyTable[color][from][to] = current + delta;
 
-                            if (killermoves[ply][0] != bestMove){
+                            if (killermoves[ply][0] != move){
                                 killermoves[ply][1] = killermoves[ply][0];
-                                killermoves[ply][0] = bestMove;
+                                killermoves[ply][0] = move;
                             }
                         }
                         break;
@@ -537,41 +537,45 @@ public class Search implements SearchAlgorithm {
 
         int idx = 0;
 
-        // Put TT move first
+        // 1) TT move
         if (ttMove != 0) {
             for (int i = 0; i < size; i++) {
                 if (m[i] == ttMove) {
-                    swap(m, 0, i);
-                    idx = 1;
+                    swap(m, idx++, i);
                     break;
                 }
             }
         }
-        for (int killerIdx = 0; killerIdx < 2; killerIdx++) {
-            int killer = killermoves[ply][killerIdx];
-            if (killer != 0 && killer != ttMove) { // Éviter les doublons avec TT
-                for (int i = idx; i < size; i++) {
-                    if (m[i] == killer) {
-                        swap(m, idx++, i);
-                        break;
-                    }
-                }
-            }
-        }
-        // Partition captures and quiets
+
+        // 2) Captures
         int captureStart = idx;
         for (int i = idx; i < size; i++) {
             if (PackedMove.isCapture(m[i])) {
                 swap(m, idx++, i);
             }
         }
-
-        // Sort captures
         sortCaptures(m, captureStart, idx);
 
-        // Sort quiets
+        // 3) Killers (quiet only, no duplicates)
+        for (int k = 0; k < 2; k++) {
+            int killer = killermoves[ply][k];
+            if (killer == 0) continue;
+            if (killer == ttMove) continue;
+            // if (PackedMove.isCapture(killer)) continue;
+
+            for (int i = idx; i < size; i++) {
+                if (m[i] == killer) {
+                    swap(m, idx++, i);
+                    break;
+                }
+            }
+        }
+
+        // 4) Remaining quiets (history)
         sortQuiets(m, idx, size, board);
     }
+    
+
 
     private static void swap(int[] arr, int a, int b) {
         int tmp = arr[a];
