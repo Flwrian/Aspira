@@ -58,88 +58,142 @@ public class Search implements SearchAlgorithm {
 
     public TranspositionTable transpositionTable = new TranspositionTable(64);
 
-    public int qsearch(Board board, int alpha, int beta, int ply) {
-        
+    
+    private int qsearch(Board board, int alpha, int beta, int ply) {
+
+        // ===== STOP / TIME =====
         if (stopSearch || checkTime(false)) {
             stopSearch = true;
             return 0;
         }
 
-        if (ply >= MAX_PLY) {
+        nodes++;
+
+        // ===== QS PLY LIMIT (ABSOLUTELY REQUIRED) =====
+        if (ply >= 8) {
             return evaluate(board);
         }
 
-        // boolean inCheck = board.isKingInCheck(board.whiteTurn);
-        
-        // if (inCheck) {
-        //     PackedMoveList moves = board.getLegalMoves(moveLists[ply]);
-
-        //     int best = -VALUE_INFINITE;
-        //     int evasions = moves.size();
-        //     for (int i = 0; i < evasions; i++) {
-        //         int move = moves.get(i);
-        //         nodes++;
-
-        //         board.makeMove(move);
-        //         int score = -qsearch(board, -beta, -alpha, ply + 1);
-        //         board.undoMove();
-
-        //         if (score > best) best = score;
-        //         if (score > alpha) {
-        //             alpha = score;
-        //             if (alpha >= beta) break;
-        //         }
-        //     }
-
-        //     if (evasions == 0) {
-        //         // échec et mat
-        //         return matedInPly(ply);
-        //     }
-
-        //     return best;
-        // }
-
-        int bestValue = evaluate(board);
-
-        if (bestValue >= beta) {
-            return bestValue;
+        // ===== DRAW / REP =====
+        if (board.isThreefoldRepetition()) {
+            return 0;
         }
 
-        if (bestValue > alpha) {
-            alpha = bestValue;
+        // ===== TT PROBE (QS) =====
+        long key = board.zobristKey;
+        TranspositionTable.Entry entry = transpositionTable.get(key);
+
+        if (entry != null) {
+            int ttScore = scoreFromTT(entry.value, ply);
+
+            if (entry.flag == TranspositionTable.Entry.EXACT) {
+                return ttScore;
+            }
+            if (entry.flag == TranspositionTable.Entry.LOWERBOUND && ttScore >= beta) {
+                return ttScore;
+            }
+            if (entry.flag == TranspositionTable.Entry.UPPERBOUND && ttScore <= alpha) {
+                return ttScore;
+            }
         }
 
-        PackedMoveList moves = board.getCaptureMoves(moveLists[ply]);
-        orderQMoves(moves);
-        for (int i = 0; i < moves.size(); i++) {
-            nodes++;
+        int alphaOrig = alpha;
 
-            int capturedPiece = PackedMove.getCaptured(moves.get(i));
+        // ===== CHECK HANDLING =====
+        if (board.isKingInCheck(board.whiteTurn)) {
+            PackedMoveList evasions = board.getLegalMoves(moveLists[ply]);
+            if (evasions.size() == 0) {
+                return matedInPly(ply);
+            }
 
-            // Delta pruning
-            if (Board.PIECE_SCORES[capturedPiece] + 400 + bestValue < alpha && !PackedMove.isPromotion(moves.get(i))) {
+            int best = -INFINITE_VALUE;
+
+            for (int i = 0; i < evasions.size(); i++) {
+                int move = evasions.get(i);
+                board.makeMove(move);
+
+                int score = -qsearch(board, -beta, -alpha, ply + 1);
+
+                board.undoMove();
+
+                if (stopSearch) return 0;
+
+                if (score > best) best = score;
+                if (score > alpha) {
+                    alpha = score;
+                    if (alpha >= beta) break;
+                }
+            }
+            return best;
+        }
+
+        // ===== STAND PAT (CORRECT) =====
+        int standPat = evaluate(board);
+
+        if (standPat >= beta) {
+            return beta; // IMPORTANT
+        }
+
+        if (standPat > alpha) {
+            alpha = standPat;
+        }
+
+        // ===== CAPTURES ONLY =====
+        PackedMoveList captures = board.getCaptureMoves(moveLists[ply]);
+        if (captures.size() == 0) {
+            return alpha;
+        }
+
+        orderQMoves(captures);
+
+        int bestScore = alpha;
+
+        for (int i = 0; i < captures.size(); i++) {
+            int move = captures.get(i);
+
+            // ===== DELTA PRUNING (SAFE, NO SEE) =====
+            int captured = PackedMove.getCaptured(move);
+            if (Board.PIECE_SCORES[captured] + 200 + standPat < alpha &&
+                !PackedMove.isPromotion(move)) {
                 continue;
             }
 
-            board.makeMove(moves.get(i));
+            board.makeMove(move);
+
             int score = -qsearch(board, -beta, -alpha, ply + 1);
+
             board.undoMove();
 
-            if (score > bestValue) {
-                bestValue = score;
+            if (stopSearch) return 0;
 
+            if (score > bestScore) {
+                bestScore = score;
                 if (score > alpha) {
                     alpha = score;
-
-                    if (alpha >= beta) {
-                        break;
-                    }
+                    if (alpha >= beta) break;
                 }
-                
             }
         }
 
-        return bestValue;
+        // ===== TT STORE (QS) =====
+        int flag;
+        if (bestScore <= alphaOrig) {
+            flag = TranspositionTable.Entry.UPPERBOUND;
+        } else if (bestScore >= beta) {
+            flag = TranspositionTable.Entry.LOWERBOUND;
+        } else {
+            flag = TranspositionTable.Entry.EXACT;
+        }
+
+        transpositionTable.put(
+            key,
+            0, // no move in QS
+            scoreFromTT(bestScore, ply),
+            0, // depth = 0 for QS
+            flag
+        );
+
+        return bestScore;
     }
 
     public int absearch(Board board, int depth, int alpha, int beta, int ply) {
@@ -156,7 +210,7 @@ public class Search implements SearchAlgorithm {
         boolean rootNode = (ply == 0);
         long hashKey = board.zobristKey;
 
-        // if (!rootNode) {
+        if (!rootNode) {
             if (board.isThreefoldRepetition()) {
                 return -5;
             }
@@ -167,8 +221,11 @@ public class Search implements SearchAlgorithm {
             if (alpha >= beta) {
                 return alpha;
             }
-        
+        }
 
+        if (depth <= 0) {
+            return qsearch(board, alpha, beta, ply);
+        }
 
         // TT probe
         TranspositionTable.Entry tte = transpositionTable.get(hashKey);
@@ -192,9 +249,6 @@ public class Search implements SearchAlgorithm {
         boolean inCheck = board.isKingInCheck(board.whiteTurn);
         
 
-        if (depth <= 0) {
-            return qsearch(board, alpha, beta, ply);
-        }
         // Null move pruning
         if (!inCheck && depth >= 3) {
             board.makeNullMove();
