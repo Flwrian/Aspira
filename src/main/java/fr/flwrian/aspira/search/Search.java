@@ -69,6 +69,36 @@ public class Search implements SearchAlgorithm {
             return evaluate(board);
         }
 
+        // boolean inCheck = board.isKingInCheck(board.whiteTurn);
+        
+        // if (inCheck) {
+        //     PackedMoveList moves = board.getLegalMoves(moveLists[ply]);
+
+        //     int best = -VALUE_INFINITE;
+        //     int evasions = moves.size();
+        //     for (int i = 0; i < evasions; i++) {
+        //         int move = moves.get(i);
+        //         nodes++;
+
+        //         board.makeMove(move);
+        //         int score = -qsearch(board, -beta, -alpha, ply + 1);
+        //         board.undoMove();
+
+        //         if (score > best) best = score;
+        //         if (score > alpha) {
+        //             alpha = score;
+        //             if (alpha >= beta) break;
+        //         }
+        //     }
+
+        //     if (evasions == 0) {
+        //         // échec et mat
+        //         return matedInPly(ply);
+        //     }
+
+        //     return best;
+        // }
+
         int bestValue = evaluate(board);
 
         if (bestValue >= beta) {
@@ -79,27 +109,16 @@ public class Search implements SearchAlgorithm {
             alpha = bestValue;
         }
 
-        boolean inCheck = board.isKingInCheck(board.whiteTurn);
-
-        PackedMoveList moves;
-        if (inCheck) {
-            moves = board.getLegalMoves(moveLists[ply]); // évasions complètes
-        } else {
-            moves = board.getCaptureMoves(moveLists[ply]);
-            orderQMoves(moves);
-        }
-
+        PackedMoveList moves = board.getCaptureMoves(moveLists[ply]);
+        orderQMoves(moves);
         for (int i = 0; i < moves.size(); i++) {
             nodes++;
 
-            if (!inCheck){
-                
-                int capturedPiece = PackedMove.getCaptured(moves.get(i));
+            int capturedPiece = PackedMove.getCaptured(moves.get(i));
 
-                // Delta pruning
-                if (Board.PIECE_SCORES[capturedPiece] + 200 + bestValue < alpha && !PackedMove.isPromotion(moves.get(i))) {
-                    continue;
-                }
+            // Delta pruning
+            if (Board.PIECE_SCORES[capturedPiece] + 400 + bestValue < alpha && !PackedMove.isPromotion(moves.get(i))) {
+                continue;
             }
 
             board.makeMove(moves.get(i));
@@ -137,7 +156,7 @@ public class Search implements SearchAlgorithm {
         boolean rootNode = (ply == 0);
         long hashKey = board.zobristKey;
 
-        if (!rootNode) {
+        // if (!rootNode) {
             if (board.isThreefoldRepetition()) {
                 return -5;
             }
@@ -148,11 +167,8 @@ public class Search implements SearchAlgorithm {
             if (alpha >= beta) {
                 return alpha;
             }
-        }
+        
 
-        if (depth <= 0) {
-            return qsearch(board, alpha, beta, ply);
-        }
 
         // TT probe
         TranspositionTable.Entry tte = transpositionTable.get(hashKey);
@@ -176,6 +192,9 @@ public class Search implements SearchAlgorithm {
         boolean inCheck = board.isKingInCheck(board.whiteTurn);
         
 
+        if (depth <= 0) {
+            return qsearch(board, alpha, beta, ply);
+        }
         // Null move pruning
         if (!inCheck && depth >= 3) {
             board.makeNullMove();
@@ -563,7 +582,14 @@ public class Search implements SearchAlgorithm {
     // }
 
     public int scoreQMove(int move) {
-        return mvvLva[PackedMove.getCaptured(move)][PackedMove.getPieceFrom(move)];
+        // System.out.println(PackedMove.unpack(move));
+        // int captured = PackedMove.getCaptured(move);
+        // int pfrom = PackedMove.getPieceFrom(move);
+        // System.out.println(captured + " " + pfrom);
+        int score = mvvLva[PackedMove.getCaptured(move)][PackedMove.getPieceFrom(move)];
+        // System.out.println(score);
+        // System.exit(0);
+        return score;
     }
 
     /**
