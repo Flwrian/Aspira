@@ -241,6 +241,8 @@ public class Search implements SearchAlgorithm {
                     }
                 }
             }
+
+            int color = board.whiteTurn ? 0 : 1;
             board.undoMove();
 
             if (score > bestScore) {
@@ -264,7 +266,6 @@ public class Search implements SearchAlgorithm {
                         // Only for non-capture moves
                         if (!PackedMove.isCapture(move)) {
                             int bonus = depth * depth;
-                            int color = board.whiteTurn ? 0 : 1;
                             int from = PackedMove.getFrom(move);
                             int to = PackedMove.getTo(move);
 
