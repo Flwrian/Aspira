@@ -313,6 +313,7 @@ public class UCI {
     }
 
     private static void uciNewGame() {
+        searchAlgorithm.resetSearch();
         searchAlgorithm.flushHashTable();
         board = new Board();
         board.loadFromFen(STARTING_POSITION);

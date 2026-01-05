@@ -565,23 +565,22 @@ public class Board {
         history.push(this, move);
     }
 
-    public boolean isThreefoldRepetition() {
-        // to check for repetition, we need to check if the current position has been
-        // seen (we will check in the history stack if it appears 3 times)
-        if (history.isEmpty() || plyCount < 8) {
-            return false;
-        } else {
-            // If the position before the last move is the same as the current position, we
-            // can return true
-            if ((history.stack[plyCount - 4].zobristKey == this.zobristKey)
-                    && (history.stack[plyCount - 8].zobristKey == this.zobristKey)) {
-                return true;
+
+     public boolean isThreefoldRepetition() {
+        int count = 0;
+
+        // on saute de 2 en 2 (même side to move)
+        for (int i = history.stack.length - 2; i >= 0; i -= 2) {
+
+            if (history.stack[i].zobristKey == this.zobristKey) {
+                count++;
+                if (count >= 2) {
+                    return true;
+                }
             }
-
-            return false;
         }
+        return false;
     }
-
     public void loadFromFen(String fen) {
         String[] fenParts = fen.split(" ");
         String[] rows = fenParts[0].split("/");

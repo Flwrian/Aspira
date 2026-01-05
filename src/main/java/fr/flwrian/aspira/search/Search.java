@@ -131,7 +131,7 @@ public class Search implements SearchAlgorithm {
         long hashKey = board.zobristKey;
 
         if (!rootNode) {
-            if (isThreefoldRepetition(hashKey)) {
+            if (board.isThreefoldRepetition()) {
                 return -5;
             }
 
@@ -216,22 +216,7 @@ public class Search implements SearchAlgorithm {
             boolean canReduce = madeMoves >= LMR_MIN_MOVES && depth >= LMR_MIN_DEPTH && allowLMR && !isCapture;
             repSize--;
 
-            int score;
-            if (madeMoves == 1 || criticalDepth){
-                score = -absearch(board, newDepth, -beta, -alpha, ply + 1);
-            }
-            else {
-                int searchDepth = canReduce ? (newDepth - LMR_REDUCTION): newDepth;
-
-                // PVS null window
-                score = -absearch(board, searchDepth, alpha, -(alpha + 1), ply + 1);
-
-                if (score > alpha){
-                    // full search fail high
-                    score = -absearch(board, newDepth, -beta, -alpha, ply + 1);
-                }
-            }
-
+            int score = -absearch(board, depth - 1, -beta, -alpha, ply + 1);
             board.undoMove();
 
             if (score > bestScore) {
@@ -296,23 +281,6 @@ public class Search implements SearchAlgorithm {
         
         return bestScore;
     }
-
-    private boolean isThreefoldRepetition(long key) {
-        int count = 0;
-
-        // on saute de 2 en 2 (même side to move)
-        for (int i = repSize - 2; i >= 0; i -= 2) {
-
-            if (hashHistory[i] == key) {
-                count++;
-                if (count == 1) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
 
     public void iterativeDeepening(Board board, int depthLimit) {
         nodes = 0;
@@ -441,7 +409,8 @@ public class Search implements SearchAlgorithm {
                 depth, convertScore(score), nodes, lastNps, timeMs, this.transpositionTable.hashfull(), getPV());
     }
 
-    private void resetSearch() {
+    @Override
+    public void resetSearch() {
         // reset PV lengths and principal variation table
         for (int i = 0; i < pvLengths.length; i++) {
             pvLengths[i] = 0;
@@ -452,12 +421,7 @@ public class Search implements SearchAlgorithm {
             }
         }
 
-        // reset counters and timing
-        nodes = 0;
-        stopSearch = false;
-        startTime = 0;
-        checks = CHECK_RATE;
-
+        
         // reset history table and transposition table
         historyTable = new int[2][64][64];
     }
@@ -601,7 +565,12 @@ public class Search implements SearchAlgorithm {
 
     @Override
     public Move search(Board board, int wtime, int btime, int winc, int binc, int movetime, int depth, long maxNodes) {
-        resetSearch();
+        // reset counters and timing
+        nodes = 0;
+        stopSearch = false;
+        startTime = 0;
+        checks = CHECK_RATE;
+
         nodeLimit = maxNodes;
         
         // Time management

@@ -21,6 +21,8 @@ public interface SearchAlgorithm {
 
     public void setHashTable(int sizeMB);
 
+    public void resetSearch();
+
     // public void setDepth(int depth);
 
     // public void setRazorDepth(int depth);
