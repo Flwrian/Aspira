@@ -79,8 +79,15 @@ public class Search implements SearchAlgorithm {
             alpha = bestValue;
         }
 
-        PackedMoveList moves = board.getCaptureMoves(moveLists[ply]);
-        orderQMoves(moves);
+        boolean inCheck = board.isKingInCheck(board.whiteTurn);
+
+        PackedMoveList moves;
+        if (inCheck) {
+            moves = board.getLegalMoves(moveLists[ply]); // évasions complètes
+        } else {
+            moves = board.getCaptureMoves(moveLists[ply]);
+            orderQMoves(moves);
+        }
 
         for (int i = 0; i < moves.size(); i++) {
             nodes++;
@@ -88,7 +95,7 @@ public class Search implements SearchAlgorithm {
             int capturedPiece = PackedMove.getCaptured(moves.get(i));
 
             // Delta pruning
-            if (Board.PIECE_SCORES[capturedPiece] + 400 + bestValue < alpha && !PackedMove.isPromotion(moves.get(i))) {
+            if (Board.PIECE_SCORES[capturedPiece] + 200 + bestValue < alpha && !PackedMove.isPromotion(moves.get(i))) {
                 continue;
             }
 
@@ -241,8 +248,6 @@ public class Search implements SearchAlgorithm {
                     }
                 }
             }
-
-            int color = board.whiteTurn ? 0 : 1;
             board.undoMove();
 
             if (score > bestScore) {
@@ -266,6 +271,7 @@ public class Search implements SearchAlgorithm {
                         // Only for non-capture moves
                         if (!PackedMove.isCapture(move)) {
                             int bonus = depth * depth;
+                            int color = board.whiteTurn ? 0 : 1;
                             int from = PackedMove.getFrom(move);
                             int to = PackedMove.getTo(move);
 

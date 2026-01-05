@@ -512,7 +512,8 @@ public class Board {
             BISHOP_SCORE,
             ROOK_SCORE,
             QUEEN_SCORE,
-            KING_SCORE
+            KING_SCORE,
+            0 // EMPTY
     };
 
     public final BoardHistoryStack history = new BoardHistoryStack(256); // profondeur max
