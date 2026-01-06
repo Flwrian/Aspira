@@ -193,8 +193,10 @@ public class Search implements SearchAlgorithm {
         }
 
         boolean inCheck = board.isKingInCheck(board.whiteTurn);
-        
 
+        if (inCheck && depth < MAX_PLY - 1) {
+            // depth++; // Étendre la recherche d'un ply
+         }
         // Null move pruning
         if (!inCheck && depth >= 3) {
             board.makeNullMove();

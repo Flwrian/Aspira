@@ -13,7 +13,6 @@ import fr.flwrian.aspira.perft.Perft;
 // import fr.flwrian.aspira.search.PureNegamax;
 import fr.flwrian.aspira.search.Search;
 import fr.flwrian.aspira.search.SearchAlgorithm;
-import fr.flwrian.aspira.search.TestSearch;
 /**
  * This class is the UCI interface for the chess engine.
  * It is responsible for communicating with the GUI.
@@ -41,7 +40,7 @@ public class UCI {
 
     public static void main(String[] args) {
 
-        searchAlgorithm = new TestSearch();
+        searchAlgorithm = new Search();
         engine.setSearchAlgorithm(searchAlgorithm);
 
         board.loadFromFen(STARTING_POSITION);
