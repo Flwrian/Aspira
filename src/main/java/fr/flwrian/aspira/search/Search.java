@@ -208,9 +208,6 @@ public class Search implements SearchAlgorithm {
             }
         }
 
-        if (inCheck && depth < MAX_PLY - 1) {
-            depth++; // Étendre la recherche d'un ply
-        }
         int oldAlpha = alpha;
         int bestScore = -VALUE_INFINITE;
         int bestMove = 0;
@@ -237,13 +234,14 @@ public class Search implements SearchAlgorithm {
             boolean isCapture = PackedMove.isCapture(move);
             boolean isPVNode = (beta - alpha > 1);
             int reduction = 0;
+            int extensions = givesCheck ? 1 : 0;
 
             if (!criticalDepth && !inCheck && !givesCheck && !isCapture && !PackedMove.isPromotion(move)) {
                 reduction = calculateReduction(depth, madeMoves, isPVNode);
             }
 
 
-            int searchDepth = Math.max(depth - 1 - reduction, 0);
+            int searchDepth = Math.max(depth - 1 - reduction, 0) + extensions;
             int score;
 
             // ===== PVS : NOUVEAU CODE =====
