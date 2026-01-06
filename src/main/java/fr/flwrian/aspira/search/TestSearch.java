@@ -1,3 +1,4 @@
+
 package fr.flwrian.aspira.search;
 
 import java.util.Locale;
@@ -8,7 +9,7 @@ import fr.flwrian.aspira.move.Move;
 import fr.flwrian.aspira.move.PackedMove;
 import fr.flwrian.aspira.move.PackedMoveList;
 
-public class Search implements SearchAlgorithm {
+public class TestSearch implements SearchAlgorithm {
 
     static final int MAX_PLY = 128;
 
@@ -27,7 +28,6 @@ public class Search implements SearchAlgorithm {
     private static final PackedMoveList[] moveLists = new PackedMoveList[MAX_PLY];
 
     static {
-        // Init stack movelist
         System.out.println("Initializing move lists...");
         for (int i = 0; i < MAX_PLY; i++){
             moveLists[i] = new PackedMoveList(218);
@@ -52,8 +52,6 @@ public class Search implements SearchAlgorithm {
 
     long startTime;
 
-    // history table
-    // Indexed by [color][from][to]
     int[][][] historyTable = new int[2][64][64];
 
     public TranspositionTable transpositionTable = new TranspositionTable(64);
@@ -69,36 +67,39 @@ public class Search implements SearchAlgorithm {
             return evaluate(board);
         }
 
-        // boolean inCheck = board.isKingInCheck(board.whiteTurn);
+        // === GESTION DES ÉCHECS (comme l'ancien code) ===
+        boolean inCheck = board.isKingInCheck(board.whiteTurn);
         
-        // if (inCheck) {
-        //     PackedMoveList moves = board.getLegalMoves(moveLists[ply]);
+        if (inCheck) {
+            PackedMoveList moves = board.getLegalMoves(moveLists[ply]);
+            
+            if (moves.size() == 0) {
+                return matedInPly(ply);
+            }
+            
+            orderMoves(moves, 0, board, ply);
+            int bestValue = -VALUE_INFINITE;
+            
+            for (int i = 0; i < moves.size(); i++) {
+                nodes++;
+                board.makeMove(moves.get(i));
+                int score = -qsearch(board, -beta, -alpha, ply + 1);
+                board.undoMove();
 
-        //     int best = -VALUE_INFINITE;
-        //     int evasions = moves.size();
-        //     for (int i = 0; i < evasions; i++) {
-        //         int move = moves.get(i);
-        //         nodes++;
+                if (score > bestValue) {
+                    bestValue = score;
+                    if (score > alpha) {
+                        alpha = score;
+                        if (alpha >= beta) {
+                            break;
+                        }
+                    }
+                }
+            }
+            return bestValue;
+        }
 
-        //         board.makeMove(move);
-        //         int score = -qsearch(board, -beta, -alpha, ply + 1);
-        //         board.undoMove();
-
-        //         if (score > best) best = score;
-        //         if (score > alpha) {
-        //             alpha = score;
-        //             if (alpha >= beta) break;
-        //         }
-        //     }
-
-        //     if (evasions == 0) {
-        //         // échec et mat
-        //         return matedInPly(ply);
-        //     }
-
-        //     return best;
-        // }
-
+        // Stand pat
         int bestValue = evaluate(board);
 
         if (bestValue >= beta) {
@@ -111,17 +112,22 @@ public class Search implements SearchAlgorithm {
 
         PackedMoveList moves = board.getCaptureMoves(moveLists[ply]);
         orderQMoves(moves);
+        
         for (int i = 0; i < moves.size(); i++) {
             nodes++;
 
-            int capturedPiece = PackedMove.getCaptured(moves.get(i));
+            int move = moves.get(i);
+            int capturedPiece = PackedMove.getCaptured(move);
 
-            // Delta pruning
-            if (Board.PIECE_SCORES[capturedPiece] + 400 + bestValue < alpha && !PackedMove.isPromotion(moves.get(i))) {
-                continue;
+            // TOUJOURS explorer les promotions
+            if (!PackedMove.isPromotion(move)) {
+                // Delta pruning seulement pour non-promotions
+                if (Board.PIECE_SCORES[capturedPiece] + 200 + bestValue < alpha) {
+                    continue;
+                }
             }
 
-            board.makeMove(moves.get(i));
+            board.makeMove(move);
             int score = -qsearch(board, -beta, -alpha, ply + 1);
             board.undoMove();
 
@@ -135,7 +141,6 @@ public class Search implements SearchAlgorithm {
                         break;
                     }
                 }
-                
             }
         }
 
@@ -152,13 +157,13 @@ public class Search implements SearchAlgorithm {
             return evaluate(board);
         }
 
-        pvLengths [ply] = ply;
+        pvLengths[ply] = ply;
         boolean rootNode = (ply == 0);
         long hashKey = board.zobristKey;
 
         if (!rootNode) {
             if (board.isThreefoldRepetition()) {
-                return -5;
+                return 0;
             }
 
             // Mate distance pruning
@@ -189,16 +194,20 @@ public class Search implements SearchAlgorithm {
             if (alpha >= beta) {
                 return ttScore;
             }
-
         }
 
         boolean inCheck = board.isKingInCheck(board.whiteTurn);
         
+        // Check extension
+        if (inCheck && depth < MAX_PLY - 1) {
+            depth++;
+        }
 
-        // Null move pruning
-        if (!inCheck && depth >= 3) {
+        // Null move pruning avec R=4 (comme l'ancien)
+        if (!inCheck && depth >= 3 && ply > 0) {
+            int R = 4;
             board.makeNullMove();
-            int score = -absearch(board, depth - 2, -beta, -beta + 1, ply + 1);
+            int score = -absearch(board, depth - R, -beta, -beta + 1, ply + 1);
             board.undoNullMove();
 
             if (score >= beta) {
@@ -218,11 +227,6 @@ public class Search implements SearchAlgorithm {
         PackedMoveList moves = board.getLegalMoves(moveLists[ply]);
         orderMoves(moves, ttMove, board, ply);
 
-
-        // final int LMR_REDUCTION = 1;
-        // final int LMR_MIN_MOVES = 3;
-        // final int LMR_MIN_DEPTH = 3;
-
         final boolean criticalDepth = (depth <= 2);
 
         for (int i = 0; i < moves.size(); i++) {
@@ -233,50 +237,39 @@ public class Search implements SearchAlgorithm {
             board.makeMove(move);
             boolean givesCheck = board.isKingInCheck(!board.whiteTurn);
             boolean isCapture = PackedMove.isCapture(move);
+            boolean isPromotion = PackedMove.isPromotion(move);
             boolean isPVNode = (beta - alpha > 1);
+            
             int reduction = 0;
-
-            if (!criticalDepth && !inCheck && !givesCheck && !isCapture && !PackedMove.isPromotion(move)) {
+            if (!criticalDepth && !inCheck && !givesCheck && !isCapture && !isPromotion) {
                 reduction = calculateReduction(depth, madeMoves, isPVNode);
             }
-
 
             int searchDepth = Math.max(depth - 1 - reduction, 0);
             int score;
 
-            // ===== PVS : NOUVEAU CODE =====
+            // PVS simplifié (comme l'ancien)
             if (madeMoves == 1) {
-                // Premier coup : recherche normale avec fenêtre complète
                 score = -absearch(board, searchDepth, -beta, -alpha, ply + 1);
             } else {
-                // Coups suivants : essayer d'abord avec fenêtre nulle (PVS)
                 score = -absearch(board, searchDepth, -alpha - 1, -alpha, ply + 1);
         
-                // Si le coup s'avère meilleur qu'attendu, re-rechercher avec fenêtre complète
                 if (score > alpha && score < beta) {
                     score = -absearch(board, searchDepth, -beta, -alpha, ply + 1);
                 }
             }
 
-            // Re-recherche LMR si nécessaire
+            // Re-recherche LMR simplifiée
             if (reduction > 0 && score > alpha) {
-                // Appliquer aussi PVS pour la re-recherche
-                if (madeMoves == 1) {
-                    score = -absearch(board, depth - 1, -beta, -alpha, ply + 1);
-                } else {
-                    score = -absearch(board, depth - 1, -alpha - 1, -alpha, ply + 1);
-                    if (score > alpha && score < beta) {
-                        score = -absearch(board, depth - 1, -beta, -alpha, ply + 1);
-                    }
-                }
+                score = -absearch(board, depth - 1, -beta, -alpha, ply + 1);
             }
+            
             board.undoMove();
 
             if (score > bestScore) {
                 bestScore = score;
                 bestMove = move;
 
-                // Update principal variation
                 principalVariations[ply][ply] = move;
 
                 for (int j = ply + 1; j < pvLengths[ply + 1]; j++) {
@@ -289,8 +282,6 @@ public class Search implements SearchAlgorithm {
                     alpha = score;
 
                     if (score >= beta) {
-                        // Update history
-                        // Only for non-capture moves
                         if (!PackedMove.isCapture(move)) {
                             int bonus = depth * depth;
                             int color = board.whiteTurn ? 0 : 1;
@@ -309,12 +300,9 @@ public class Search implements SearchAlgorithm {
                         break;
                     }
                 }
-
             }
-  
         }
         
-        // No moves made -> checkmate or stalemate
         if (madeMoves == 0) {
             if (inCheck) {
                 return matedInPly(ply);
@@ -323,7 +311,6 @@ public class Search implements SearchAlgorithm {
             }
         }
 
-        // Calculate bound for TT
         int flag;
         if (bestScore >= beta) {
             flag = TranspositionTable.Entry.LOWERBOUND;
@@ -340,39 +327,27 @@ public class Search implements SearchAlgorithm {
         return bestScore;
     }
 
-    
-    // Supprimer les constantes fixes et ajouter :
-
     private int calculateReduction(int depth, int moveNumber, boolean isPVNode) {
         if (moveNumber < 3 || depth < 3) {
-            return 0; // Pas de réduction
+            return 0;
         }
 
-        // Formule de base : réduction croissante
+        // Réduction simple et conservative (comme l'ancien)
         int reduction = 1;
-
-        if (depth >= 6) {
+        
+        if (moveNumber >= 8 && depth >= 6) {
             reduction = 2;
         }
 
-        if (moveNumber >= 6) {
-            reduction += 1;
-        }
-
-        if (moveNumber >= 12) {
-            reduction += 1;
-        }
-
-        // Moins de réduction sur les nœuds PV
-        if (isPVNode && reduction > 0) {
-            reduction -= 1;
+        // Pas de réduction sur PV
+        if (isPVNode) {
+            reduction = 0;
         }
 
         return reduction;
     }
 
-    
-        public void iterativeDeepening(Board board, int depthLimit) {
+    public void iterativeDeepening(Board board, int depthLimit) {
         nodes = 0;
         int score = 0;
         int bestMove = 0;
@@ -382,18 +357,15 @@ public class Search implements SearchAlgorithm {
         
             int alpha, beta;
         
-            // Premières profondeurs : fenêtre infinie pour avoir un score stable
             if (depth <= 4) {
                 alpha = -INFINITE_VALUE;
                 beta = INFINITE_VALUE;
                 score = absearch(board, depth, alpha, beta, 0);
             } else {
-                // Aspiration window : fenêtre étroite autour du score précédent
                 int window = 15;
                 alpha = score - window;
                 beta = score + window;
             
-                // Boucle de re-recherche si on sort de la fenêtre
                 int researches = 0;
                 while (true) {
                     score = absearch(board, depth, alpha, beta, 0);
@@ -402,22 +374,17 @@ public class Search implements SearchAlgorithm {
                         break;
                     }
 
-                    // Si on sort de la fenêtre, élargir et re-chercher
                     if (score <= alpha) {
-                        // Fail-low : le score est plus bas qu'attendu
                         beta = (alpha + beta) / 2;
                         alpha = Math.max(score - window * (1 + researches), -INFINITE_VALUE);
                         researches++;
                     } else if (score >= beta) {
-                        // Fail-high : le score est plus haut qu'attendu
                         beta = Math.min(score + window * (1 + researches), INFINITE_VALUE);
                         researches++;
                     } else {
-                        // Score dans la fenêtre, on peut continuer
                         break;
                     }
                 
-                    // Sécurité : après 3 re-recherches, fenêtre infinie
                     if (researches >= 3) {
                         alpha = -INFINITE_VALUE;
                         beta = INFINITE_VALUE;
@@ -434,7 +401,6 @@ public class Search implements SearchAlgorithm {
             printSearchInfo(depth, score, nodes, endTime - startTime);
         }
 
-        // Last attempt to get best move
         if (bestMove == 0) {
             bestMove = principalVariations[0][0];
         }
@@ -453,7 +419,6 @@ public class Search implements SearchAlgorithm {
             return true;
         }
 
-        // node limit
         if (nodeLimit != 0 && nodes >= nodeLimit) {
             return true;
         }
@@ -471,7 +436,6 @@ public class Search implements SearchAlgorithm {
 
         long currentTime = System.nanoTime();
 
-        // time limit
         if (currentTime >= startTime + timeLimit) {
             return true;
         }
@@ -488,7 +452,6 @@ public class Search implements SearchAlgorithm {
         return sb.toString().trim();
     }
     
-
     public String convertScore(int score) {
         if (score >= VALUE_MATE_IN_PLY) {
             return "mate " + (((VALUE_MATE - score) / 2) + ((VALUE_MATE - score) & 1));
@@ -502,9 +465,7 @@ public class Search implements SearchAlgorithm {
     public int scoreFromTT(int score, int ply) {
         if (score >= VALUE_TB_WIN_IN_MAX_PLY) {
             return score - ply;
-        }
-
-        else {
+        } else {
             if (score <= VALUE_TB_LOSS_IN_MAX_PLY) {
                 return score + ply;
             } else {
@@ -513,8 +474,6 @@ public class Search implements SearchAlgorithm {
         }
     }
 
-
-
     public int mateInPly(int ply) {
         return VALUE_MATE - ply;
     }
@@ -522,7 +481,6 @@ public class Search implements SearchAlgorithm {
     public int matedInPly(int ply) {
         return ply - VALUE_MATE;
     }
-
 
     private void printSearchInfo(int depth, int score, long nodes, long durationNanos) {
         double timeMs = durationNanos / 1_000_000.0;
@@ -535,7 +493,6 @@ public class Search implements SearchAlgorithm {
 
     @Override
     public void resetSearch() {
-        // reset PV lengths and principal variation table
         for (int i = 0; i < pvLengths.length; i++) {
             pvLengths[i] = 0;
         }
@@ -545,66 +502,29 @@ public class Search implements SearchAlgorithm {
             }
         }
 
-        // reset killers
         killermoves = new int[MAX_PLY][2];
-
-        
-        // reset history table and transposition table
         historyTable = new int[2][64][64];
     }
 
     public static final int[][] mvvLva = {
-
-            { 105, 205, 305, 405, 505, 605 }, // Pawn captures
-
-            { 104, 204, 304, 404, 504, 604 }, // Knight captures
-
-            { 103, 203, 303, 403, 503, 603 }, // Bishop captures
-
-            { 102, 202, 302, 402, 502, 602 }, // Rook captures
-
-            { 101, 201, 301, 401, 501, 601 }, // Queen captures
-
-            { 100, 200, 300, 400, 500, 600 } // King captures
-
+        { 105, 205, 305, 405, 505, 605 },
+        { 104, 204, 304, 404, 504, 604 },
+        { 103, 203, 303, 403, 503, 603 },
+        { 102, 202, 302, 402, 502, 602 },
+        { 101, 201, 301, 401, 501, 601 },
+        { 100, 200, 300, 400, 500, 600 }
     };
 
-    // public int scoreMove(int move, int ttMove, Board board) {
-    //     if (move == ttMove) {
-    //         return 1_000_000;
-    //     }
-
-    //     if (PackedMove.isCapture(move)) {
-    //         return 32_000 + mvvLva[PackedMove.getCaptured(move)][PackedMove.getPieceFrom(move)];
-    //     }
-
-    //     return historyTable[board.whiteTurn ? 0 : 1][PackedMove.getFrom(move)][PackedMove.getTo(move)];
-    // }
-
     public int scoreQMove(int move) {
-        // System.out.println(PackedMove.unpack(move));
-        // int captured = PackedMove.getCaptured(move);
-        // int pfrom = PackedMove.getPieceFrom(move);
-        // System.out.println(captured + " " + pfrom);
-        int score = mvvLva[PackedMove.getCaptured(move)][PackedMove.getPieceFrom(move)];
-        // System.out.println(score);
-        // System.exit(0);
-        return score;
+        return mvvLva[PackedMove.getCaptured(move)][PackedMove.getPieceFrom(move)];
     }
 
     /**
-     * Orders moves in the following order:
-     * 1️ -> Transposition table move
-     * 2️ -> Captures (MVV-LVA)
-     * 3️ -> Quiets (History heuristic)
-     * @param moves
-     * @param ttMove
-     * @param board
+     * Ordre: TT -> Promotions -> Captures donnant échec -> Captures -> Killers -> Quiets
      */
     public void orderMoves(PackedMoveList moves, int ttMove, Board board, int ply) {
         int size = moves.size();
         int[] m = moves.moves;
-
         int idx = 0;
 
         // 1) TT move
@@ -617,7 +537,29 @@ public class Search implements SearchAlgorithm {
             }
         }
 
-        // 2) Captures
+        // 2) Promotions (PRIORITÉ ABSOLUE)
+        for (int i = idx; i < size; i++) {
+            if (PackedMove.isPromotion(m[i])) {
+                swap(m, idx++, i);
+            }
+        }
+
+        // 3) Captures donnant échec
+        int checkCaptureStart = idx;
+        for (int i = idx; i < size; i++) {
+            if (PackedMove.isCapture(m[i])) {
+                board.makeMove(m[i]);
+                boolean givesCheck = board.isKingInCheck(!board.whiteTurn);
+                board.undoMove();
+                
+                if (givesCheck) {
+                    swap(m, idx++, i);
+                }
+            }
+        }
+        sortCaptures(m, checkCaptureStart, idx);
+
+        // 4) Autres captures
         int captureStart = idx;
         for (int i = idx; i < size; i++) {
             if (PackedMove.isCapture(m[i])) {
@@ -626,12 +568,11 @@ public class Search implements SearchAlgorithm {
         }
         sortCaptures(m, captureStart, idx);
 
-        // 3) Killers (quiet only, no duplicates)
+        // 5) Killers
         for (int k = 0; k < 2; k++) {
             int killer = killermoves[ply][k];
             if (killer == 0) continue;
             if (killer == ttMove) continue;
-            // if (PackedMove.isCapture(killer)) continue;
 
             for (int i = idx; i < size; i++) {
                 if (m[i] == killer) {
@@ -641,11 +582,9 @@ public class Search implements SearchAlgorithm {
             }
         }
 
-        // 4) Remaining quiets (history)
+        // 6) Quiets
         sortQuiets(m, idx, size, board);
     }
-    
-
 
     private static void swap(int[] arr, int a, int b) {
         int tmp = arr[a];
@@ -692,7 +631,6 @@ public class Search implements SearchAlgorithm {
         }
     }
 
-
     public void orderQMoves(PackedMoveList moves) {
         int size = moves.size();
         int[] m = moves.moves;
@@ -710,22 +648,16 @@ public class Search implements SearchAlgorithm {
         }
     }
 
-
     @Override
     public Move search(Board board, int wtime, int btime, int winc, int binc, int movetime, int depth, long maxNodes) {
-        // reset counters and timing
         nodes = 0;
         stopSearch = false;
         startTime = 0;
         checks = CHECK_RATE;
         resetSearch();
 
-
         nodeLimit = maxNodes;
 
-
-        
-        // Time management
         if (movetime > 0) {
             timeLimit = movetime * 1_000_000L;
         } else {
@@ -769,6 +701,4 @@ public class Search implements SearchAlgorithm {
         this.transpositionTable = null;
         this.transpositionTable = new TranspositionTable(sizeMB);
     }
-
-
 }
