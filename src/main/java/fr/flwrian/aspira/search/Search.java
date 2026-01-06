@@ -194,9 +194,6 @@ public class Search implements SearchAlgorithm {
 
         boolean inCheck = board.isKingInCheck(board.whiteTurn);
 
-        if (inCheck && depth < MAX_PLY - 1) {
-            // depth++; // Étendre la recherche d'un ply
-         }
         // Null move pruning
         if (!inCheck && depth >= 3 && ply > 0 && board.hasNonPawnMaterial()) {
             if (beta < VALUE_TB_WIN_IN_MAX_PLY){
@@ -211,6 +208,9 @@ public class Search implements SearchAlgorithm {
             }
         }
 
+        if (inCheck && depth < MAX_PLY - 1) {
+            depth++; // Étendre la recherche d'un ply
+        }
         int oldAlpha = alpha;
         int bestScore = -VALUE_INFINITE;
         int bestMove = 0;
