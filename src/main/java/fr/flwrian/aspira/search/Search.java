@@ -198,16 +198,16 @@ public class Search implements SearchAlgorithm {
             // depth++; // Étendre la recherche d'un ply
          }
         // Null move pruning
-        if (!inCheck && depth >= 3) {
-            board.makeNullMove();
-            int score = -absearch(board, depth - 2, -beta, -beta + 1, ply + 1);
-            board.undoNullMove();
+        if (!inCheck && depth >= 3 && ply > 0 && board.hasNonPawnMaterial()) {
+            if (beta < VALUE_TB_WIN_IN_MAX_PLY){
+                
+                board.makeNullMove();
+                int score = -absearch(board, depth - 4, -beta, -(beta - 1), ply + 1);
+                board.undoNullMove();
 
-            if (score >= beta) {
-                if (score >= VALUE_TB_WIN_IN_MAX_PLY) {
-                    score = beta;
+                if (score >= beta && score < VALUE_TB_WIN_IN_MAX_PLY) {
+                    return score;
                 }
-                return score;
             }
         }
 
@@ -353,22 +353,22 @@ public class Search implements SearchAlgorithm {
         // Formule de base : réduction croissante
         int reduction = 1;
 
-        if (depth >= 6) {
-            reduction = 2;
-        }
+        // if (depth >= 6) {
+        //     reduction = 2;
+        // }
 
-        if (moveNumber >= 6) {
-            reduction += 1;
-        }
+        // if (moveNumber >= 6) {
+        //     reduction += 1;
+        // }
 
-        if (moveNumber >= 12) {
-            reduction += 1;
-        }
+        // if (moveNumber >= 12) {
+        //     reduction += 1;
+        // }
 
-        // Moins de réduction sur les nœuds PV
-        if (isPVNode && reduction > 0) {
-            reduction -= 1;
-        }
+        // // Moins de réduction sur les nœuds PV
+        // if (isPVNode && reduction > 0) {
+        //     reduction -= 1;
+        // }
 
         return reduction;
     }
