@@ -101,6 +101,7 @@ With a good NNUE implementation, good HCE, good training, Aspira could very well
 
 On March 2025 on a **Ryzen 7 7800X3D**, Aspira reaches around **15 million nodes per second** in realistic conditions (legal move generation, checks, full rules enforced).
 December 2025: move gen about ~13Mnps on a Ryzen 5 5500U (18MNPS perft semi bulk i think).
+January 2026: bumped to ~20-22MNPS Ryzen 5 5500U (about 30MNPS on Ryzen 7 7800X3D)
 
 That number didn’t come from one big optimization. It came from dozens of small fixes:
 - removing unnecessary allocations
@@ -160,4 +161,5 @@ The name comes from *aspiring* — not just to build something stronger, but to 
 Somewhere along the way, it also started aspiring my soul.
 
 There’s still a lot to improve. But this is a solid foundation, earned the hard way.
+
 
