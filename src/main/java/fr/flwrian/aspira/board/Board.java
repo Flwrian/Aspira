@@ -2069,10 +2069,12 @@ public class Board {
     }
 
     public boolean isKingInCheck(boolean whiteTurn) {
-        // Generate opponent mask attack
-        long opponentAttacks = MoveGenerator.generateMask(this, !whiteTurn);
-        long king = whiteTurn ? whiteKing : blackKing;
-        return (opponentAttacks & king) != 0;
+        // // Generate opponent mask attack
+        // long opponentAttacks = MoveGenerator.generateMask(this, !whiteTurn);
+        // long king = whiteTurn ? whiteKing : blackKing;
+        // return (opponentAttacks & king) != 0;
+        int kingSquare = Long.numberOfTrailingZeros(whiteTurn ? whiteKing : blackKing);
+        return MoveGenerator.isSquareAttacked(this, kingSquare, !whiteTurn);
     }
 
     public boolean isInCheck() {

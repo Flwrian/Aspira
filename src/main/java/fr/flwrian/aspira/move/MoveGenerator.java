@@ -67,6 +67,28 @@ public class MoveGenerator {
     private static final long bishopAttacks[][] = new long[64][512];
     private static final long rookAttacks[][] = new long[64][4096];
 
+    public static final long[] WHITE_PAWN_ATTACKS = new long[64];
+    public static final long[] BLACK_PAWN_ATTACKS = new long[64];
+
+    static {
+        for (int sq = 0; sq < 64; sq++) {
+            long bb = 1L << sq;
+
+            // pions blancs attaquent vers le haut ( +7 / +9 )
+            long white = 0L;
+            if ((bb & Board.FILE_A) == 0) white |= bb << 9;
+            if ((bb & Board.FILE_H) == 0) white |= bb << 7;
+            WHITE_PAWN_ATTACKS[sq] = white;
+
+            // pions noirs attaquent vers le bas ( -7 / -9 )
+            long black = 0L;
+            if ((bb & Board.FILE_A) == 0) black |= bb >>> 7;
+            if ((bb & Board.FILE_H) == 0) black |= bb >>> 9;
+            BLACK_PAWN_ATTACKS[sq] = black;
+        }
+    }
+
+
     // init slider piece attacks
     public static void initSliderAttacks(boolean bishop) {
         for (int square = 0; square < 64; square++) {
@@ -728,6 +750,34 @@ public class MoveGenerator {
 
         return moves;
     }
+
+    public static boolean isSquareAttacked(Board board, int sq, boolean byWhite) {
+
+        long occupancy = board.bitboard;
+
+        long pawns   = byWhite ? board.whitePawns   : board.blackPawns;
+        long knights = byWhite ? board.whiteKnights : board.blackKnights;
+        long bishops = byWhite ? board.whiteBishops : board.blackBishops;
+        long rooks   = byWhite ? board.whiteRooks   : board.blackRooks;
+        long queens  = byWhite ? board.whiteQueens  : board.blackQueens;
+        long king    = byWhite ? board.whiteKing    : board.blackKing;
+
+        if ((Board.KNIGHT_MOVES[sq] & knights) != 0) return true;
+
+        long pawnAttacks = byWhite
+            ? BLACK_PAWN_ATTACKS[sq]
+            : WHITE_PAWN_ATTACKS[sq];
+
+        if ((pawnAttacks & pawns) != 0) return true;
+
+        if ((getBishopAttacks(sq, occupancy) & (bishops | queens)) != 0) return true;
+        if ((getRookAttacks(sq, occupancy) & (rooks | queens)) != 0) return true;
+
+        if ((Board.KING_MOVES[sq] & king) != 0) return true;
+
+        return false;
+    }
+
 
     public static long generateWhiteMask(Board board) {
         long whiteAttacks = 0L;
