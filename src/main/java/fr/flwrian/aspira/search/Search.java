@@ -10,7 +10,7 @@ import fr.flwrian.aspira.move.PackedMoveList;
 
 public class Search implements SearchAlgorithm {
 
-    static final int MAX_PLY = 128;
+    static final int MAX_PLY = 256;
 
     static final int VALUE_MATE = 32000;
     static final int VALUE_INFINITE = 32001;
