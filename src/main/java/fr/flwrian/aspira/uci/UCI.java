@@ -119,6 +119,8 @@ public class UCI {
                 }
                 searchAlgorithm.setHashTable(sizeMB);
                 break;
+
+            // Currently only 1 thread is supported
             case "Threads":
                 int threads = Integer.parseInt(value);
                 if (threads < THREADS_MIN || threads > THREADS_MAX) {

@@ -425,13 +425,14 @@ public class Search implements SearchAlgorithm {
                 }
             }
 
-            if (stopSearch || checkTime(true)) {
-                break;
-            }
-        
+            
             bestMove = principalVariations[0][0];
             long endTime = System.nanoTime();
             printSearchInfo(depth, score, nodes, endTime - startTime);
+            
+            if (stopSearch || checkTime(true)) {
+                break;
+            }
         }
 
         // Last attempt to get best move
