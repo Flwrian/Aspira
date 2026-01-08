@@ -70,17 +70,16 @@ public class MoveGenerator {
     public static final long[] WHITE_PAWN_ATTACKS = new long[64];
     public static final long[] BLACK_PAWN_ATTACKS = new long[64];
 
+    // pre compute pawn attacks
     static {
         for (int sq = 0; sq < 64; sq++) {
             long bb = 1L << sq;
 
-            // pions blancs attaquent vers le haut ( +7 / +9 )
             long white = 0L;
             if ((bb & Board.FILE_A) == 0) white |= bb << 9;
             if ((bb & Board.FILE_H) == 0) white |= bb << 7;
             WHITE_PAWN_ATTACKS[sq] = white;
 
-            // pions noirs attaquent vers le bas ( -7 / -9 )
             long black = 0L;
             if ((bb & Board.FILE_A) == 0) black |= bb >>> 7;
             if ((bb & Board.FILE_H) == 0) black |= bb >>> 9;
@@ -220,7 +219,6 @@ public class MoveGenerator {
         for (int square = 0; square < 64; square++) {
             int relevantOccupancyBitCount = rookRelevantOccupancyBitCount[square];
             long magicNumber = generateMagicNumber(square, relevantOccupancyBitCount, false);
-            // print the numbers so i can copy paste them
             System.out.printf("0x%XL, ", magicNumber);
         }
         System.out.println("");
@@ -228,7 +226,6 @@ public class MoveGenerator {
         for (int square = 0; square < 64; square++) {
             int relevantOccupancyBitCount = bishopRelevantOccupancyBitCount[square];
             long magicNumber = generateMagicNumber(square, relevantOccupancyBitCount, true);
-            // print the numbers so i can copy paste them
             System.out.printf("0x%XL, ", magicNumber);
         }
 
@@ -264,15 +261,6 @@ public class MoveGenerator {
     public static void printMask(Board board, boolean white) {
         long mask = generateMask(board, white);
         board.printBitBoard(mask);
-    }
-
-    public static int countBits(long mask) {
-        int count = 0;
-        while (mask != 0) {
-            mask &= mask - 1;
-            count++;
-        }
-        return count;
     }
 
     private static final int[] PROMO_PIECES = {
@@ -317,8 +305,6 @@ public class MoveGenerator {
                 int captured = isEnPassant
                         ? Board.PAWN
                         : board.getPiece(to);
-
-                boolean isCapture = isEnPassant || captured != Board.EMPTY;
 
                 // promotion
                 if (isPromotion) {
@@ -885,36 +871,6 @@ public class MoveGenerator {
         return pawnMask;
     }
 
-    private static long generatePawnAttacks(long pawns, boolean white) {
-        // Mask + capture and en passant moves
-        long pawnAttacks = 0L;
-        if (white) {
-            // Captures diagonales, gauche et droite
-            long capturesLeft = (pawns << 9) & ~Board.FILE_H;
-            long capturesRight = (pawns << 7) & ~Board.FILE_A;
-
-            pawnAttacks |= capturesLeft | capturesRight;
-        } else {
-            // Captures diagonales, gauche et droite
-            long capturesLeft = (pawns >> 7) & ~Board.FILE_H;
-            long capturesRight = (pawns >> 9) & ~Board.FILE_A;
-
-            pawnAttacks |= capturesLeft | capturesRight;
-        }
-
-        // En passant
-        if (white) {
-            long enPassantLeft = (pawns << 9) & Board.FILE_H;
-            long enPassantRight = (pawns << 7) & Board.FILE_A;
-            pawnAttacks |= enPassantLeft | enPassantRight;
-        } else {
-            long enPassantLeft = (pawns >> 7) & Board.FILE_H;
-            long enPassantRight = (pawns >> 9) & Board.FILE_A;
-            pawnAttacks |= enPassantLeft | enPassantRight;
-        }
-        return pawnAttacks;
-    }
-
     public static long generatePawnMoves(long pawns, Board board) {
         long pawnMoves = 0L;
 
@@ -938,11 +894,7 @@ public class MoveGenerator {
 
         } else {
             long singlePush = (pawns >> 8) & ~board.getBoard(); // Avancer d'une case
-            long doublePush = ((pawns >> 16) & ~board.getBoard() & (singlePush >> 8) & Board.RANK_5); // Avancer de
-                                                                                                      // deux cases
-                                                                                                      // depuis la
-                                                                                                      // rangée
-                                                                                                      // initiale
+            long doublePush = ((pawns >> 16) & ~board.getBoard() & (singlePush >> 8) & Board.RANK_5);
             pawnMoves |= singlePush | doublePush;
             // Captures diagonales, gauche et droite
             long capturesLeft = (pawns >> 7) & board.getWhitePieces() & ~Board.FILE_H;
