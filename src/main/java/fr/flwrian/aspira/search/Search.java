@@ -190,16 +190,6 @@ public class Search implements SearchAlgorithm {
 
         boolean inCheck = board.isKingInCheck(board.whiteTurn);
 
-        if (!inCheck && depth <= 3 && !rootNode) {
-            int staticEval = evaluate(board);
-
-            int margin = 100 * depth;
-            if (staticEval + margin <= alpha) {
-                return staticEval + margin;
-            }
-        }
-
-
         // Null move pruning
         if (!inCheck && depth >= 3 && ply > 0 && board.hasNonPawnMaterial()) {
             if (beta < MATE_BOUND){
@@ -250,23 +240,22 @@ public class Search implements SearchAlgorithm {
             int searchDepth = Math.max(depth - 1 - reduction, 0) + extensions;
             int score;
 
-            // ===== PVS : NOUVEAU CODE =====
             if (madeMoves == 1) {
-                // Premier coup : recherche normale avec fenêtre complète
+                // full search pv
                 score = -absearch(board, searchDepth, -beta, -alpha, ply + 1);
             } else {
-                // Coups suivants : essayer d'abord avec fenêtre nulle (PVS)
+                // try with null window
                 score = -absearch(board, searchDepth, -alpha - 1, -alpha, ply + 1);
         
-                // Si le coup s'avère meilleur qu'attendu, re-rechercher avec fenêtre complète
+                // if fails high, do a full search
                 if (score > alpha && score < beta) {
                     score = -absearch(board, searchDepth, -beta, -alpha, ply + 1);
                 }
             }
 
-            // Re-recherche LMR si nécessaire
+            // Re search if reduced and score > alpha
             if (reduction > 0 && score > alpha) {
-                // Appliquer aussi PVS pour la re-recherche
+                // Apply PVS for re search
                 if (madeMoves == 1) {
                     score = -absearch(board, depth - 1, -beta, -alpha, ply + 1);
                 } else {
@@ -295,7 +284,7 @@ public class Search implements SearchAlgorithm {
                     alpha = score;
 
                     if (score >= beta) {
-                        // Update history
+                        // Update history and killers
                         // Only for non-capture moves
                         if (!PackedMove.isCapture(move)) {
                             int bonus = depth * depth;
@@ -347,14 +336,11 @@ public class Search implements SearchAlgorithm {
     }
 
     
-    // Supprimer les constantes fixes et ajouter :
-
     private int calculateReduction(int depth, int moveNumber, boolean isPVNode) {
         if (moveNumber < 3 || depth < 3) {
-            return 0; // Pas de réduction
+            return 0;
         }
 
-        // Formule de base : réduction croissante
         int reduction = 1;
 
         // if (depth >= 6) {
@@ -369,7 +355,6 @@ public class Search implements SearchAlgorithm {
         //     reduction += 1;
         // }
 
-        // // Moins de réduction sur les nœuds PV
         // if (isPVNode && reduction > 0) {
         //     reduction -= 1;
         // }
@@ -378,73 +363,66 @@ public class Search implements SearchAlgorithm {
     }
 
     
-        public void iterativeDeepening(Board board, int depthLimit) {
+    public void iterativeDeepening(Board board, int depthLimit) {
         nodes = 0;
         int score = 0;
         int bestMove = 0;
         startTime = System.nanoTime();
-
+        
         for (int depth = 1; depth <= depthLimit; depth++) {
-        
-            int alpha, beta;
-        
-            // Premières profondeurs : fenêtre infinie pour avoir un score stable
-            if (depth <= 4) {
-                alpha = -INFINITE_VALUE;
-                beta = INFINITE_VALUE;
-                score = absearch(board, depth, alpha, beta, 0);
-            } else {
-                // Aspiration window : fenêtre étroite autour du score précédent
-                int window = 15;
-                alpha = score - window;
-                beta = score + window;
+            int alpha = -INFINITE_VALUE;
+            int beta = INFINITE_VALUE;
+            int windowSize = 50; // Taille initiale de la fenêtre
             
-                // Boucle de re-recherche si on sort de la fenêtre
-                int researches = 0;
-                while (true) {
-                    score = absearch(board, depth, alpha, beta, 0);
-
-                    if (stopSearch || checkTime(true)) {
-                        break;
-                    }
-
-                    // Si on sort de la fenêtre, élargir et re-chercher
-                    if (score <= alpha) {
-                        // Fail-low : le score est plus bas qu'attendu
-                        beta = (alpha + beta) / 2;
-                        alpha = Math.max(score - window * (1 + researches), -INFINITE_VALUE);
-                        researches++;
-                    } else if (score >= beta) {
-                        // Fail-high : le score est plus haut qu'attendu
-                        beta = Math.min(score + window * (1 + researches), INFINITE_VALUE);
-                        researches++;
-                    } else {
-                        // Score dans la fenêtre, on peut continuer
-                        break;
-                    }
+            // Utiliser aspiration window seulement après les premières profondeurs
+            if (depth >= 5 && score != -INFINITE_VALUE) {
+                alpha = score - windowSize;
+                beta = score + windowSize;
+            }
+            
+            while (true) {
+                score = absearch(board, depth, alpha, beta, 0);
                 
-                    // Sécurité : après 3 re-recherches, fenêtre infinie
-                    if (researches >= 3) {
-                        alpha = -INFINITE_VALUE;
-                        beta = INFINITE_VALUE;
-                    }
+                if (stopSearch || checkTime(true)) {
+                    break;
+                }
+                
+                // Si le score est dans la fenêtre, c'est bon
+                if (score > alpha && score < beta) {
+                    break;
+                }
+                
+                // Fail-low : élargir la borne inférieure
+                if (score <= alpha) {
+                    alpha = score - windowSize;
+                    windowSize *= 4;
+                }
+                // Fail-high : élargir la borne supérieure
+                else if (score >= beta) {
+                    beta = score + windowSize;
+                    windowSize *= 4;
+                }
+                
+                // Si la fenêtre devient trop grande, repasser en recherche complète
+                if (windowSize > INFINITE_VALUE / 8) {
+                    alpha = -INFINITE_VALUE;
+                    beta = INFINITE_VALUE;
                 }
             }
-
+            
             if (stopSearch || checkTime(true)) {
                 break;
             }
-        
+            
             bestMove = principalVariations[0][0];
             long endTime = System.nanoTime();
             printSearchInfo(depth, score, nodes, endTime - startTime);
         }
-
-        // Last attempt to get best move
+        
         if (bestMove == 0) {
             bestMove = principalVariations[0][0];
         }
-
+        
         Move best = PackedMove.unpack(bestMove);
         System.out.println("bestmove " + best);
     }
