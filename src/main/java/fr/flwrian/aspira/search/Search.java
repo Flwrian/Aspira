@@ -368,61 +368,68 @@ public class Search implements SearchAlgorithm {
         int score = 0;
         int bestMove = 0;
         startTime = System.nanoTime();
-        
+
         for (int depth = 1; depth <= depthLimit; depth++) {
-            int alpha = -INFINITE_VALUE;
-            int beta = INFINITE_VALUE;
-            int windowSize = 50; // Taille initiale de la fenêtre
-            
-            // Utiliser aspiration window seulement après les premières profondeurs
-            if (depth >= 5 && score != -INFINITE_VALUE) {
-                alpha = score - windowSize;
-                beta = score + windowSize;
-            }
-            
-            while (true) {
+        
+            int alpha, beta;
+        
+            // Premières profondeurs : fenêtre infinie pour avoir un score stable
+            if (depth <= 4) {
+                alpha = -INFINITE_VALUE;
+                beta = INFINITE_VALUE;
                 score = absearch(board, depth, alpha, beta, 0);
+            } else {
+                // Aspiration window : fenêtre étroite autour du score précédent
+                int window = 15;
+                alpha = score - window;
+                beta = score + window;
+            
+                // Boucle de re-recherche si on sort de la fenêtre
+                int researches = 0;
+                while (true) {
+                    score = absearch(board, depth, alpha, beta, 0);
+
+                    if (stopSearch || checkTime(true)) {
+                        break;
+                    }
+
+                    // Si on sort de la fenêtre, élargir et re-chercher
+                    if (score <= alpha) {
+                        // Fail-low : le score est plus bas qu'attendu
+                        beta = (alpha + beta) / 2;
+                        alpha = Math.max(score - window * (1 + researches), -INFINITE_VALUE);
+                        researches++;
+                    } else if (score >= beta) {
+                        // Fail-high : le score est plus haut qu'attendu
+                        beta = Math.min(score + window * (1 + researches), INFINITE_VALUE);
+                        researches++;
+                    } else {
+                        // Score dans la fenêtre, on peut continuer
+                        break;
+                    }
                 
-                if (stopSearch || checkTime(true)) {
-                    break;
-                }
-                
-                // Si le score est dans la fenêtre, c'est bon
-                if (score > alpha && score < beta) {
-                    break;
-                }
-                
-                // Fail-low : élargir la borne inférieure
-                if (score <= alpha) {
-                    alpha = score - windowSize;
-                    windowSize *= 4;
-                }
-                // Fail-high : élargir la borne supérieure
-                else if (score >= beta) {
-                    beta = score + windowSize;
-                    windowSize *= 4;
-                }
-                
-                // Si la fenêtre devient trop grande, repasser en recherche complète
-                if (windowSize > INFINITE_VALUE / 8) {
-                    alpha = -INFINITE_VALUE;
-                    beta = INFINITE_VALUE;
+                    // Sécurité : après 3 re-recherches, fenêtre infinie
+                    if (researches >= 3) {
+                        alpha = -INFINITE_VALUE;
+                        beta = INFINITE_VALUE;
+                    }
                 }
             }
-            
+
             if (stopSearch || checkTime(true)) {
                 break;
             }
-            
+        
             bestMove = principalVariations[0][0];
             long endTime = System.nanoTime();
             printSearchInfo(depth, score, nodes, endTime - startTime);
         }
-        
+
+        // Last attempt to get best move
         if (bestMove == 0) {
             bestMove = principalVariations[0][0];
         }
-        
+
         Move best = PackedMove.unpack(bestMove);
         System.out.println("bestmove " + best);
     }
@@ -520,14 +527,17 @@ public class Search implements SearchAlgorithm {
     @Override
     public void resetSearch() {
         // reset PV lengths and principal variation table
-        for (int i = 0; i < pvLengths.length; i++) {
-            pvLengths[i] = 0;
-        }
-        for (int i = 0; i < principalVariations.length; i++) {
-            for (int j = 0; j < principalVariations[i].length; j++) {
-                principalVariations[i][j] = 0;
-            }
-        }
+        // for (int i = 0; i < pvLengths.length; i++) {
+        //     pvLengths[i] = 0;
+        // }
+        // for (int i = 0; i < principalVariations.length; i++) {
+        //     for (int j = 0; j < principalVariations[i].length; j++) {
+        //         principalVariations[i][j] = 0;
+        //     }
+        // }
+
+        pvLengths = new int[MAX_PLY];
+        principalVariations = new int[MAX_PLY][MAX_PLY];
 
         // reset killers
         killermoves = new int[MAX_PLY][2];
