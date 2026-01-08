@@ -192,22 +192,7 @@ public class Search implements SearchAlgorithm {
 
         }
 
-        boolean isPVNode = (beta - alpha > 1);
         boolean inCheck = board.isKingInCheck(board.whiteTurn);
-
-        if (!isPVNode
-            && depth <= 4
-            && !inCheck) {
-
-            int staticEval = evaluate(board);
-
-            int margin = 120 + depth * 80;
-
-            if (staticEval + margin <= alpha) {
-                return staticEval;
-            }
-        }
-
 
         // Null move pruning
         if (!inCheck && depth >= 3 && ply > 0 && board.hasNonPawnMaterial()) {
@@ -247,6 +232,7 @@ public class Search implements SearchAlgorithm {
             board.makeMove(move);
             boolean givesCheck = board.isKingInCheck(!board.whiteTurn);
             boolean isCapture = PackedMove.isCapture(move);
+            boolean isPVNode = (beta - alpha > 1);
             int reduction = 0;
             int extensions = givesCheck ? 1 : 0;
 
