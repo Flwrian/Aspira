@@ -190,6 +190,16 @@ public class Search implements SearchAlgorithm {
 
         boolean inCheck = board.isKingInCheck(board.whiteTurn);
 
+        if (!inCheck && depth <= 3 && !rootNode) {
+            int staticEval = evaluate(board);
+
+            int margin = 100 * depth;
+            if (staticEval + margin <= alpha) {
+                return staticEval + margin;
+            }
+        }
+
+
         // Null move pruning
         if (!inCheck && depth >= 3 && ply > 0 && board.hasNonPawnMaterial()) {
             if (beta < MATE_BOUND){
