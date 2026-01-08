@@ -10,19 +10,15 @@ import fr.flwrian.aspira.move.PackedMoveList;
 
 public class Search implements SearchAlgorithm {
 
-    static final int MAX_PLY = 256;
+    static final int MAX_PLY = 128;
 
-    static final int VALUE_MATE = 32000;
-    static final int VALUE_INFINITE = 32001;
-    static final int VALUE_NONE = 32002;
+    static final int MATE = 32000;
+    static final int MATE_BOUND = 31000;
+    static final int INFINITE = 32001;
+    static final int DRAW = -5; // bias to avoid draws
 
-    static final int VALUE_MATE_IN_PLY = VALUE_MATE - MAX_PLY;
+    static final int VALUE_MATE_IN_PLY = MATE - MAX_PLY;
     static final int VALUE_MATED_IN_PLY = -VALUE_MATE_IN_PLY;
-
-    static final int VALUE_TB_WIN = VALUE_MATE_IN_PLY;
-    static final int VALUE_TB_LOSS = -VALUE_TB_WIN;
-    static final int VALUE_TB_WIN_IN_MAX_PLY = VALUE_TB_WIN - MAX_PLY;
-    static final int VALUE_TB_LOSS_IN_MAX_PLY = -VALUE_TB_WIN_IN_MAX_PLY;
 
     private static final PackedMoveList[] moveLists = new PackedMoveList[MAX_PLY];
 
@@ -196,20 +192,20 @@ public class Search implements SearchAlgorithm {
 
         // Null move pruning
         if (!inCheck && depth >= 3 && ply > 0 && board.hasNonPawnMaterial()) {
-            if (beta < VALUE_TB_WIN_IN_MAX_PLY){
+            if (beta < MATE_BOUND){
                 
                 board.makeNullMove();
                 int score = -absearch(board, depth - 4, -beta, -(beta - 1), ply + 1);
                 board.undoNullMove();
 
-                if (score >= beta && score < VALUE_TB_WIN_IN_MAX_PLY) {
+                if (score >= beta && score < MATE_BOUND) {
                     return score;
                 }
             }
         }
 
         int oldAlpha = alpha;
-        int bestScore = -VALUE_INFINITE;
+        int bestScore = -INFINITE;
         int bestMove = 0;
 
         int madeMoves = 0;
@@ -491,21 +487,21 @@ public class Search implements SearchAlgorithm {
 
     public String convertScore(int score) {
         if (score >= VALUE_MATE_IN_PLY) {
-            return "mate " + (((VALUE_MATE - score) / 2) + ((VALUE_MATE - score) & 1));
+            return "mate " + (((MATE - score) / 2) + ((MATE - score) & 1));
         } else if (score <= VALUE_MATED_IN_PLY) {
-            return "mate " + (-((VALUE_MATE + score) / 2) + ((VALUE_MATE + score) & 1));
+            return "mate " + (-((MATE + score) / 2) + ((MATE + score) & 1));
         } else {
             return "cp " + score;
         }
     }
 
     public int scoreFromTT(int score, int ply) {
-        if (score >= VALUE_TB_WIN_IN_MAX_PLY) {
+        if (score >= MATE - MAX_PLY) {
             return score - ply;
         }
 
         else {
-            if (score <= VALUE_TB_LOSS_IN_MAX_PLY) {
+            if (score <= -MATE + MAX_PLY) {
                 return score + ply;
             } else {
                 return score;
@@ -516,11 +512,11 @@ public class Search implements SearchAlgorithm {
 
 
     public int mateInPly(int ply) {
-        return VALUE_MATE - ply;
+        return MATE - ply;
     }
 
     public int matedInPly(int ply) {
-        return ply - VALUE_MATE;
+        return ply - MATE;
     }
 
 
@@ -631,7 +627,6 @@ public class Search implements SearchAlgorithm {
             int killer = killermoves[ply][k];
             if (killer == 0) continue;
             if (killer == ttMove) continue;
-            // if (PackedMove.isCapture(killer)) continue;
 
             for (int i = idx; i < size; i++) {
                 if (m[i] == killer) {
