@@ -164,7 +164,7 @@ public class Board {
     };
 
     // knight pre-encoded moves
-    public static final long[] KNIGHT_MOVES = {
+    public static final long[] KNIGHT_ATTACKS = {
             (B3 | C2), // A1
             (C3 | D2 | A3), // B1
             (D3 | E2 | A2 | B3), // C1
@@ -239,7 +239,7 @@ public class Board {
     };
 
     // king pre-encoded moves
-    public static final long[] KING_MOVES = {
+    public static final long[] KING_ATTACKS = {
             (B1 | B2 | A2), // A1
             (A1 | C1 | C2 | A2 | B2), // B1
             (B1 | D1 | D2 | B2 | C2), // C1
@@ -715,7 +715,6 @@ public class Board {
 
         // en passant square
         if (!fenParts[3].equals("-")) {
-            System.out.println(fenParts[3]);
             int file = fenParts[3].charAt(0) - 'a';
             int rank = fenParts[3].charAt(1) - '1';
             enPassantSquare = 1L << (rank * 8 + file);

@@ -620,7 +620,7 @@ public class Search implements SearchAlgorithm {
         }
         sortCaptures(m, captureStart, idx);
 
-        // 3) Killers (quiet only, no duplicates)
+        // 3) Killers
         for (int k = 0; k < 2; k++) {
             int killer = killermoves[ply][k];
             if (killer == 0) continue;
@@ -762,6 +762,19 @@ public class Search implements SearchAlgorithm {
         this.transpositionTable = null;
         this.transpositionTable = new TranspositionTable(sizeMB);
     }
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 }

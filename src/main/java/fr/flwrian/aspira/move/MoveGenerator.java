@@ -748,7 +748,7 @@ public class MoveGenerator {
         long queens  = byWhite ? board.whiteQueens  : board.blackQueens;
         long king    = byWhite ? board.whiteKing    : board.blackKing;
 
-        if ((Board.KNIGHT_MOVES[sq] & knights) != 0) return true;
+        if ((Board.KNIGHT_ATTACKS[sq] & knights) != 0) return true;
 
         long pawnAttacks = byWhite
             ? BLACK_PAWN_ATTACKS[sq]
@@ -759,11 +759,48 @@ public class MoveGenerator {
         if ((getBishopAttacks(sq, occupancy) & (bishops | queens)) != 0) return true;
         if ((getRookAttacks(sq, occupancy) & (rooks | queens)) != 0) return true;
 
-        if ((Board.KING_MOVES[sq] & king) != 0) return true;
+        if ((Board.KING_ATTACKS[sq] & king) != 0) return true;
 
         return false;
     }
 
+    // Get attackers for a given square
+    public static long getAttackers(Board board, int sq, boolean byWhite) {
+
+        long occupancy = board.bitboard;
+        long attackers = 0L;
+
+        long pawns   = byWhite ? board.whitePawns   : board.blackPawns;
+        long knights = byWhite ? board.whiteKnights : board.blackKnights;
+        long bishops = byWhite ? board.whiteBishops : board.blackBishops;
+        long rooks   = byWhite ? board.whiteRooks   : board.blackRooks;
+        long queens  = byWhite ? board.whiteQueens  : board.blackQueens;
+        long king    = byWhite ? board.whiteKing    : board.blackKing;
+
+        if ((Board.KNIGHT_ATTACKS[sq] & knights) != 0)
+            attackers |= (Board.KNIGHT_ATTACKS[sq] & knights);
+
+        long pawnAttacks = byWhite
+            ? BLACK_PAWN_ATTACKS[sq]
+            : WHITE_PAWN_ATTACKS[sq];
+
+        if ((pawnAttacks & pawns) != 0)
+            attackers |= (pawnAttacks & pawns);
+
+        long bishopAttacks = getBishopAttacks(sq, occupancy);
+        if ((bishopAttacks & (bishops | queens)) != 0)
+            attackers |= (bishopAttacks & (bishops | queens));
+
+        long rookAttacks = getRookAttacks(sq, occupancy);
+        if ((rookAttacks & (rooks | queens)) != 0)
+            attackers |= (rookAttacks & (rooks | queens));
+
+        if ((Board.KING_ATTACKS[sq] & king) != 0)
+            attackers |= (Board.KING_ATTACKS[sq] & king);
+
+        return attackers;
+    }
+    
 
     public static long generateWhiteMask(Board board) {
         long whiteAttacks = 0L;
@@ -922,7 +959,7 @@ public class MoveGenerator {
             knights &= knights - 1; //
 
             // run the knight through the precomputed knight moves
-            long knightMoves = Board.KNIGHT_MOVES[Long.numberOfTrailingZeros(knight)];
+            long knightMoves = Board.KNIGHT_ATTACKS[Long.numberOfTrailingZeros(knight)];
 
             knightMask |= knightMoves;
         }
@@ -1147,10 +1184,10 @@ public class MoveGenerator {
     }
 
     public static long generateKingMask(long king) {
-        return Board.KING_MOVES[Long.numberOfTrailingZeros(king)];
+        return Board.KING_ATTACKS[Long.numberOfTrailingZeros(king)];
     }
 
-    public static final long generateWhiteKingMoves(long king, Board board) {
+    public static long generateWhiteKingMoves(long king, Board board) {
         // Le roi peut se déplacer d'une case dans toutes les directions et peut roquer
         long kingMoves = generateKingMask(king);
         // pas la meme couleur
