@@ -81,9 +81,9 @@ public class Search implements SearchAlgorithm {
             nodes++;
 
             // SEE pruning
-            // if (!SEE.staticExchangeEvaluation(board, moves.get(i), 0)) {
-            //     continue;
-            // }
+            if (!SEE.staticExchangeEvaluation(board, moves.get(i), 0)) {
+                continue;
+            }
 
             int capturedPiece = PackedMove.getCaptured(moves.get(i));
 
