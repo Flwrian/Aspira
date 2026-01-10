@@ -65,36 +65,6 @@ public class Search implements SearchAlgorithm {
             return evaluate(board);
         }
 
-        // boolean inCheck = board.isKingInCheck(board.whiteTurn);
-        
-        // if (inCheck) {
-        //     PackedMoveList moves = board.getLegalMoves(moveLists[ply]);
-
-        //     int best = -VALUE_INFINITE;
-        //     int evasions = moves.size();
-        //     for (int i = 0; i < evasions; i++) {
-        //         int move = moves.get(i);
-        //         nodes++;
-
-        //         board.makeMove(move);
-        //         int score = -qsearch(board, -beta, -alpha, ply + 1);
-        //         board.undoMove();
-
-        //         if (score > best) best = score;
-        //         if (score > alpha) {
-        //             alpha = score;
-        //             if (alpha >= beta) break;
-        //         }
-        //     }
-
-        //     if (evasions == 0) {
-        //         // échec et mat
-        //         return matedInPly(ply);
-        //     }
-
-        //     return best;
-        // }
-
         int bestValue = evaluate(board);
 
         if (bestValue >= beta) {
@@ -111,9 +81,9 @@ public class Search implements SearchAlgorithm {
             nodes++;
 
             // SEE pruning
-            if (!SEE.staticExchangeEvaluation(board, moves.get(i), 0)) {
-                continue;
-            }
+            // if (!SEE.staticExchangeEvaluation(board, moves.get(i), 0)) {
+            //     continue;
+            // }
 
             int capturedPiece = PackedMove.getCaptured(moves.get(i));
 
@@ -553,18 +523,18 @@ public class Search implements SearchAlgorithm {
     }
 
     public static final int[][] mvvLva = {
+        
+        { 105, 104, 103, 102, 101, 100 }, // Pawn captures
 
-            { 105, 205, 305, 405, 505, 605 }, // Pawn captures
+        { 205, 204, 203, 202, 201, 200 }, // Knight captures
 
-            { 104, 204, 304, 404, 504, 604 }, // Knight captures
+        { 305, 304, 303, 302, 301, 300 }, // Bishop captures
 
-            { 103, 203, 303, 403, 503, 603 }, // Bishop captures
+        { 405, 404, 403, 402, 401, 400 }, // Rook captures
 
-            { 102, 202, 302, 402, 502, 602 }, // Rook captures
+        { 505, 504, 503, 502, 501, 500 }, // Queen captures
 
-            { 101, 201, 301, 401, 501, 601 }, // Queen captures
-
-            { 100, 200, 300, 400, 500, 600 } // King captures
+        { 605, 604, 603, 602, 601, 600 }  // King captures
 
     };
 
@@ -581,13 +551,7 @@ public class Search implements SearchAlgorithm {
     // }
 
     public int scoreQMove(int move) {
-        // System.out.println(PackedMove.unpack(move));
-        // int captured = PackedMove.getCaptured(move);
-        // int pfrom = PackedMove.getPieceFrom(move);
-        // System.out.println(captured + " " + pfrom);
         int score = mvvLva[PackedMove.getCaptured(move)][PackedMove.getPieceFrom(move)];
-        // System.out.println(score);
-        // System.exit(0);
         return score;
     }
 
