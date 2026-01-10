@@ -17,13 +17,9 @@ public interface SearchAlgorithm {
 
     public long getLastNPS();
 
-    // public void setDepth(int depth);
+    public void flushHashTable();
 
-    // public void setRazorDepth(int depth);
+    public void setHashTable(int sizeMB);
 
-    // public void setNPM(int npm);
-
-    // public int getRazorDepth();
-
-    // public int getNPM();
+    public void resetSearch();
 }

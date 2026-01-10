@@ -6,16 +6,6 @@ import fr.flwrian.aspira.board.Board;
 
 public class MoveGenerator {
 
-    // Table MVV-LVA (Most Valuable Victim, Least Valuable Attacker)
-    private static final int[][] mvvLva = {
-            { 105, 205, 305, 405, 505, 605 }, // Pawn captures
-            { 104, 204, 304, 404, 504, 604 }, // Knight captures
-            { 103, 203, 303, 403, 503, 603 }, // Bishop captures
-            { 102, 202, 302, 402, 502, 602 }, // Rook captures
-            { 101, 201, 301, 401, 501, 601 }, // Queen captures
-            { 100, 200, 300, 400, 500, 600 } // King captures
-    };
-
     // bishop relevant occupancy bit count for every square
     private static final int[] bishopRelevantOccupancyBitCount = {
             6, 5, 5, 5, 5, 5, 5, 6,
@@ -76,6 +66,27 @@ public class MoveGenerator {
     private static final long rookMasks[] = new long[64];
     private static final long bishopAttacks[][] = new long[64][512];
     private static final long rookAttacks[][] = new long[64][4096];
+
+    public static final long[] WHITE_PAWN_ATTACKS = new long[64];
+    public static final long[] BLACK_PAWN_ATTACKS = new long[64];
+
+    // pre compute pawn attacks
+    static {
+        for (int sq = 0; sq < 64; sq++) {
+            long bb = 1L << sq;
+
+            long white = 0L;
+            if ((bb & Board.FILE_A) == 0) white |= bb << 9;
+            if ((bb & Board.FILE_H) == 0) white |= bb << 7;
+            WHITE_PAWN_ATTACKS[sq] = white;
+
+            long black = 0L;
+            if ((bb & Board.FILE_A) == 0) black |= bb >>> 7;
+            if ((bb & Board.FILE_H) == 0) black |= bb >>> 9;
+            BLACK_PAWN_ATTACKS[sq] = black;
+        }
+    }
+
 
     // init slider piece attacks
     public static void initSliderAttacks(boolean bishop) {
@@ -208,7 +219,6 @@ public class MoveGenerator {
         for (int square = 0; square < 64; square++) {
             int relevantOccupancyBitCount = rookRelevantOccupancyBitCount[square];
             long magicNumber = generateMagicNumber(square, relevantOccupancyBitCount, false);
-            // print the numbers so i can copy paste them
             System.out.printf("0x%XL, ", magicNumber);
         }
         System.out.println("");
@@ -216,7 +226,6 @@ public class MoveGenerator {
         for (int square = 0; square < 64; square++) {
             int relevantOccupancyBitCount = bishopRelevantOccupancyBitCount[square];
             long magicNumber = generateMagicNumber(square, relevantOccupancyBitCount, true);
-            // print the numbers so i can copy paste them
             System.out.printf("0x%XL, ", magicNumber);
         }
 
@@ -254,21 +263,13 @@ public class MoveGenerator {
         board.printBitBoard(mask);
     }
 
-    public static int countBits(long mask) {
-        int count = 0;
-        while (mask != 0) {
-            mask &= mask - 1;
-            count++;
-        }
-        return count;
-    }
-
     private static final int[] PROMO_PIECES = {
             Board.QUEEN, Board.ROOK, Board.BISHOP, Board.KNIGHT
     };
 
-    public static PackedMoveList generatePseudoLegalMoves(Board board) {
-        PackedMoveList moves = new PackedMoveList(218);
+    public static PackedMoveList generatePseudoLegalMoves(Board board, PackedMoveList moves) {
+        // PackedMoveList moves = new PackedMoveList(218);
+        moves.clear();
 
         // =========================
         // PAWNS
@@ -297,8 +298,7 @@ public class MoveGenerator {
                             Board.PAWN,
                             Board.EMPTY,
                             0,
-                            Move.DOUBLE_PAWN_PUSH,
-                            Move.DOUBLE_PAWN_PUSH_SCORE));
+                            Move.DOUBLE_PAWN_PUSH));
                     continue;
                 }
 
@@ -306,21 +306,16 @@ public class MoveGenerator {
                         ? Board.PAWN
                         : board.getPiece(to);
 
-                boolean isCapture = isEnPassant || captured != Board.EMPTY;
-
                 // promotion
                 if (isPromotion) {
                     for (int promo : PROMO_PIECES) {
-                        int score = isCapture
-                                ? Move.PROMOTION_SCORE + mvvLva[promo][captured]
-                                : Move.PROMOTION_SCORE;
+
                         moves.add(PackedMove.encode(
                                 from, to,
                                 Board.PAWN,
                                 captured,
                                 promo,
-                                Move.PROMOTION,
-                                score));
+                                Move.PROMOTION));
                     }
                     continue;
                 }
@@ -332,8 +327,7 @@ public class MoveGenerator {
                             Board.PAWN,
                             Board.PAWN,
                             0,
-                            Move.EN_PASSANT,
-                            Move.CAPTURE_SCORE));
+                            Move.EN_PASSANT));
                     continue;
                 }
 
@@ -344,16 +338,14 @@ public class MoveGenerator {
                             Board.PAWN,
                             captured,
                             0,
-                            Move.CAPTURE,
-                            mvvLva[Board.PAWN][captured]));
+                            Move.CAPTURE));
                 } else {
                     moves.add(PackedMove.encode(
                             from, to,
                             Board.PAWN,
                             Board.EMPTY,
                             0,
-                            Move.DEFAULT,
-                            0));
+                            Move.DEFAULT));
                 }
             }
         }
@@ -385,16 +377,14 @@ public class MoveGenerator {
                             Board.KNIGHT,
                             captured,
                             0,
-                            Move.CAPTURE,
-                            mvvLva[Board.KNIGHT][captured]));
+                            Move.CAPTURE));
                 } else {
                     moves.add(PackedMove.encode(
                             from, to,
                             Board.KNIGHT,
                             Board.EMPTY,
                             0,
-                            Move.DEFAULT,
-                            0));
+                            Move.DEFAULT));
                 }
             }
         }
@@ -426,16 +416,14 @@ public class MoveGenerator {
                             Board.BISHOP,
                             captured,
                             0,
-                            Move.CAPTURE,
-                            mvvLva[Board.BISHOP][captured]));
+                            Move.CAPTURE));
                 } else {
                     moves.add(PackedMove.encode(
                             from, to,
                             Board.BISHOP,
                             Board.EMPTY,
                             0,
-                            Move.DEFAULT,
-                            0));
+                            Move.DEFAULT));
                 }
             }
         }
@@ -467,16 +455,14 @@ public class MoveGenerator {
                             Board.ROOK,
                             captured,
                             0,
-                            Move.CAPTURE,
-                            mvvLva[Board.ROOK][captured]));
+                            Move.CAPTURE));
                 } else {
                     moves.add(PackedMove.encode(
                             from, to,
                             Board.ROOK,
                             Board.EMPTY,
                             0,
-                            Move.DEFAULT,
-                            0));
+                            Move.DEFAULT));
                 }
             }
         }
@@ -508,16 +494,14 @@ public class MoveGenerator {
                             Board.QUEEN,
                             captured,
                             0,
-                            Move.CAPTURE,
-                            mvvLva[Board.QUEEN][captured]));
+                            Move.CAPTURE));
                 } else {
                     moves.add(PackedMove.encode(
                             from, to,
                             Board.QUEEN,
                             Board.EMPTY,
                             0,
-                            Move.DEFAULT,
-                            0));
+                            Move.DEFAULT));
                 }
             }
         }
@@ -540,17 +524,13 @@ public class MoveGenerator {
             int captured = board.getPiece(to);
 
             int flag;
-            int score;
 
             if (Math.abs(from - to) == 2) {
                 flag = Move.CASTLING;
-                score = Move.CASTLING_SCORE;
             } else if (captured != Board.EMPTY) {
                 flag = Move.CAPTURE;
-                score = mvvLva[Board.KING][captured];
             } else {
                 flag = Move.DEFAULT;
-                score = 0;
             }
 
             moves.add(PackedMove.encode(
@@ -558,17 +538,15 @@ public class MoveGenerator {
                     Board.KING,
                     captured,
                     0,
-                    flag,
-                    score));
+                    flag));
         }
 
         return moves;
     }
 
-    public static PackedMoveList generateCaptureMoves(Board board) {
-        // maximum number of capture moves is 218
-        PackedMoveList moves = new PackedMoveList(218);
+    public static PackedMoveList generateCaptureMoves(Board board, PackedMoveList moves) {
 
+        moves.clear();
         // Pawns
         long pawns = board.whiteTurn ? board.getWhitePawns() : board.getBlackPawns();
 
@@ -603,8 +581,7 @@ public class MoveGenerator {
                                 Board.PAWN,
                                 capturedPiece,
                                 promo,
-                                Move.PROMOTION,
-                                Move.PROMOTION_SCORE + mvvLva[Board.PAWN][capturedPiece]));
+                                Move.PROMOTION));
                     }
                 } else {
                     moves.add(PackedMove.encode(
@@ -612,8 +589,7 @@ public class MoveGenerator {
                             Board.PAWN,
                             capturedPiece,
                             0,
-                            isEnPassant ? Move.EN_PASSANT : Move.CAPTURE,
-                            mvvLva[Board.PAWN][capturedPiece]));
+                            isEnPassant ? Move.EN_PASSANT : Move.CAPTURE));
                 }
             }
         }
@@ -635,9 +611,7 @@ public class MoveGenerator {
                 if ((move & board.bitboard) != 0L) {
                     int capturedPiece = board.getPiece(to);
 
-                    // MVV-LVA calculation
-                    int mvvLvaScore = mvvLva[Board.KNIGHT][capturedPiece];
-                    long packed = PackedMove.encode(from, to, Board.KNIGHT, capturedPiece, 0, 0, mvvLvaScore);
+                    int packed = PackedMove.encode(from, to, Board.KNIGHT, capturedPiece, 0, 0);
                     moves.add(packed);
                 }
             }
@@ -665,15 +639,13 @@ public class MoveGenerator {
                 int to = Board.getSquare(move);
                 int captured = board.getPiece(to);
 
-                int score = mvvLva[Board.BISHOP][captured];
 
                 moves.add(PackedMove.encode(
                         from, to,
                         Board.BISHOP,
                         captured,
                         0,
-                        Move.CAPTURE,
-                        score));
+                        Move.CAPTURE));
             }
         }
 
@@ -703,8 +675,7 @@ public class MoveGenerator {
                         Board.ROOK,
                         captured,
                         0,
-                        Move.CAPTURE,
-                        mvvLva[Board.ROOK][captured]));
+                        Move.CAPTURE));
             }
         }
 
@@ -734,8 +705,7 @@ public class MoveGenerator {
                         Board.QUEEN,
                         captured,
                         0,
-                        Move.CAPTURE,
-                        mvvLva[Board.QUEEN][captured]));
+                        Move.CAPTURE));
             }
         }
 
@@ -761,12 +731,76 @@ public class MoveGenerator {
                     Board.KING,
                     captured,
                     0,
-                    Move.CAPTURE,
-                    mvvLva[Board.KING][captured]));
+                    Move.CAPTURE));
         }
 
         return moves;
     }
+
+    public static boolean isSquareAttacked(Board board, int sq, boolean byWhite) {
+
+        long occupancy = board.bitboard;
+
+        long pawns   = byWhite ? board.whitePawns   : board.blackPawns;
+        long knights = byWhite ? board.whiteKnights : board.blackKnights;
+        long bishops = byWhite ? board.whiteBishops : board.blackBishops;
+        long rooks   = byWhite ? board.whiteRooks   : board.blackRooks;
+        long queens  = byWhite ? board.whiteQueens  : board.blackQueens;
+        long king    = byWhite ? board.whiteKing    : board.blackKing;
+
+        if ((Board.KNIGHT_ATTACKS[sq] & knights) != 0) return true;
+
+        long pawnAttacks = byWhite
+            ? BLACK_PAWN_ATTACKS[sq]
+            : WHITE_PAWN_ATTACKS[sq];
+
+        if ((pawnAttacks & pawns) != 0) return true;
+
+        if ((getBishopAttacks(sq, occupancy) & (bishops | queens)) != 0) return true;
+        if ((getRookAttacks(sq, occupancy) & (rooks | queens)) != 0) return true;
+
+        if ((Board.KING_ATTACKS[sq] & king) != 0) return true;
+
+        return false;
+    }
+
+    // Get attackers for a given square
+    public static long getAttackers(Board board, int sq, boolean byWhite) {
+
+        long occupancy = board.bitboard;
+        long attackers = 0L;
+
+        long pawns   = byWhite ? board.whitePawns   : board.blackPawns;
+        long knights = byWhite ? board.whiteKnights : board.blackKnights;
+        long bishops = byWhite ? board.whiteBishops : board.blackBishops;
+        long rooks   = byWhite ? board.whiteRooks   : board.blackRooks;
+        long queens  = byWhite ? board.whiteQueens  : board.blackQueens;
+        long king    = byWhite ? board.whiteKing    : board.blackKing;
+
+        if ((Board.KNIGHT_ATTACKS[sq] & knights) != 0)
+            attackers |= (Board.KNIGHT_ATTACKS[sq] & knights);
+
+        long pawnAttacks = byWhite
+            ? BLACK_PAWN_ATTACKS[sq]
+            : WHITE_PAWN_ATTACKS[sq];
+
+        if ((pawnAttacks & pawns) != 0)
+            attackers |= (pawnAttacks & pawns);
+
+        long bishopAttacks = getBishopAttacks(sq, occupancy);
+        if ((bishopAttacks & (bishops | queens)) != 0)
+            attackers |= (bishopAttacks & (bishops | queens));
+
+        long rookAttacks = getRookAttacks(sq, occupancy);
+        if ((rookAttacks & (rooks | queens)) != 0)
+            attackers |= (rookAttacks & (rooks | queens));
+
+        if ((Board.KING_ATTACKS[sq] & king) != 0)
+            attackers |= (Board.KING_ATTACKS[sq] & king);
+
+        return attackers;
+    }
+    
 
     public static long generateWhiteMask(Board board) {
         long whiteAttacks = 0L;
@@ -874,36 +908,6 @@ public class MoveGenerator {
         return pawnMask;
     }
 
-    private static long generatePawnAttacks(long pawns, boolean white) {
-        // Mask + capture and en passant moves
-        long pawnAttacks = 0L;
-        if (white) {
-            // Captures diagonales, gauche et droite
-            long capturesLeft = (pawns << 9) & ~Board.FILE_H;
-            long capturesRight = (pawns << 7) & ~Board.FILE_A;
-
-            pawnAttacks |= capturesLeft | capturesRight;
-        } else {
-            // Captures diagonales, gauche et droite
-            long capturesLeft = (pawns >> 7) & ~Board.FILE_H;
-            long capturesRight = (pawns >> 9) & ~Board.FILE_A;
-
-            pawnAttacks |= capturesLeft | capturesRight;
-        }
-
-        // En passant
-        if (white) {
-            long enPassantLeft = (pawns << 9) & Board.FILE_H;
-            long enPassantRight = (pawns << 7) & Board.FILE_A;
-            pawnAttacks |= enPassantLeft | enPassantRight;
-        } else {
-            long enPassantLeft = (pawns >> 7) & Board.FILE_H;
-            long enPassantRight = (pawns >> 9) & Board.FILE_A;
-            pawnAttacks |= enPassantLeft | enPassantRight;
-        }
-        return pawnAttacks;
-    }
-
     public static long generatePawnMoves(long pawns, Board board) {
         long pawnMoves = 0L;
 
@@ -927,11 +931,7 @@ public class MoveGenerator {
 
         } else {
             long singlePush = (pawns >> 8) & ~board.getBoard(); // Avancer d'une case
-            long doublePush = ((pawns >> 16) & ~board.getBoard() & (singlePush >> 8) & Board.RANK_5); // Avancer de
-                                                                                                      // deux cases
-                                                                                                      // depuis la
-                                                                                                      // rangée
-                                                                                                      // initiale
+            long doublePush = ((pawns >> 16) & ~board.getBoard() & (singlePush >> 8) & Board.RANK_5);
             pawnMoves |= singlePush | doublePush;
             // Captures diagonales, gauche et droite
             long capturesLeft = (pawns >> 7) & board.getWhitePieces() & ~Board.FILE_H;
@@ -959,7 +959,7 @@ public class MoveGenerator {
             knights &= knights - 1; //
 
             // run the knight through the precomputed knight moves
-            long knightMoves = Board.KNIGHT_MOVES[Long.numberOfTrailingZeros(knight)];
+            long knightMoves = Board.KNIGHT_ATTACKS[Long.numberOfTrailingZeros(knight)];
 
             knightMask |= knightMoves;
         }
@@ -1184,10 +1184,10 @@ public class MoveGenerator {
     }
 
     public static long generateKingMask(long king) {
-        return Board.KING_MOVES[Long.numberOfTrailingZeros(king)];
+        return Board.KING_ATTACKS[Long.numberOfTrailingZeros(king)];
     }
 
-    public static final long generateWhiteKingMoves(long king, Board board) {
+    public static long generateWhiteKingMoves(long king, Board board) {
         // Le roi peut se déplacer d'une case dans toutes les directions et peut roquer
         long kingMoves = generateKingMask(king);
         // pas la meme couleur
@@ -1197,7 +1197,6 @@ public class MoveGenerator {
         // Si on possède le droit de roquer, que la tour est à sa place et que les cases
         // entre le roi et la tour sont vides
         // alors on peut roquer
-
 
         // Si on a les droits de roquer du côté de du roi
         if (board.whiteCastleKingSide == 1L) {

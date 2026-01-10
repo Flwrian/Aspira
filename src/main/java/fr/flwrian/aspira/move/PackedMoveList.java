@@ -1,22 +1,22 @@
 package fr.flwrian.aspira.move;
 
 public class PackedMoveList {
-    private final long[] moves;
-    private int size = 0;
+    public final int[] moves;
+    public int size = 0;
 
     public PackedMoveList(int maxSize) {
-        this.moves = new long[maxSize];
+        this.moves = new int[maxSize];
     }
 
     public void clear() {
         size = 0;
     }
 
-    public void add(long packedMove) {
+    public void add(int packedMove) {
         moves[size++] = packedMove;
     }
 
-    public long get(int index) {
+    public int get(int index) {
         return moves[index];
     }
 
@@ -24,7 +24,7 @@ public class PackedMoveList {
         return size;
     }
 
-    public long[] raw() {
+    public int[] raw() {
         return moves;
     }
 
@@ -34,36 +34,36 @@ public class PackedMoveList {
         size--; // Shrink list
     }
 
-    public void sortByScore() {
-        // Custom sorting implementation for primitive long array
-        for (int i = 0; i < size - 1; i++) {
-            for (int j = 0; j < size - i - 1; j++) {
-                int scoreA = PackedMove.getScore(moves[j]);
-                int scoreB = PackedMove.getScore(moves[j + 1]);
-                if (scoreA < scoreB) {
-                    // Swap
-                    long temp = moves[j];
-                    moves[j] = moves[j + 1];
-                    moves[j + 1] = temp;
-                }
-            }
-        }
-    }
+    // public void sortByScore() {
+    //     // Custom sorting implementation for primitive int array
+    //     for (int i = 0; i < size - 1; i++) {
+    //         for (int j = 0; j < size - i - 1; j++) {
+    //             int scoreA = PackedMove.getScore(moves[j]);
+    //             int scoreB = PackedMove.getScore(moves[j + 1]);
+    //             if (scoreA < scoreB) {
+    //                 // Swap
+    //                 int temp = moves[j];
+    //                 moves[j] = moves[j + 1];
+    //                 moves[j + 1] = temp;
+    //             }
+    //         }
+    //     }
+    // }
 
-    // hash move
-    public void prioritize(long move) {
-        for (int i = 0; i < size; i++) {
-            if (moves[i] == move) {
-                PackedMove.setScore(moves[i], 1000); // Set high score
-            }
-        }
-    }
+    // // hash move
+    // public void prioritize(int move) {
+    //     for (int i = 0; i < size; i++) {
+    //         if (moves[i] == move) {
+    //             PackedMove.setScore(moves[i], 1_000_000); // Set high score
+    //         }
+    //     }
+    // }
 
     public void shuffle() {
         for (int i = size - 1; i > 0; i--) {
             int j = (int) (Math.random() * (i + 1));
             // Swap moves[i] and moves[j]
-            long temp = moves[i];
+            int temp = moves[i];
             moves[i] = moves[j];
             moves[j] = temp;
         }
@@ -79,7 +79,7 @@ public class PackedMoveList {
         return moveList.toString();
     }
 
-    public boolean contains(long killer1) {
+    public boolean contains(int killer1) {
         for (int i = 0; i < size; i++) {
             if (moves[i] == killer1) {
                 return true;

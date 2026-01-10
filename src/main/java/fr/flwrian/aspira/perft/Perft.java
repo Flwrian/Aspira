@@ -15,13 +15,35 @@ import fr.flwrian.aspira.move.PackedMoveList;
 
 public class Perft {
 
+
+    private static final PackedMoveList[] moveLists = new PackedMoveList[16];
+    static {
+        for (int i = 0; i < 16; i++) {
+            moveLists[i] = new PackedMoveList(218);
+        }
+    }
     public static long perft(Board bitBoard, int depth) {
 
         if (depth == 0) {
             return 1;
         }
 
-        PackedMoveList moveList = bitBoard.getLegalMoves();
+        // Bulk counting
+        if (depth == 1) {
+            PackedMoveList moveList = bitBoard.getPseudoLegalMoves(moveLists[depth]);
+            long count = 0;
+
+            for (int i = 0; i < moveList.size(); i++) {
+                bitBoard.makeMove(moveList.get(i));
+                if (!bitBoard.isKingInCheck(!bitBoard.whiteTurn)) {
+                    count++;
+                }
+                bitBoard.undoMove();
+            }
+            return count;
+        }
+
+        PackedMoveList moveList = bitBoard.getLegalMoves(moveLists[depth]);
         long nodes = 0;
         
         for (int i = 0; i < moveList.size(); i++) {
@@ -48,14 +70,14 @@ public class Perft {
         result += "[Depth: " + depth + "]\n";
         result += "[ === ]\n";
 
-        PackedMoveList moveList = bitBoard.getLegalMoves();
+        PackedMoveList moveList = bitBoard.getLegalMoves(moveLists[depth]);
         long totalNodes = 0;
 
         long time = System.currentTimeMillis();
 
         // Itère sur chaque coup possible au premier niveau
         for (int i = 0; i < moveList.size(); i++) {
-            long move = moveList.get(i);
+            int move = moveList.get(i);
             bitBoard.makeMove(move);
             // Compare hash key
             // if (bitBoard.generateZobristKey() != bitBoard.zobristKey) {

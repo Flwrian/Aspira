@@ -164,7 +164,7 @@ public class Board {
     };
 
     // knight pre-encoded moves
-    public static final long[] KNIGHT_MOVES = {
+    public static final long[] KNIGHT_ATTACKS = {
             (B3 | C2), // A1
             (C3 | D2 | A3), // B1
             (D3 | E2 | A2 | B3), // C1
@@ -239,7 +239,7 @@ public class Board {
     };
 
     // king pre-encoded moves
-    public static final long[] KING_MOVES = {
+    public static final long[] KING_ATTACKS = {
             (B1 | B2 | A2), // A1
             (A1 | C1 | C2 | A2 | B2), // B1
             (B1 | D1 | D2 | B2 | C2), // C1
@@ -506,7 +506,16 @@ public class Board {
     public static final int QUEEN_SCORE = 900;
     public static final int KING_SCORE = 20000;
 
-    public final BoardHistoryStack history = new BoardHistoryStack(256); // profondeur max
+    public static final int[] PIECE_SCORES = {
+            PAWN_SCORE,
+            KNIGHT_SCORE,
+            BISHOP_SCORE,
+            ROOK_SCORE,
+            QUEEN_SCORE,
+            KING_SCORE
+    };
+
+    public final BoardHistoryStack history = new BoardHistoryStack(256); // max 256 half-moves
 
     public static final String INITIAL_STARTING_POSITION = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
@@ -552,27 +561,26 @@ public class Board {
 
     }
 
-    private void saveBoardHistory(long move) {
+    private void saveBoardHistory(int move) {
         history.push(this, move);
     }
 
-    public boolean isThreefoldRepetition() {
-        // to check for repetition, we need to check if the current position has been
-        // seen (we will check in the history stack if it appears 3 times)
-        if (history.isEmpty() || plyCount < 8) {
-            return false;
-        } else {
-            // If the position before the last move is the same as the current position, we
-            // can return true
-            if ((history.stack[plyCount - 4].zobristKey == this.zobristKey)
-                    && (history.stack[plyCount - 8].zobristKey == this.zobristKey)) {
-                return true;
+
+     public boolean isThreefoldRepetition() {
+        int count = 0;
+
+        // on saute de 2 en 2 (même side to move)
+        for (int i = history.stack.length - 2; i >= 0; i -= 2) {
+
+            if (history.stack[i].zobristKey == this.zobristKey) {
+                count++;
+                if (count >= 2) {
+                    return true;
+                }
             }
-
-            return false;
         }
+        return false;
     }
-
     public void loadFromFen(String fen) {
         String[] fenParts = fen.split(" ");
         String[] rows = fenParts[0].split("/");
@@ -707,7 +715,6 @@ public class Board {
 
         // en passant square
         if (!fenParts[3].equals("-")) {
-            System.out.println(fenParts[3]);
             int file = fenParts[3].charAt(0) - 'a';
             int rank = fenParts[3].charAt(1) - '1';
             enPassantSquare = 1L << (rank * 8 + file);
@@ -1361,7 +1368,7 @@ public class Board {
     }
 
     public void makeNullMove() {
-        saveBoardHistory(0L);
+        saveBoardHistory(0);
 
         if (enPassantSquare != 0L) {
             this.zobristKey ^= Zobrist.EN_PASSANT_KEYS[Long.numberOfTrailingZeros(enPassantSquare)];
@@ -1378,7 +1385,7 @@ public class Board {
         undoMove();
     }
 
-    public final void makeMove(long move) {
+    public final void makeMove(int move) {
         saveBoardHistory(move);
 
         final int from = PackedMove.getFrom(move);
@@ -1413,7 +1420,7 @@ public class Board {
     }
 
     private void makeMoveWhite(int from, int to, long fromBB, long toBB, int flags, int fromFlipped, int toFlipped,
-            long move) {
+            int move) {
         // Handle captures first (branch prediction optimization)
         if ((blackPieces & toBB) != 0) {
             handleCaptureWhite(toBB);
@@ -1443,7 +1450,7 @@ public class Board {
         }
     }
 
-    private void makeMoveBlack(int from, int to, long fromBB, long toBB, int flags, long move) {
+    private void makeMoveBlack(int from, int to, long fromBB, long toBB, int flags, int move) {
         if ((whitePieces & toBB) != 0) {
             handleCaptureBlack(toBB);
         }
@@ -1484,7 +1491,7 @@ public class Board {
     }
 
     private void handleWhitePawnMove(int from, int to, long fromBB, long toBB,
-            int flags, int fromFlipped, int toFlipped, long move) {
+            int flags, int fromFlipped, int toFlipped, int move) {
         if (flags == Move.EN_PASSANT) {
             long capturedPawn = enPassantSquare >> 8;
             blackPawns &= ~capturedPawn;
@@ -1519,7 +1526,7 @@ public class Board {
     }
 
     private void handleWhitePromotion(int from, int to, long fromBB, long toBB,
-            int toFlipped, int fromFlipped, long move) {
+            int toFlipped, int fromFlipped, int move) {
         int promoType = PackedMove.getPromotion(move);
 
         // Remove pawn
@@ -1615,7 +1622,7 @@ public class Board {
     }
 
     private void handleBlackPawnMove(int from, int to, long fromBB, long toBB,
-            int flags, long move) {
+            int flags, int move) {
         if (flags == Move.EN_PASSANT) {
             long capturedPawn = enPassantSquare << 8;
             whitePawns &= ~capturedPawn;
@@ -1649,7 +1656,7 @@ public class Board {
         }
     }
 
-    private void handleBlackPromotion(int from, int to, long fromBB, long toBB, long move) {
+    private void handleBlackPromotion(int from, int to, long fromBB, long toBB, int move) {
         int promoType = PackedMove.getPromotion(move);
 
         // Remove pawn
@@ -1999,107 +2006,111 @@ public class Board {
         int pieceFrom = getPiece(fromSquare);
 
         // piece to if last character is not a digit
-        int pieceTo = 0;
+        int captured = getPiece(toSquare);
+
+        int promotedPiece = 0;
 
         // if last character is q or r or b or n
         if (move.length() == 5) {
             char lastChar = Character.toLowerCase(move.charAt(4));
             switch (lastChar) {
                 case 'q':
-                    pieceTo = QUEEN;
+                    promotedPiece = QUEEN;
                     break;
                 case 'r':
-                    pieceTo = ROOK;
+                    promotedPiece = ROOK;
                     break;
                 case 'b':
-                    pieceTo = BISHOP;
+                    promotedPiece = BISHOP;
                     break;
                 case 'n':
-                    pieceTo = KNIGHT;
+                    promotedPiece = KNIGHT;
                     break;
             }
         }
 
         if (move.length() == 5) {
-            System.out.println("Promotion move");
-            System.out.println("to piece: " + pieceTo);
-            long moveLong = PackedMove.encode(fromSquare, pieceTo, pieceFrom, pieceTo, toSquare, pieceFrom, pieceTo);
-            System.out.println("Move: " + moveLong);
+            int moveLong = PackedMove.encode(fromSquare, toSquare, pieceFrom, captured, promotedPiece, Move.PROMOTION);
+
             makeMove(moveLong);
         } else {
-            System.out.println("Normal move");
-            long moveLong = PackedMove.encode(fromSquare, pieceFrom, pieceFrom, pieceTo, toSquare, pieceFrom, pieceTo);
-            System.out.println("Move: " + moveLong);
+            int moveLong = PackedMove.encode(fromSquare, toSquare, pieceFrom, captured, 0, 0);
             makeMove(moveLong);
         }
 
     }
 
     // pseudo legal
-    public PackedMoveList getPseudoLegalMoves() {
-        return MoveGenerator.generatePseudoLegalMoves(this);
+    public PackedMoveList getPseudoLegalMoves(PackedMoveList moves) {
+        return MoveGenerator.generatePseudoLegalMoves(this, moves);
     }
 
     // legal moves
-    public PackedMoveList getLegalMoves() {
-        PackedMoveList moveList = MoveGenerator.generatePseudoLegalMoves(this);
+    public PackedMoveList getLegalMoves(PackedMoveList moves) {
+        moves.clear();
+        moves = MoveGenerator.generatePseudoLegalMoves(this, moves);
 
         // Pour chaque coup, vérifier si le roi est en échec après le coup
         // Si le roi est en échec, le coup n'est pas légal
         // Sinon, le coup est légal
-        for (int i = 0; i < moveList.size(); i++) {
-            long move = moveList.get(i);
+        for (int i = 0; i < moves.size(); i++) {
+            int move = moves.get(i);
             makeMove(move);
             if (isKingInCheck(!whiteTurn)) {
-                moveList.remove(i);
+                moves.remove(i);
                 i--;
             }
             undoMove();
 
         }
 
-        return moveList;
+        return moves;
     }
 
     public boolean isKingInCheck(boolean whiteTurn) {
-        // Generate opponent mask attack
-        long opponentAttacks = MoveGenerator.generateMask(this, !whiteTurn);
-        long king = whiteTurn ? whiteKing : blackKing;
-        return (opponentAttacks & king) != 0;
+        // // Generate opponent mask attack
+        // long opponentAttacks = MoveGenerator.generateMask(this, !whiteTurn);
+        // long king = whiteTurn ? whiteKing : blackKing;
+        // return (opponentAttacks & king) != 0;
+        int kingSquare = Long.numberOfTrailingZeros(whiteTurn ? whiteKing : blackKing);
+        return MoveGenerator.isSquareAttacked(this, kingSquare, !whiteTurn);
     }
 
     public boolean isInCheck() {
         return isKingInCheck(whiteTurn);
     }
 
-    public PackedMoveList getCaptureMoves() {
-        PackedMoveList moveList = MoveGenerator.generateCaptureMoves(this);
+    public PackedMoveList getCaptureMoves(PackedMoveList moves) {
+        moves.clear();
+        MoveGenerator.generateCaptureMoves(this, moves);
 
         // Pour chaque coup, vérifier si le roi est en échec après le coup
         // Si le roi est en échec, le coup n'est pas légal
         // Sinon, le coup est légal
-        for (int i = 0; i < moveList.size(); i++) {
-            long move = moveList.get(i);
+        for (int i = 0; i < moves.size(); i++) {
+            int move = moves.get(i);
             makeMove(move);
             if (isKingInCheck(!whiteTurn)) {
-                moveList.remove(i);
+                moves.remove(i);
                 i--;
             }
             undoMove();
 
         }
 
-        return moveList;
+        return moves;
     }
 
-    public boolean isStaleMate() {
-        PackedMoveList moveList = getLegalMoves();
-        return moveList.size() == 0 && !isKingInCheck(whiteTurn);
+    public boolean isStaleMate(PackedMoveList moves) {
+        moves.clear();
+        moves = getLegalMoves(moves);
+        return moves.size() == 0 && !isKingInCheck(whiteTurn);
     }
 
-    public boolean isCheckMate() {
-        PackedMoveList moveList = getLegalMoves();
-        return moveList.size() == 0 && isKingInCheck(whiteTurn);
+    public boolean isCheckMate(PackedMoveList moves) {
+        moves.clear();
+        moves = getLegalMoves(moves);
+        return moves.size() == 0 && isKingInCheck(whiteTurn);
     }
 
     private void updateBitBoard() {
@@ -2371,6 +2382,11 @@ public class Board {
         this.phase = other.phase;
 
         this.zobristKey = other.zobristKey;
+    }
+
+    // return if the side to mvoe has any non pawn material
+    public boolean hasNonPawnMaterial() {
+        return (whiteTurn ? (whiteKnights | whiteBishops | whiteRooks | whiteQueens) : (blackKnights | blackBishops | blackRooks | blackQueens)) != 0;
     }
 
 }

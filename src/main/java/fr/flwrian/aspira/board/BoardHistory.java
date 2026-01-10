@@ -1,7 +1,8 @@
 package fr.flwrian.aspira.board;
 
 public class BoardHistory {
-    public long bitboard, move;
+    public long bitboard;
+    public int move;
     public long whitePawns, whiteKnights, whiteBishops, whiteRooks, whiteQueens, whiteKing;
     public long blackPawns, blackKnights, blackBishops, blackRooks, blackQueens, blackKing;
     public long whiteCastleQueenSide, whiteCastleKingSide, blackCastleQueenSide, blackCastleKingSide;
@@ -14,7 +15,7 @@ public class BoardHistory {
         // vide
     }
 
-    public void copyFrom(Board b, long move) {
+    public void copyFrom(Board b, int move) {
         this.move = move;
         this.bitboard = b.bitboard;
 

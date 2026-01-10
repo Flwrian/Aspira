@@ -9,9 +9,10 @@ import fr.flwrian.aspira.move.Move;
 import fr.flwrian.aspira.move.MoveGenerator;
 import fr.flwrian.aspira.move.PackedMove;
 import fr.flwrian.aspira.perft.Perft;
-import fr.flwrian.aspira.search.AlphaBetaSearch;
+// import fr.flwrian.aspira.search.AlphaBetaSearch;
+// import fr.flwrian.aspira.search.PureNegamax;
+import fr.flwrian.aspira.search.Search;
 import fr.flwrian.aspira.search.SearchAlgorithm;
-
 /**
  * This class is the UCI interface for the chess engine.
  * It is responsible for communicating with the GUI.
@@ -22,6 +23,14 @@ public class UCI {
     private static String AUTHOR = "Flwrian";
     private static String VERSION = "1.0";
 
+    private static final int HASH_TABLE_MIN_SIZE_MB = 8;
+    private static final int HASH_TABLE_DEFAULT_SIZE_MB = 64;
+    private static final int HASH_TABLE_MAX_SIZE_MB = 1024;
+
+    private static final int THREADS_MIN = 1;
+    private static final int THREADS_DEFAULT = 1;
+    private static final int THREADS_MAX = 1;
+
     private static String STARTING_POSITION = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
     private static Board board = new Board();
@@ -31,7 +40,7 @@ public class UCI {
 
     public static void main(String[] args) {
 
-        searchAlgorithm = new AlphaBetaSearch();
+        searchAlgorithm = new Search();
         engine.setSearchAlgorithm(searchAlgorithm);
 
         board.loadFromFen(STARTING_POSITION);
@@ -76,8 +85,8 @@ public class UCI {
                 case "quit":
                     quit();
                     break;
-                case "option":
-                    option(inputArray);
+                case "setoption":
+                    setoption(inputArray);
                     break;
                 case "d":
                     d();
@@ -86,13 +95,44 @@ public class UCI {
                     help();
                     break;
                 default:
-                    System.out.println("Unknown command: " + command);
                     break;
             }
         }
     }
 
-    private static void option(String[] inputArray) {
+    private static void setoption(String[] inputArray) {
+
+        // Example: setoption name Hash value 128
+        if (inputArray.length < 5) {
+            return;
+        }
+
+        String name = inputArray[2];
+        String value = inputArray[4];
+
+        switch (name) {
+            case "Hash":
+                int sizeMB = Integer.parseInt(value);
+                if (sizeMB < HASH_TABLE_MIN_SIZE_MB || sizeMB > HASH_TABLE_MAX_SIZE_MB) {
+                    System.out.println("info string Hash size must be between " + HASH_TABLE_MIN_SIZE_MB + " and " + HASH_TABLE_MAX_SIZE_MB + " MB");
+                    return;
+                }
+                searchAlgorithm.setHashTable(sizeMB);
+                break;
+
+            // Currently only 1 thread is supported
+            case "Threads":
+                int threads = Integer.parseInt(value);
+                if (threads < THREADS_MIN || threads > THREADS_MAX) {
+                    System.out.println("info string Threads must be between " + THREADS_MIN + " and " + THREADS_MAX);
+                    return;
+                }
+                // searchAlgorithm.setThreads(threads);
+                System.out.println("info string Using " + threads + " threads");
+                break;
+            default:
+                break;
+        }
     }
 
     private static void help() {
@@ -165,8 +205,9 @@ public class UCI {
 
         switch (tokens[1]) {
             case "perft":
-                if (tokens.length < 3)
+                if (tokens.length < 3) {
                     return;
+                }
                 handlePerftCommand(tokens);
                 break;
 
@@ -227,11 +268,6 @@ public class UCI {
         searchThread.start();
     }
 
-    private static void setDepth(int depth) {
-        engine.setDepth(depth);
-        System.out.println("Depth set to " + depth);
-    }
-
     private static void position(String[] inputArray) {
         // Example: position startpos moves e2e4 e7e5
         // Example2: position fen rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0
@@ -278,13 +314,9 @@ public class UCI {
     }
 
     private static void uciNewGame() {
-        board = null;
+        searchAlgorithm.resetSearch();
+        searchAlgorithm.flushHashTable();
         board = new Board();
-        searchAlgorithm = null;
-        searchAlgorithm = new AlphaBetaSearch();
-        engine = null;
-        engine = new Engine(board);
-        engine.setSearchAlgorithm(searchAlgorithm);
         board.loadFromFen(STARTING_POSITION);
     }
 
@@ -296,7 +328,7 @@ public class UCI {
         System.out.println("id name " + ENGINE_NAME);
         System.out.println("id author " + AUTHOR);
         System.out.println("id version " + VERSION);
-        System.out.println("option name Hash type spin default 1 min 1 max 1");
+        System.out.println("option name Hash type spin default " + HASH_TABLE_DEFAULT_SIZE_MB + " min " + HASH_TABLE_MIN_SIZE_MB + " max " + HASH_TABLE_MAX_SIZE_MB);
         System.out.println("option name Threads type spin default 1 min 1 max 1");
         System.out.println();
         System.out.println("uciok");

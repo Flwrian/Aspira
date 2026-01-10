@@ -15,12 +15,12 @@ public class TranspositionTable {
         public static final int UPPERBOUND = 2;
 
         public final long key;      // full Zobrist (for safety)
-        public final long bestMove; // packed move
+        public final int bestMove; // packed move
         public final int  value;    // already encoded for TT by caller
         public final int  depth;    // search depth stored
         public final int  flag;     // EXACT / LOWERBOUND / UPPERBOUND
 
-        public Entry(long key, long bestMove, int value, int depth, int flag) {
+        public Entry(long key, int bestMove, int value, int depth, int flag) {
             this.key = key;
             this.bestMove = bestMove;
             this.value = value;
@@ -36,7 +36,7 @@ public class TranspositionTable {
 
     // Parallel primitive arrays (size = buckets * WAYS)
     private final long[] keys;
-    private final long[] moves;
+    private final int[] moves;
     private final int[]  values;
     private final short[] depths;   // depth <= ~32767
     private final byte[]  flags;    // 0..2
@@ -49,8 +49,8 @@ public class TranspositionTable {
         if (sizeMB < 1) throw new IllegalArgumentException("Size must be at least 1 MB");
 
         // Rough entry footprint (primitive arrays only):
-        // key(8) + move(8) + value(4) + depth(2) + flag(1) + used(1) ~= 24 bytes/entry
-        final int ENTRY_BYTES = 24;
+        // key(8) + move(4) + value(4) + depth(2) + flag(1) + used(1) ~= 20 bytes/entry
+        final int ENTRY_BYTES = 20;
 
         long bytes = (long) sizeMB * 1024L * 1024L;
         long maxEntries = Math.max(256, bytes / ENTRY_BYTES); // avoid tiny tables
@@ -64,7 +64,7 @@ public class TranspositionTable {
         int capacity = this.buckets * WAYS;
 
         this.keys   = new long[capacity];
-        this.moves  = new long[capacity];
+        this.moves  = new int[capacity];
         this.values = new int [capacity];
         this.depths = new short[capacity];
         this.flags  = new byte [capacity];
@@ -74,7 +74,7 @@ public class TranspositionTable {
     // --- Public API ---
 
     /** Store (depth-preferred; always keeps deeper line). */
-    public void put(long zobristKey, long bestMove, int value, int depth, int flag) {
+    public void put(long zobristKey, int bestMove, int value, int depth, int flag) {
         final int base = baseIndex(zobristKey);
 
         // 1) If key already present in bucket → replace if depth is >= existing (keep newer/deeper)
@@ -155,5 +155,11 @@ public class TranspositionTable {
             if (used[i] != 0) usedSlots++;
         }
         return (int) ((usedSlots * 1000L) / capacity());
+    }
+
+    public void flush() {
+        for (int i = 0; i < used.length; i++) {
+            used[i] = 0;
+        }
     }
 }

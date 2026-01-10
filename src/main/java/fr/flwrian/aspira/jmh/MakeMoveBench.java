@@ -10,9 +10,9 @@ import java.util.concurrent.TimeUnit;
 
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.NANOSECONDS)
-@Warmup(iterations = 5, time = 500, timeUnit = TimeUnit.MILLISECONDS)
-@Measurement(iterations = 10, time = 500, timeUnit = TimeUnit.MILLISECONDS)
-@Fork(2)
+@Warmup(iterations = 3, time = 300, timeUnit = TimeUnit.MILLISECONDS)
+@Measurement(iterations = 7, time = 300, timeUnit = TimeUnit.MILLISECONDS)
+@Fork(1)
 @State(Scope.Thread)
 public class MakeMoveBench {
 
@@ -21,6 +21,7 @@ public class MakeMoveBench {
        ================================ */
 
     static final String[] FENS = BenchPositions.POSITIONS;
+    static final int MAX_DEPTH = 4;
 
     /* ================================
        DONNÉES PRÉ-CALCULÉES
@@ -28,6 +29,7 @@ public class MakeMoveBench {
 
     Board[] boards;
     PackedMoveList[] moveLists;
+    PackedMoveList[] tempLists; // Pour les benchmarks qui ont besoin de listes temporaires
     int index;
 
     /* ================================
@@ -39,14 +41,27 @@ public class MakeMoveBench {
         int n = FENS.length;
 
         boards = new Board[n];
+        
+        // Initialiser moveLists pour chaque position
         moveLists = new PackedMoveList[n];
+        for (int i = 0; i < n; i++) {
+            moveLists[i] = new PackedMoveList(218);
+        }
+        
+        // Initialiser tempLists pour les benchmarks temporaires
+        tempLists = new PackedMoveList[MAX_DEPTH];
+        for (int i = 0; i < MAX_DEPTH; i++) {
+            tempLists[i] = new PackedMoveList(218);
+        }
 
         for (int i = 0; i < n; i++) {
             Board b = new Board();
             b.loadFromFen(FENS[i]);
+            
+            // Générer les coups légaux pour chaque position
+            b.getLegalMoves(moveLists[i]);
 
             boards[i] = b;
-            moveLists[i] = b.getLegalMoves();
         }
 
         index = 0;
@@ -61,11 +76,10 @@ public class MakeMoveBench {
         int i = index++ % boards.length;
 
         Board b = boards[i];
-        PackedMoveList ml = moveLists[i];
 
         // rotation simple pour éviter les coups identiques
-        int moveIndex = index % ml.size();
-        long move = ml.get(moveIndex);
+        int moveIndex = index % moveLists[i].size();
+        int move = moveLists[i].get(moveIndex);
 
         b.makeMove(move);
         bh.consume(b.zobristKey);
@@ -80,12 +94,12 @@ public class MakeMoveBench {
     public void depth2MiniSearch(Blackhole bh) {
         Board b = boards[index++ % boards.length];
 
-        PackedMoveList m1 = b.getLegalMoves();
-        long mv1 = m1.get(0);
+        PackedMoveList m1 = b.getLegalMoves(tempLists[0]);
+        int mv1 = m1.get(0);
         b.makeMove(mv1);
 
-        PackedMoveList m2 = b.getLegalMoves();
-        long mv2 = m2.get(0);
+        PackedMoveList m2 = b.getLegalMoves(tempLists[1]);
+        int mv2 = m2.get(0);
         b.makeMove(mv2);
 
         bh.consume(b.zobristKey);
@@ -99,7 +113,7 @@ public class MakeMoveBench {
         // Rotation déterministe
         boards[index++ % boards.length].loadFromFen(FENS[index++ % FENS.length]);
 
-        PackedMoveList moves = boards[index++ % boards.length].getLegalMoves();
+        PackedMoveList moves = boards[index++ % boards.length].getLegalMoves(tempLists[2]);
 
         // Empêche DCE
         bh.consume(moves.size());
@@ -110,7 +124,7 @@ public class MakeMoveBench {
         // Rotation déterministe
         boards[index++ % boards.length].loadFromFen(FENS[index++ % FENS.length]);
 
-        PackedMoveList moves = boards[index++ % boards.length].getPseudoLegalMoves();
+        PackedMoveList moves = boards[index++ % boards.length].getPseudoLegalMoves(tempLists[3]);
 
         // Empêche DCE
         bh.consume(moves.size());
