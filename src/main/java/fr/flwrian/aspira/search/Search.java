@@ -110,6 +110,11 @@ public class Search implements SearchAlgorithm {
         for (int i = 0; i < moves.size(); i++) {
             nodes++;
 
+            // SEE pruning
+            if (!SEE.staticExchangeEvaluation(board, moves.get(i), 0)) {
+                continue;
+            }
+
             int capturedPiece = PackedMove.getCaptured(moves.get(i));
 
             // Delta pruning
