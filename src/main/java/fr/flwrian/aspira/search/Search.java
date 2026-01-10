@@ -81,7 +81,7 @@ public class Search implements SearchAlgorithm {
             nodes++;
 
             // SEE pruning
-            if (!SEE.staticExchangeEvaluation(board, moves.get(i), 0)) {
+            if (!SEE.staticExchangeEvaluation(board, moves.get(i), -100)) {
                 continue;
             }
 
