@@ -105,7 +105,6 @@ January 2026: bumped to ~20-22MNPS Ryzen 5 5500U (about 30MNPS on Ryzen 7 7800X3
 
 That number didn’t come from one big optimization. It came from dozens of small fixes:
 - removing unnecessary allocations
-- fixing subtle bugs that killed pruning
 - rewriting slow paths
 - simplifying logic that looked “clean” but wasn’t fast
 
@@ -118,12 +117,10 @@ Most performance gains came from correctness, not clever tricks.
 Chess engines are unforgiving.  
 You don’t just debug crashes — you debug *ideas*.
 
-- A broken repetition check quietly kills winning lines.
 - A slightly wrong make/undo corrupts the position three plies later.
-- A bad quiescence search looks fine… until it doesn’t.
 - One incorrect bit operation and evaluation becomes noise.
 
-And that's just for the search function. I've literally spent nights debugging positions to pass a perft suite (aka suite of positions where you generate each possible moves, make those moves, generate each possible moves... until a certain "depth").
+I've literally spent nights debugging positions to pass a perft suite (aka suite of positions where you generate each possible moves, make those moves, generate each possible moves... until a certain "depth").
 Move generation seems quite simple and in fact it's not that hard but the bugs you've created along the way will come up to the surface when running perft :)
 
 You spend hours staring at code that *looks* correct, only to realize the bug is conceptually wrong, not syntactically wrong.
@@ -161,5 +158,6 @@ The name comes from *aspiring* — not just to build something stronger, but to 
 Somewhere along the way, it also started aspiring my soul.
 
 There’s still a lot to improve. But this is a solid foundation, earned the hard way.
+
 
 
