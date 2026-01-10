@@ -515,7 +515,7 @@ public class Board {
             KING_SCORE
     };
 
-    public final BoardHistoryStack history = new BoardHistoryStack(256); // max 256 half-moves
+    public final BoardHistoryStack history = new BoardHistoryStack(512); // max 256 half-moves
 
     public static final String INITIAL_STARTING_POSITION = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
@@ -2390,3 +2390,4 @@ public class Board {
     }
 
 }
+
