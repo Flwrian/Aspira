@@ -181,13 +181,14 @@ public class Search implements SearchAlgorithm {
         }
 
         boolean inCheck = board.isKingInCheck(board.whiteTurn);
+        int staticEval = evaluate(board);
 
         // Null move pruning
-        if (!inCheck && depth >= 3 && ply > 0 && board.hasNonPawnMaterial()) {
+        if (!inCheck && depth >= 3 && ply > 0 && board.hasNonPawnMaterial() && staticEval >= beta) {
             if (beta < MATE_BOUND){
                 
                 board.makeNullMove();
-                int score = -absearch(board, depth - 4, -beta, -(beta - 1), ply + 1);
+                int score = -absearch(board, depth - 4, -beta, -beta + 1, ply + 1);
                 board.undoNullMove();
 
                 if (score >= beta && score < MATE_BOUND) {
@@ -317,15 +318,7 @@ public class Search implements SearchAlgorithm {
 
     
     private int calculateReduction(int depth, int moveNumber, boolean isPVNode) {
-        // Dans un nœud PV, on réduit moins agressivement
-        int reduction = LMR_REDUCTIONS[Math.min(depth, MAX_PLY - 1)][Math.min(moveNumber, 217)];
-        
-        // Réduction supplémentaire pour les nœuds non-PV
-        if (!isPVNode) {
-            reduction += 1;
-        }
-        
-        return reduction;
+        return LMR_REDUCTIONS[Math.min(depth, MAX_PLY - 1)][Math.min(moveNumber, 217)];
     }
 
     
