@@ -12,7 +12,7 @@ public class BenchRunner {
 
         for(String fen : BenchPositions.POSITIONS) {
             board.loadFromFen(fen);
-            engine.getSearchAlgorithm().search(board, 100000, 1000, 100, 100, 67_0000, 6, 0L);
+            engine.getSearchAlgorithm().search(board, 100000, 1000, 100, 100, 67_0000, 14, 0L);
             
             nodeCount += engine.getSearchAlgorithm().getLastNodeCount();
             nps += engine.getSearchAlgorithm().getLastNPS();
