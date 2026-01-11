@@ -34,8 +34,8 @@ public class Search implements SearchAlgorithm {
         System.out.println("Initializing LMR reductions...");
         for (int i = 0; i < MAX_PLY; i++) {
             for (int j = 0; j < 218; j++) {
-                // 0.75 + log(depth) * log(moves) / 2.5
-                LMR_REDUCTIONS[i][j] = (int) Math.round(0.75 + (Math.log(i + 1) * Math.log(j + 1)) / 2.5);
+                // Formule recommandée : 0.77 + log(moves) * log(depth) / 2.36
+                LMR_REDUCTIONS[i][j] = (int) Math.round(0.77 + (Math.log(j + 1) * Math.log(i + 1)) / 2.36);
             }
         }
     }
@@ -205,13 +205,6 @@ public class Search implements SearchAlgorithm {
         PackedMoveList moves = board.getLegalMoves(moveLists[ply]);
         orderMoves(moves, ttMove, board, ply);
 
-
-        // final int LMR_REDUCTION = 1;
-        // final int LMR_MIN_MOVES = 3;
-        // final int LMR_MIN_DEPTH = 3;
-
-        final boolean criticalDepth = (depth <= 2);
-
         for (int i = 0; i < moves.size(); i++) {
             int move = moves.get(i);
             madeMoves++;
@@ -221,42 +214,37 @@ public class Search implements SearchAlgorithm {
             boolean givesCheck = board.isKingInCheck(!board.whiteTurn);
             boolean isCapture = PackedMove.isCapture(move);
             boolean isPVNode = (beta - alpha > 1);
-            int reduction = 0;
             int extensions = givesCheck ? 1 : 0;
-
-            if (!criticalDepth && !inCheck && !givesCheck && !isCapture && !PackedMove.isPromotion(move)) {
-                reduction = calculateReduction(depth, madeMoves, isPVNode);
-            }
-
-
-            int searchDepth = Math.max(depth - 1 - reduction, 0) + extensions;
+            int newDepth = depth - 1 + extensions;
             int score;
 
-            if (madeMoves == 1) {
-                // full search pv
-                score = -absearch(board, searchDepth, -beta, -alpha, ply + 1);
-            } else {
-                // try with null window
-                score = -absearch(board, searchDepth, -alpha - 1, -alpha, ply + 1);
-        
-                // if fails high, do a full search
-                if (score > alpha && score < beta) {
-                    score = -absearch(board, searchDepth, -beta, -alpha, ply + 1);
+            // Advanced PVSearch implementation
+            if (depth >= 2 && madeMoves > 3 && !inCheck && !givesCheck && !isCapture && !PackedMove.isPromotion(move)) {
+                // Case 1: Late Move Reductions
+                int reduction = calculateReduction(depth, madeMoves, isPVNode);
+                int searchedDepth = Math.max(newDepth - reduction, 0);
+
+                score = -absearch(board, searchedDepth, -alpha - 1, -alpha, ply + 1);
+                
+                // Si la recherche réduite échoue et qu'on n'a pas cherché à pleine profondeur
+                if (score > alpha && searchedDepth < newDepth) {
+                    score = -absearch(board, newDepth, -alpha - 1, -alpha, ply + 1);
                 }
+            } else if (!isPVNode || madeMoves > 1) {
+                // Case 2: Null-window search mais pas de LMR
+                // Se produit pour les premiers coups et les faibles profondeurs
+                score = -absearch(board, newDepth, -alpha - 1, -alpha, ply + 1);
+            } else {
+                // Case 3: Premier coup en nœud PV, recherche complète directement
+                score = 0; // sera cherché dans le bloc suivant
             }
 
-            // Re search if reduced and score > alpha
-            if (reduction > 0 && score > alpha) {
-                // Apply PVS for re search
-                if (madeMoves == 1) {
-                    score = -absearch(board, depth - 1, -beta, -alpha, ply + 1);
-                } else {
-                    score = -absearch(board, depth - 1, -alpha - 1, -alpha, ply + 1);
-                    if (score > alpha && score < beta) {
-                        score = -absearch(board, depth - 1, -beta, -alpha, ply + 1);
-                    }
-                }
+            // Case 3: Full-window full-depth search
+            // Seulement dans les nœuds PV où on a dépassé alpha ou pour le premier coup
+            if (isPVNode && (madeMoves == 1 || (score > alpha && score < beta))) {
+                score = -absearch(board, newDepth, -beta, -alpha, ply + 1);
             }
+
             board.undoMove();
 
             if (score > bestScore) {
@@ -329,11 +317,14 @@ public class Search implements SearchAlgorithm {
 
     
     private int calculateReduction(int depth, int moveNumber, boolean isPVNode) {
-        if (isPVNode) {
-            return 0;
-        }
-
+        // Dans un nœud PV, on réduit moins agressivement
         int reduction = LMR_REDUCTIONS[depth][moveNumber];
+        
+        // Réduction supplémentaire pour les nœuds non-PV
+        if (!isPVNode) {
+            reduction += 1;
+        }
+        
         return reduction;
     }
 
@@ -346,49 +337,44 @@ public class Search implements SearchAlgorithm {
 
         for (int depth = 1; depth <= depthLimit; depth++) {
             seldepth = 0;
-            int alpha, beta;
-        
-            // Premières profondeurs : fenêtre infinie pour avoir un score stable
-            if (depth <= 4) {
-                alpha = -INFINITE_VALUE;
-                beta = INFINITE_VALUE;
-                score = absearch(board, depth, alpha, beta, 0);
-            } else {
-                // Aspiration window : fenêtre étroite autour du score précédent
-                int window = 15;
-                alpha = score - window;
-                beta = score + window;
             
-                // Boucle de re-recherche si on sort de la fenêtre
-                int researches = 0;
-                while (true) {
-                    score = absearch(board, depth, alpha, beta, 0);
-
-                    if (stopSearch || checkTime(true)) {
-                        break;
-                    }
-
-                    // Si on sort de la fenêtre, élargir et re-chercher
-                    if (score <= alpha) {
-                        // Fail-low : le score est plus bas qu'attendu
-                        beta = (alpha + beta) / 2;
-                        alpha = Math.max(score - window * (1 + researches), -INFINITE_VALUE);
-                        researches++;
-                    } else if (score >= beta) {
-                        // Fail-high : le score est plus haut qu'attendu
-                        beta = Math.min(score + window * (1 + researches), INFINITE_VALUE);
-                        researches++;
-                    } else {
-                        // Score dans la fenêtre, on peut continuer
-                        break;
-                    }
-                
-                    // Sécurité : après 3 re-recherches, fenêtre infinie
-                    if (researches >= 3) {
-                        alpha = -INFINITE_VALUE;
-                        beta = INFINITE_VALUE;
-                    }
+            int alpha = -INFINITE_VALUE;
+            int beta = INFINITE_VALUE;
+            int lowerWindowSize = 50; // Taille initiale de la fenêtre d'aspiration
+            int upperWindowSize = 50;
+            
+            if (score != -INFINITE_VALUE) {
+                // Fenêtres d'aspiration autour du score précédent
+                alpha = score - lowerWindowSize;
+                beta = score + upperWindowSize;
+            }
+            
+            score = absearch(board, depth, alpha, beta, 0);
+            
+            while (!(alpha < score && score < beta)) {
+                if (stopSearch || checkTime(true)) {
+                    break;
                 }
+                
+                // Le résultat est hors de la fenêtre, on doit l'élargir
+                if (score <= alpha) {
+                    // Fail-low : élargir la borne inférieure
+                    lowerWindowSize *= 4;
+                } else if (score >= beta) {
+                    // Fail-high : élargir la borne supérieure
+                    upperWindowSize *= 4;
+                }
+                
+                alpha = score - lowerWindowSize;
+                beta = score + upperWindowSize;
+                
+                if (upperWindowSize + lowerWindowSize > INFINITE_VALUE / 8) {
+                    // Fenêtre trop large : passer aux bornes infinies
+                    alpha = -INFINITE_VALUE;
+                    beta = INFINITE_VALUE;
+                }
+                
+                score = absearch(board, depth, alpha, beta, 0);
             }
 
             if (stopSearch || checkTime(true)) {
@@ -581,39 +567,39 @@ public class Search implements SearchAlgorithm {
         }
 
         // 2) Good captures (SEE >= 0)
-int goodCapStart = idx;
-for (int i = idx; i < size; i++) {
-    int move = m[i];
-    if (PackedMove.isCapture(move) && SEE.staticExchangeEvaluation(board, move, 0)) {
-        swap(m, idx++, i);
-    }
-}
-sortCaptures(m, goodCapStart, idx);
-
-// 3) Killers
-for (int k = 0; k < 2; k++) {
-    int killer = killermoves[ply][k];
-    if (killer == 0 || killer == ttMove) continue;
-    for (int i = idx; i < size; i++) {
-        if (m[i] == killer) {
-            swap(m, idx++, i);
-            break;
+        int goodCapStart = idx;
+        for (int i = idx; i < size; i++) {
+            int move = m[i];
+            if (PackedMove.isCapture(move) && SEE.staticExchangeEvaluation(board, move, 0)) {
+                swap(m, idx++, i);
+            }
         }
-    }
-}
+        sortCaptures(m, goodCapStart, idx);
 
-// 4) Bad captures (SEE < 0)
-int badCapStart = idx;
-for (int i = idx; i < size; i++) {
-    int move = m[i];
-    if (PackedMove.isCapture(move)) {
-        swap(m, idx++, i);
-    }
-}
-sortCaptures(m, badCapStart, idx);
+        // 3) Killers
+        for (int k = 0; k < 2; k++) {
+            int killer = killermoves[ply][k];
+            if (killer == 0 || killer == ttMove) continue;
+            for (int i = idx; i < size; i++) {
+                if (m[i] == killer) {
+                    swap(m, idx++, i);
+                    break;
+                }
+            }
+        }
 
-// 5) Quiets (history)
-sortQuiets(m, idx, size, board);
+        // 4) Bad captures (SEE < 0)
+        int badCapStart = idx;
+        for (int i = idx; i < size; i++) {
+            int move = m[i];
+            if (PackedMove.isCapture(move)) {
+                swap(m, idx++, i);
+            }
+        }
+        sortCaptures(m, badCapStart, idx);
+
+        // 5) Quiets (history)
+        sortQuiets(m, idx, size, board);
 
     }
     
