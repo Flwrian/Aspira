@@ -46,6 +46,9 @@ public class Search implements SearchAlgorithm {
     long nodeLimit = 0;
     long timeLimit = 0;
 
+    int seldepth = 0;
+    int lastSeldepth = 0;
+
     long startTime;
 
     // history table
@@ -60,6 +63,8 @@ public class Search implements SearchAlgorithm {
             stopSearch = true;
             return 0;
         }
+
+        if (ply > seldepth) seldepth = ply;
 
         if (ply >= MAX_PLY) {
             return evaluate(board);
@@ -118,6 +123,8 @@ public class Search implements SearchAlgorithm {
         if (checkTime(false)) {
             return 0;
         }
+
+        if (ply > seldepth) seldepth = ply;
 
         if (ply >= MAX_PLY) {
             return evaluate(board);
@@ -345,7 +352,7 @@ public class Search implements SearchAlgorithm {
         startTime = System.nanoTime();
 
         for (int depth = 1; depth <= depthLimit; depth++) {
-        
+            seldepth = 0;
             int alpha, beta;
         
             // Premières profondeurs : fenêtre infinie pour avoir un score stable
@@ -495,8 +502,8 @@ public class Search implements SearchAlgorithm {
         double rawNps = nodes / (durationNanos / 1_000_000_000.0);
         lastNps = (long) rawNps;
 
-        System.out.printf(Locale.US, "info depth %d score %s nodes %d nps %d time %.0f hashfull %d pv %s\n",
-                depth, convertScore(score), nodes, lastNps, timeMs, this.transpositionTable.hashfull(), getPV());
+        System.out.printf(Locale.US, "info depth %d seldepth %d score %s nodes %d nps %d time %.0f hashfull %d pv %s\n",
+                depth, seldepth, convertScore(score), nodes, lastNps, timeMs, this.transpositionTable.hashfull(), getPV());
     }
 
     @Override
