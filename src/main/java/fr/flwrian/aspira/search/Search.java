@@ -318,7 +318,7 @@ public class Search implements SearchAlgorithm {
     
     private int calculateReduction(int depth, int moveNumber, boolean isPVNode) {
         // Dans un nœud PV, on réduit moins agressivement
-        int reduction = LMR_REDUCTIONS[depth][moveNumber];
+        int reduction = LMR_REDUCTIONS[Math.min(depth, MAX_PLY - 1)][Math.min(moveNumber, 217)];
         
         // Réduction supplémentaire pour les nœuds non-PV
         if (!isPVNode) {
@@ -340,8 +340,8 @@ public class Search implements SearchAlgorithm {
             
             int alpha = -INFINITE_VALUE;
             int beta = INFINITE_VALUE;
-            int lowerWindowSize = 50; // Taille initiale de la fenêtre d'aspiration
-            int upperWindowSize = 50;
+            int lowerWindowSize = 15; // Taille initiale de la fenêtre d'aspiration
+            int upperWindowSize = 15;
             
             if (score != -INFINITE_VALUE) {
                 // Fenêtres d'aspiration autour du score précédent
