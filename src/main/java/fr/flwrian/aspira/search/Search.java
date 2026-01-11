@@ -22,11 +22,21 @@ public class Search implements SearchAlgorithm {
 
     private static final PackedMoveList[] moveLists = new PackedMoveList[MAX_PLY];
 
+    private static final int[][] LMR_REDUCTIONS = new int[MAX_PLY][218];
+
     static {
         // Init stack movelist
         System.out.println("Initializing move lists...");
         for (int i = 0; i < MAX_PLY; i++){
             moveLists[i] = new PackedMoveList(218);
+        }
+
+        System.out.println("Initializing LMR reductions...");
+        for (int i = 0; i < MAX_PLY; i++) {
+            for (int j = 0; j < 218; j++) {
+                // 0.75 + log(depth) * log(moves) / 2.5
+                LMR_REDUCTIONS[i][j] = (int) Math.round(0.75 + (Math.log(i + 1) * Math.log(j + 1)) / 2.5);
+            }
         }
     }
 
@@ -319,28 +329,11 @@ public class Search implements SearchAlgorithm {
 
     
     private int calculateReduction(int depth, int moveNumber, boolean isPVNode) {
-        if (moveNumber < 3 || depth < 3) {
+        if (isPVNode) {
             return 0;
         }
 
-        int reduction = 1;
-
-        // if (depth >= 6) {
-        //     reduction = 2;
-        // }
-
-        // if (moveNumber >= 6) {
-        //     reduction += 1;
-        // }
-
-        // if (moveNumber >= 12) {
-        //     reduction += 1;
-        // }
-
-        // if (isPVNode && reduction > 0) {
-        //     reduction -= 1;
-        // }
-
+        int reduction = LMR_REDUCTIONS[depth][moveNumber];
         return reduction;
     }
 
@@ -587,31 +580,41 @@ public class Search implements SearchAlgorithm {
             }
         }
 
-        // 2) Captures
-        int captureStart = idx;
-        for (int i = idx; i < size; i++) {
-            if (PackedMove.isCapture(m[i])) {
-                swap(m, idx++, i);
-            }
+        // 2) Good captures (SEE >= 0)
+int goodCapStart = idx;
+for (int i = idx; i < size; i++) {
+    int move = m[i];
+    if (PackedMove.isCapture(move) && SEE.staticExchangeEvaluation(board, move, 0)) {
+        swap(m, idx++, i);
+    }
+}
+sortCaptures(m, goodCapStart, idx);
+
+// 3) Killers
+for (int k = 0; k < 2; k++) {
+    int killer = killermoves[ply][k];
+    if (killer == 0 || killer == ttMove) continue;
+    for (int i = idx; i < size; i++) {
+        if (m[i] == killer) {
+            swap(m, idx++, i);
+            break;
         }
-        sortCaptures(m, captureStart, idx);
+    }
+}
 
-        // 3) Killers
-        for (int k = 0; k < 2; k++) {
-            int killer = killermoves[ply][k];
-            if (killer == 0) continue;
-            if (killer == ttMove) continue;
+// 4) Bad captures (SEE < 0)
+int badCapStart = idx;
+for (int i = idx; i < size; i++) {
+    int move = m[i];
+    if (PackedMove.isCapture(move)) {
+        swap(m, idx++, i);
+    }
+}
+sortCaptures(m, badCapStart, idx);
 
-            for (int i = idx; i < size; i++) {
-                if (m[i] == killer) {
-                    swap(m, idx++, i);
-                    break;
-                }
-            }
-        }
+// 5) Quiets (history)
+sortQuiets(m, idx, size, board);
 
-        // 4) Remaining quiets (history)
-        sortQuiets(m, idx, size, board);
     }
     
 
