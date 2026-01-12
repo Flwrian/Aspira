@@ -7,3 +7,4 @@ JAVA_BIN=java
 
 exec "$JAVA_BIN" \
   -jar "$MYSELF" "$@"
+  # -XX:+PrintFlagsFinal \
