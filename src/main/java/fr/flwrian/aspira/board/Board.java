@@ -570,11 +570,11 @@ public class Board {
         int count = 0;
 
         // on saute de 2 en 2 (même side to move)
-        for (int i = history.stack.length - 2; i >= 0; i -= 2) {
+        for (int i = history.size() - 2; i >= 0; i -= 2) {
 
             if (history.stack[i].zobristKey == this.zobristKey) {
                 count++;
-                if (count >= 2) {
+                if (count == 1) {
                     return true;
                 }
             }

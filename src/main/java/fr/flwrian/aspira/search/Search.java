@@ -406,6 +406,12 @@ public class Search implements SearchAlgorithm {
         }
 
         Move best = PackedMove.unpack(bestMove);
+        // print hash history (board.history.stack[].zobristKey)
+        String[] hashHistory = new String[board.history.size() + 1];
+        for (int i = 0; i < board.history.size() + 1; i++) {
+            hashHistory[i] = Long.toHexString(board.history.stack[i].zobristKey);
+        }
+        System.out.println("Hash history: " + java.util.Arrays.toString(hashHistory));
         System.out.println("bestmove " + best);
     }
 
