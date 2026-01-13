@@ -11,10 +11,6 @@ public class BoardHistory {
     public int evalMG, evalEG, phase;
     public long zobristKey;
 
-    public BoardHistory() {
-        // vide
-    }
-
     public void copyFrom(Board b, int move) {
         this.move = move;
         this.bitboard = b.bitboard;

@@ -2042,6 +2042,7 @@ public class Board {
 
     // pseudo legal
     public PackedMoveList getPseudoLegalMoves(PackedMoveList moves) {
+        moves.clear();
         return MoveGenerator.generatePseudoLegalMoves(this, moves);
     }
 

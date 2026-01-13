@@ -40,6 +40,7 @@ public class Search implements SearchAlgorithm {
 
     long nodes = 0;
     long lastNps = 0;
+    int seldepth = 0;
     boolean stopSearch = false;
     int checks = CHECK_RATE;
 
@@ -60,6 +61,8 @@ public class Search implements SearchAlgorithm {
             stopSearch = true;
             return 0;
         }
+
+        seldepth = Math.max(seldepth, ply);
 
         if (ply >= MAX_PLY) {
             return evaluate(board);
@@ -340,6 +343,7 @@ public class Search implements SearchAlgorithm {
     
     public void iterativeDeepening(Board board, int depthLimit) {
         nodes = 0;
+        seldepth = 0;
         int score = 0;
         int bestMove = 0;
         startTime = System.nanoTime();
@@ -407,11 +411,11 @@ public class Search implements SearchAlgorithm {
 
         Move best = PackedMove.unpack(bestMove);
         // print hash history (board.history.stack[].zobristKey)
-        String[] hashHistory = new String[board.history.size() + 1];
-        for (int i = 0; i < board.history.size() + 1; i++) {
-            hashHistory[i] = Long.toHexString(board.history.stack[i].zobristKey);
-        }
-        System.out.println("Hash history: " + java.util.Arrays.toString(hashHistory));
+        // String[] hashHistory = new String[board.history.size() + 1];
+        // for (int i = 0; i < board.history.size() + 1; i++) {
+        //     hashHistory[i] = Long.toHexString(board.history.stack[i].zobristKey);
+        // }
+        // System.out.println("Hash history: " + java.util.Arrays.toString(hashHistory));
         System.out.println("bestmove " + best);
     }
 
@@ -501,8 +505,8 @@ public class Search implements SearchAlgorithm {
         double rawNps = nodes / (durationNanos / 1_000_000_000.0);
         lastNps = (long) rawNps;
 
-        System.out.printf(Locale.US, "info depth %d score %s nodes %d nps %d time %.0f hashfull %d pv %s\n",
-                depth, convertScore(score), nodes, lastNps, timeMs, this.transpositionTable.hashfull(), getPV());
+        System.out.printf(Locale.US, "info depth %d seldepth %d score %s nodes %d nps %d time %.0f hashfull %d pv %s\n",
+                depth, seldepth, convertScore(score), nodes, lastNps, timeMs, this.transpositionTable.hashfull(), getPV());
     }
 
     @Override
