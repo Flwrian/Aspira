@@ -40,11 +40,11 @@ public final class SEE {
 
     public static int moveEstimatedValue(Board b, int move) {
         int captured = PackedMove.getCaptured(move);
-        int value = captured != Board.EMPTY ? Board.PIECE_SCORES[captured] : 0;
+        int value = captured != Board.EMPTY ? SEE_PIECE_VALUES[captured] : 0;
 
         if (PackedMove.isPromotion(move)) {
             int promo = PackedMove.getPromotion(move);
-            value += Board.PIECE_SCORES[promo] - Board.PAWN_SCORE;
+            value += SEE_PIECE_VALUES[promo] - Board.PAWN_SCORE;
         }
         if (PackedMove.getFlags(move) == Move.EN_PASSANT) {
             value = Board.PAWN_SCORE;

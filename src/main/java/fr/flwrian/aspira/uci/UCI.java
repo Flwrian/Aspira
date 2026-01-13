@@ -273,7 +273,6 @@ public class UCI {
         // Example2: position fen rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0
         // 1 moves e2e4 e7e5
         // So we need to load the starting position and then make the moves
-
         if (inputArray[1].equals("fen")) {
             // Load the position from the FEN string
             String fen = "";

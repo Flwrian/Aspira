@@ -1,149 +1,166 @@
-// package fr.flwrian.aspira.search;
+package fr.flwrian.aspira.search;
 
-// import java.util.Locale;
+import java.util.Locale;
 
-// import fr.flwrian.aspira.board.Board;
-// import fr.flwrian.aspira.move.Move;
-// import fr.flwrian.aspira.move.PackedMove;
-// import fr.flwrian.aspira.move.PackedMoveList;
+import fr.flwrian.aspira.board.Board;
+import fr.flwrian.aspira.move.Move;
+import fr.flwrian.aspira.move.PackedMove;
+import fr.flwrian.aspira.move.PackedMoveList;
 
-// public class PureNegamax implements SearchAlgorithm {
+public class PureNegamax implements SearchAlgorithm {
 
-//     private long nodes = 0;
-    
-//     // Pre-allocated SearchResult array for recursion depth (no allocations in hot path)
-//     private static final int MAX_DEPTH = 128;
-//     private final SearchResult[] resultStack = new SearchResult[MAX_DEPTH];
-    
-//     private static final int MATE = 32000;
-//     private static final int DRAW = 0;
+    static final int MAX_PLY = 128;
+    static final int MATE = 32000;
+    static final int INFINITE = 32001;
 
-//     public PureNegamax() {
-//         // Pre-allocate all SearchResult objects once
-//         for (int i = 0; i < MAX_DEPTH; i++) {
-//             resultStack[i] = new SearchResult();
-//         }
-//     }
+    private static final PackedMoveList[] moveLists = new PackedMoveList[MAX_PLY];
 
-//     @Override
-//     public Move search(Board board, int wtime, int btime, int winc, int binc, int movetime, int depth, long maxNodes) {
-//         long bestPackedMove = 0L;
-//         int bestScore = 0;
+    static {
+        for (int i = 0; i < MAX_PLY; i++) {
+            moveLists[i] = new PackedMoveList(218);
+        }
+    }
 
-//         for (int currentDepth = 1; currentDepth <= depth; currentDepth++) {
-//             nodes = 0;
-//             long startTime = System.nanoTime();
+    int[] pvLengths = new int[MAX_PLY];
+    int[][] principalVariations = new int[MAX_PLY][MAX_PLY];
 
-//             SearchResult result = resultStack[0];
-//             negamax(board, currentDepth, -MATE, MATE, 0);
-//             bestPackedMove = result.move;
-//             bestScore = result.score;
+    long nodes = 0;
+    long lastNps = 0;
+    boolean stopSearch = false;
+    long startTime;
 
-//             long endTime = System.nanoTime();
-//             printSearchInfo(currentDepth, bestScore, nodes, endTime - startTime, result);
-//         }
+    public int negamax(Board board, int depth, int ply) {
+        if (ply >= MAX_PLY) {
+            return evaluate(board);
+        }
 
-//         Move best = PackedMove.unpack(bestPackedMove);
-//         System.out.println("bestmove " + best);
-//         return best;
-//     }
+        pvLengths[ply] = ply;
 
-//     private void printSearchInfo(int depth, int score, long nodes, long durationNanos, SearchResult result) {
-//         double timeMs = durationNanos / 1_000_000.0;
-//         double rawNps = nodes / (durationNanos / 1_000_000_000.0);
+        if (depth <= 0) {
+            return evaluate(board);
+        }
 
-//         System.out.printf(Locale.US, "info depth %d score cp %d nodes %d nps %d time %.0f\n",
-//                 depth, score, nodes, (long) rawNps, timeMs);
-//     }
+        int bestScore = -INFINITE;
+        PackedMoveList moves = board.getLegalMoves(moveLists[ply]);
 
-//     private void negamax(Board board, int depth, int alpha, int beta, int ply) {
-//         nodes++;
+        // Checkmate ou stalemate
+        if (moves.size() == 0) {
+            if (board.isKingInCheck(board.whiteTurn)) {
+                return -MATE + ply;
+            } else {
+                return 0;
+            }
+        }
 
-//         SearchResult result = resultStack[ply];
-        
-//         if (depth == 0) {
-//             result.move = 0L;
-//             result.score = evaluate(board);
-//             return;
-//         }
+        for (int i = 0; i < moves.size(); i++) {
+            int move = moves.get(i);
+            nodes++;
 
-//         PackedMoveList moves = board.getLegalMoves();
-//         boolean inCheck = board.isKingInCheck(board.whiteTurn);
-        
-//         if (moves.size() == 0) {
-//             result.move = 0L;
-//             result.score = inCheck ? -MATE : DRAW;
-//             return;
-//         }
+            board.makeMove(move);
+            int score = -negamax(board, depth - 1, ply + 1);
+            board.undoMove();
 
-//         moves.sortByScore();
+            if (score > bestScore) {
+                bestScore = score;
 
-//         long bestMove = 0L;
-//         int bestScore = -MATE;
+                // Update principal variation
+                principalVariations[ply][ply] = move;
+                for (int j = ply + 1; j < pvLengths[ply + 1]; j++) {
+                    principalVariations[ply][j] = principalVariations[ply + 1][j];
+                }
+                pvLengths[ply] = pvLengths[ply + 1];
+            }
+        }
 
-//         SearchResult childResult = resultStack[ply + 1];
+        return bestScore;
+    }
 
-//         for (int i = 0; i < moves.size(); i++) {
-//             long move = moves.get(i);
+    public void iterativeDeepening(Board board, int depthLimit) {
+        nodes = 0;
+        startTime = System.nanoTime();
 
-//             board.makeMove(move);
-//             negamax(board, depth - 1, -beta, -alpha, ply + 1);
-//             int score = -childResult.score;
-//             board.undoMove();
+        for (int depth = 1; depth <= depthLimit; depth++) {
+            int score = negamax(board, depth, 0);
 
-//             if (score > bestScore) {
-//                 bestScore = score;
-//                 bestMove = move;
-//             }
+            if (stopSearch) {
+                break;
+            }
 
-//             if (bestScore > alpha) {
-//                 alpha = bestScore;
-//             }
+            long endTime = System.nanoTime();
+            printSearchInfo(depth, score, nodes, endTime - startTime);
+        }
 
-//             if (alpha >= beta) {
-//                 break;
-//             }
-            
-//         }
+        Move best = PackedMove.unpack(principalVariations[0][0]);
+        System.out.println("bestmove " + best);
+    }
 
-//         result.move = bestMove;
-//         result.score = bestScore;
-//     }
+    @Override
+    public int evaluate(Board board) {
+        return board.whiteTurn ? board.evaluate() : -board.evaluate();
+    }
 
-//     @Override
-//     public int evaluate(Board board) {
-//         int e = board.evaluate();
-//         return board.whiteTurn ? e : -e;
-//     }
+    public String getPV() {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < pvLengths[0]; i++) {
+            Move move = PackedMove.unpack(principalVariations[0][i]);
+            sb.append(move.toString()).append(" ");
+        }
+        return sb.toString().trim();
+    }
 
-//     @Override
-//     public String getName() {
-//         return "PureNegamax";
-//     }
+    private void printSearchInfo(int depth, int score, long nodes, long durationNanos) {
+        double timeMs = durationNanos / 1_000_000.0;
+        double rawNps = nodes / (durationNanos / 1_000_000_000.0);
+        lastNps = (long) rawNps;
 
-//     private static class SearchResult {
-//         long move;
-//         int score;
-//     }
+        System.out.printf(Locale.US, "info depth %d score cp %d nodes %d nps %d time %.0f pv %s\n",
+                depth, score, nodes, lastNps, timeMs, getPV());
+    }
 
-//     @Override
-//     public void setStopSearch(boolean b) {
-        
-//     }
+    @Override
+    public void resetSearch() {
+        pvLengths = new int[MAX_PLY];
+        principalVariations = new int[MAX_PLY][MAX_PLY];
+    }
 
-//     @Override
-//     public long getLastNodeCount() {
-//         return nodes;
-//     }
+    @Override
+    public Move search(Board board, int wtime, int btime, int winc, int binc, int movetime, int depth, long maxNodes) {
+        nodes = 0;
+        stopSearch = false;
+        startTime = 0;
+        resetSearch();
 
-//     @Override
-//     public long getLastNPS() {
-//         return 0L;
-//     }
+        iterativeDeepening(board, depth);
+        return PackedMove.unpack(principalVariations[0][0]);
+    }
 
-//     @Override
-//     public void flushHashTable() {
-//         // TODO Auto-generated method stub
-//         throw new UnsupportedOperationException("Unimplemented method 'flushHashTable'");
-//     }
-// }
+    @Override
+    public String getName() {
+        return "PureNegamax";
+    }
+
+    @Override
+    public void setStopSearch(boolean b) {
+        stopSearch = b;
+    }
+
+    @Override
+    public long getLastNodeCount() {
+        return nodes;
+    }
+
+    @Override
+    public long getLastNPS() {
+        return lastNps;
+    }
+
+    @Override
+    public void flushHashTable() {
+        // Pas de hash table
+    }
+
+    @Override
+    public void setHashTable(int sizeMB) {
+        // Pas de hash table
+    }
+}

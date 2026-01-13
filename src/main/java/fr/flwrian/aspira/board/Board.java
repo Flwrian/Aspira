@@ -515,7 +515,7 @@ public class Board {
             KING_SCORE
     };
 
-    public final BoardHistoryStack history = new BoardHistoryStack(512); // max 256 half-moves
+    public final BoardHistoryStack history = new BoardHistoryStack(1024); // max 1024 half-moves
 
     public static final String INITIAL_STARTING_POSITION = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
@@ -570,11 +570,11 @@ public class Board {
         int count = 0;
 
         // on saute de 2 en 2 (même side to move)
-        for (int i = history.stack.length - 2; i >= 0; i -= 2) {
+        for (int i = history.size() - 2; i >= 0; i -= 2) {
 
             if (history.stack[i].zobristKey == this.zobristKey) {
                 count++;
-                if (count >= 2) {
+                if (count == 1) {
                     return true;
                 }
             }
@@ -2042,6 +2042,7 @@ public class Board {
 
     // pseudo legal
     public PackedMoveList getPseudoLegalMoves(PackedMoveList moves) {
+        moves.clear();
         return MoveGenerator.generatePseudoLegalMoves(this, moves);
     }
 

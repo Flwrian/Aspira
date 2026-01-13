@@ -27,7 +27,7 @@ target/
 *.vscode
 *.lst
 
-engines/*
+engines/
 fastchess-windows-latest/
 
 *.exe
@@ -52,3 +52,5 @@ config.json
 .factorypath
 .project
 .settings/
+
+old/
