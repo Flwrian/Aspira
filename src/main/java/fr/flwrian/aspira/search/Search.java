@@ -22,11 +22,23 @@ public class Search implements SearchAlgorithm {
 
     private static final PackedMoveList[] moveLists = new PackedMoveList[MAX_PLY];
 
+    // precompute LMR reductions (log)
+    private static final int[][] LMR_REDUCTION = new int[MAX_PLY][218];
+
     static {
         // Init stack movelist
         System.out.println("Initializing move lists...");
         for (int i = 0; i < MAX_PLY; i++){
             moveLists[i] = new PackedMoveList(218);
+        }
+
+        // Init LMR reductions 0.77+log(moveNumber)×log(depth)/2.36
+        System.out.println("Precomputing LMR reductions...");
+        for (int depth = 1; depth < MAX_PLY; depth++) {
+            for (int moveNumber = 1; moveNumber < 218; moveNumber++) {
+                double reduction = 0.77 + Math.log(moveNumber) * Math.log(depth) / 2.36;
+                LMR_REDUCTION[depth][moveNumber] = (int) reduction;
+            }
         }
     }
 
@@ -317,29 +329,10 @@ public class Search implements SearchAlgorithm {
 
     
     private int calculateReduction(int depth, int moveNumber, boolean isPVNode) {
-        if (moveNumber < 3 || depth < 3) {
+        if (moveNumber < 3 || depth < 3 || isPVNode) {
             return 0;
         }
-
-        int reduction = 1;
-
-        // if (depth >= 6) {
-        //     reduction = 2;
-        // }
-
-        // if (moveNumber >= 6) {
-        //     reduction += 1;
-        // }
-
-        // if (moveNumber >= 12) {
-        //     reduction += 1;
-        // }
-
-        // if (isPVNode && reduction > 0) {
-        //     reduction -= 1;
-        // }
-
-        return reduction;
+        return LMR_REDUCTION[depth][moveNumber];
     }
 
     
