@@ -1,12 +1,16 @@
+
+
 ![Java](https://img.shields.io/badge/Language-Java-blue.svg)
 ![UCI Support](https://img.shields.io/badge/Protocol-UCI-green.svg)
 ![License](https://img.shields.io/badge/License-MIT-lightgrey.svg)
+<p align="center">
+  <img src="logo.svg" alt="Aspira Logo" width="200"/>
+</p>
 
 # Aspira – Java Chess Engine
 
 Aspira is a UCI-compatible chess engine written entirely in **Java**. Built from scratch with bitboards, magic bitboards, alpha-beta search...
 
----
 
 ## Quick Start
 
