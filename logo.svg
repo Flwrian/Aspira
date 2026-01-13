@@ -1,0 +1,85 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <defs>
+    <linearGradient id="mainGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#3B82F6;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#6366F1;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#8B5CF6;stop-opacity:1" />
+    </linearGradient>
+    
+    <linearGradient id="accentGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#60A5FA;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#A78BFA;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <circle cx="100" cy="100" r="95" fill="url(#mainGrad)"/>
+  
+  <g opacity="0.35" transform="translate(100, 100)">
+    <path d="
+      M -45 -20
+      L -35 40
+      L 35 40
+      L 45 -20
+      Z
+    " fill="white"/>
+    
+    <path d="
+      M 45 -10
+      Q 65 10 45 30
+    " fill="none" stroke="white" stroke-width="8"/>
+    
+    <path d="M -25 -30 Q -20 -45 -15 -30" fill="none" stroke="white" stroke-width="3" stroke-linecap="round"/>
+    <path d="M -5 -35 Q 0 -50 5 -35" fill="none" stroke="white" stroke-width="3" stroke-linecap="round"/>
+    <path d="M 15 -32 Q 20 -47 25 -32" fill="none" stroke="white" stroke-width="3" stroke-linecap="round"/>
+  </g>
+  
+  <g opacity="0.15">
+    <rect x="40" y="40" width="30" height="30" fill="white"/>
+    <rect x="100" y="40" width="30" height="30" fill="white"/>
+    <rect x="70" y="70" width="30" height="30" fill="white"/>
+    <rect x="130" y="70" width="30" height="30" fill="white"/>
+    <rect x="40" y="100" width="30" height="30" fill="white"/>
+    <rect x="100" y="100" width="30" height="30" fill="white"/>
+    <rect x="70" y="130" width="30" height="30" fill="white"/>
+    <rect x="130" y="130" width="30" height="30" fill="white"/>
+  </g>
+  
+  <g>
+    <path d="
+      M 100 45
+      L 150 160
+      L 125 160
+      L 115 130
+      L 85 130
+      L 75 160
+      L 50 160
+      L 100 45
+      Z
+      
+      M 100 85
+      L 92 118
+      L 108 118
+      Z
+    " fill="white" fill-rule="evenodd"/>
+  </g>
+  
+  <g opacity="0.3">
+    <circle cx="70" cy="70" r="8" fill="white"/>
+    <circle cx="140" cy="60" r="6" fill="white"/>
+    <circle cx="130" cy="140" r="5" fill="white"/>
+  </g>
+  
+  <text x="100" y="182" font-family="Arial, sans-serif" font-size="10" font-weight="600" fill="white" text-anchor="middle" opacity="0.8" letter-spacing="1">Aspira</text>
+  
+  <g opacity="0.25" fill="white">
+    <rect x="25" y="25" width="8" height="8" rx="1"/>
+    <rect x="37" y="25" width="8" height="8" rx="1"/>
+    <rect x="25" y="37" width="8" height="8" rx="1"/>
+    
+    <rect x="158" y="25" width="8" height="8" rx="1"/>
+    <rect x="170" y="25" width="8" height="8" rx="1"/>
+    <rect x="170" y="37" width="8" height="8" rx="1"/>
+  </g>
+  
+  <circle cx="100" cy="100" r="95" fill="none" stroke="white" stroke-width="2" opacity="0.2"/>
+</svg>
