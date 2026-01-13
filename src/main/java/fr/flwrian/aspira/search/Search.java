@@ -47,9 +47,6 @@ public class Search implements SearchAlgorithm {
     long nodeLimit = 0;
     long timeLimit = 0;
 
-    int seldepth = 0;
-    int lastSeldepth = 0;
-
     long startTime;
 
     // history table
