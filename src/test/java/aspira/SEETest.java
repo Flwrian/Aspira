@@ -1,9 +1,15 @@
-package fr.flwrian.aspira.search;
+package aspira;
+
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
+import org.junit.Test;
 
 import fr.flwrian.aspira.board.Board;
 import fr.flwrian.aspira.move.Move;
 import fr.flwrian.aspira.move.MoveGenerator;
 import fr.flwrian.aspira.move.PackedMove;
+import fr.flwrian.aspira.search.SEE;
 
 public class SEETest {
 
@@ -79,7 +85,8 @@ public class SEETest {
 			+ "8/8/1k6/8/8/2N1N3/4p1K1/3n4 w - - | c3d1 | 100 | N - (N + Q - P) + Q\n"
 			+ "r1bqk1nr/pppp1ppp/2n5/1B2p3/1b2P3/5N2/PPPP1PPP/RNBQK2R w KQkq - | e1g1 | 0";
 
-    public static void main(String[] args) {
+	@Test
+    public void testSEE() {
 
         MoveGenerator.initSlidingAttacks();
         for (String line : rawTestString.split("\n")) {
@@ -95,8 +102,12 @@ public class SEETest {
             Move move = new Move(moveStr, board);
             int pmove = PackedMove.encode(move);
 
+			
             boolean ok = SEE.staticExchangeEvaluation(board, pmove, expected);
             boolean ko = SEE.staticExchangeEvaluation(board, pmove, expected + 1);
+
+			assertTrue("SEE failed for: " + fen + " | " + moveStr, ok);
+			assertFalse("SEE failed for: " + fen + " | " + moveStr, ko);
 
             if (!ok || ko) {
                 System.out.println("FAIL:");
