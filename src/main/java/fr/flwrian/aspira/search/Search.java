@@ -343,13 +343,13 @@ public class Search implements SearchAlgorithm {
     
     public void iterativeDeepening(Board board, int depthLimit) {
         nodes = 0;
-        seldepth = 0;
         int score = 0;
         int bestMove = 0;
         startTime = System.nanoTime();
-
-        for (int depth = 1; depth <= depthLimit; depth++) {
         
+        for (int depth = 1; depth <= depthLimit; depth++) {
+            
+            seldepth = 0;
             int alpha, beta;
         
             // Premières profondeurs : fenêtre infinie pour avoir un score stable
