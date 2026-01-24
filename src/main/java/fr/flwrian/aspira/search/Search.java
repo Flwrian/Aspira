@@ -20,14 +20,20 @@ public class Search implements SearchAlgorithm {
     static final int VALUE_MATE_IN_PLY = MATE - MAX_PLY;
     static final int VALUE_MATED_IN_PLY = -VALUE_MATE_IN_PLY;
 
+    // Precomputed LMR reduction table dimensions
+    private static final int MAX_MOVES = 218;
+    private static final int[][] reductionTable = new int[MAX_MOVES + 1][MAX_PLY + 1];
+
     private static final PackedMoveList[] moveLists = new PackedMoveList[MAX_PLY];
 
     static {
         // Init stack movelist
-        System.out.println("Initializing move lists...");
         for (int i = 0; i < MAX_PLY; i++){
             moveLists[i] = new PackedMoveList(218);
         }
+
+        // Initialize precomputed reduction table
+        initReductionTable();
     }
 
     final int CHECK_RATE = 256;
@@ -212,38 +218,46 @@ public class Search implements SearchAlgorithm {
             int reduction = 0;
             int extensions = givesCheck ? 1 : 0;
 
-            if (!criticalDepth && !inCheck && !givesCheck && !isCapture && !PackedMove.isPromotion(move)) {
-                reduction = calculateReduction(depth, madeMoves, isPVNode);
-            }
+            int newDepth = Math.max(depth - 1, 0);
 
-
-            int searchDepth = Math.max(depth - 1 - reduction, 0) + extensions;
             int score;
 
-            if (madeMoves == 1) {
-                // full search pv
-                score = -absearch(board, searchDepth, -beta, -alpha, ply + 1);
-            } else {
-                // try with null window
-                score = -absearch(board, searchDepth, -alpha - 1, -alpha, ply + 1);
-        
-                // if fails high, do a full search
-                if (score > alpha && score < beta) {
-                    score = -absearch(board, searchDepth, -beta, -alpha, ply + 1);
+            // Follow the sequence from your snippet:
+            // 1) If depth>=2 and move index > 3 -> LMR
+            if (depth >= 2 && madeMoves > 3) {
+                // get reduction from table
+                reduction = calculateReduction(depth, madeMoves, isPVNode);
+
+                // don't reduce captures or promotions
+                if (isCapture || PackedMove.isPromotion(move)) {
+                    reduction = 0;
                 }
+
+                int searchedDepth = Math.max(newDepth - reduction, 0) + extensions;
+                int fullNewDepth = newDepth + extensions;
+
+                // null-window search at reduced depth
+                score = -absearch(board, searchedDepth, -alpha - 1, -alpha, ply + 1);
+
+                // if it improves alpha and we actually reduced, try null-window at full new depth
+                if (score > alpha && searchedDepth < fullNewDepth) {
+                    score = -absearch(board, fullNewDepth, -alpha - 1, -alpha, ply + 1);
+                }
+
+            } else if (!isPVNode || madeMoves > 1) {
+                // Case 2: Null-window search but no LMR
+                int fullNewDepth = newDepth + extensions;
+                score = -absearch(board, fullNewDepth, -alpha - 1, -alpha, ply + 1);
+            } else {
+                // PV and first move case: do a full search directly
+                int fullNewDepth = newDepth + extensions;
+                score = -absearch(board, fullNewDepth, -beta, -alpha, ply + 1);
             }
 
-            // Re search if reduced and score > alpha
-            if (reduction > 0 && score > alpha) {
-                // Apply PVS for re search
-                if (madeMoves == 1) {
-                    score = -absearch(board, depth - 1, -beta, -alpha, ply + 1);
-                } else {
-                    score = -absearch(board, depth - 1, -alpha - 1, -alpha, ply + 1);
-                    if (score > alpha && score < beta) {
-                        score = -absearch(board, depth - 1, -beta, -alpha, ply + 1);
-                    }
-                }
+            // Case 3: full-window full-depth search for PV nodes when first move or score > alpha
+            if (isPVNode && (madeMoves == 1 || score > alpha)) {
+                int fullNewDepth = newDepth + extensions;
+                score = -absearch(board, fullNewDepth, -beta, -alpha, ply + 1);
             }
             board.undoMove();
 
@@ -317,29 +331,49 @@ public class Search implements SearchAlgorithm {
 
     
     private int calculateReduction(int depth, int moveNumber, boolean isPVNode) {
-        if (moveNumber < 3 || depth < 3) {
-            return 0;
+        // guard indices to table bounds
+        int im = Math.min(Math.max(moveNumber, 0), MAX_MOVES);
+        int dm = Math.min(Math.max(depth, 0), MAX_PLY);
+
+        int reduction = reductionTable[im][dm];
+
+        // reduce reduction by 1 in PV nodes (if any), but not below 0
+        if (isPVNode && reduction > 0) {
+            reduction = reduction - 1;
         }
 
-        int reduction = 1;
-
-        // if (depth >= 6) {
-        //     reduction = 2;
-        // }
-
-        // if (moveNumber >= 6) {
-        //     reduction += 1;
-        // }
-
-        // if (moveNumber >= 12) {
-        //     reduction += 1;
-        // }
-
-        // if (isPVNode && reduction > 0) {
-        //     reduction -= 1;
-        // }
-
         return reduction;
+    }
+
+    /**
+     * Initialize the reduction table using the formula:
+     * reduction(i,d) = 0.77 + log(i) * log(d) / 2.36
+     * Values are rounded and clamped to [0, d-1].
+     */
+    private static void initReductionTable() {
+        // fill zeros for index 0
+        for (int d = 0; d <= MAX_PLY; d++) {
+            reductionTable[0][d] = 0;
+        }
+        for (int i = 1; i <= MAX_MOVES; i++) {
+            for (int d = 0; d <= MAX_PLY; d++) {
+                // safety for small move numbers or depths
+                if (i < 3 || d < 3) {
+                    reductionTable[i][d] = 0;
+                    continue;
+                }
+
+                // compute formula using natural logarithm
+                double raw = 0.77 + (Math.log(i) * Math.log(d)) / 2.36;
+                int r = (int) Math.round(raw);
+
+                // clamp to [0, d-1]
+                if (r < 0) r = 0;
+                if (r > d - 1) r = Math.max(0, d - 1);
+
+                reductionTable[i][d] = r;
+            }
+        }
     }
 
     
